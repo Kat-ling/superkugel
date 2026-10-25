@@ -29,8 +29,32 @@ AUDIO_INTENTS = [
         "den krimi", "mein krimi", "lieber hörbuch", "lieber das hörbuch", "hörbuch hören",
     ]},
     {"name": "StartChatIntent", "slots": [], "samples": [
-        "plaudern", "ich will plaudern", "ich möchte plaudern", "lieber plaudern", "reden", "ich will reden",
-        "unterhalten", "ich möchte mich unterhalten", "plaudern bitte", "ein bisschen plaudern",
+        "ratschen", "ich will ratschen", "ich möchte ratschen", "lieber ratschen", "ratschen bitte",
+        "ein bisschen ratschen", "a bissl ratschen", "reden", "ich will reden", "unterhalten",
+        "ich möchte mich unterhalten",
+        # „plaudern“ wird zusätzlich verstanden, gesagt wird es nirgends
+        "plaudern", "ich will plaudern", "lieber plaudern",
+    ]},
+    {"name": "PlayShowIntent", "slots": [{"name": "show", "type": "AMAZON.SearchQuery"}], "samples": [
+        "spiel die neueste folge von {show}", "spiel die neue folge von {show}", "spiel die letzte folge von {show}",
+        "spiel den podcast {show}", "spiel die sendung {show}", "spiel das hörspiel {show}",
+        "neueste folge von {show}", "die neue folge von {show}", "ich will die sendung {show} hören",
+    ]},
+    {"name": "ListShowsIntent", "slots": [], "samples": [
+        "welche podcasts hab ich", "welche sendungen hab ich", "welche hörspiele hab ich",
+        "was für podcasts gibt es", "welche sendungen gibt es", "meine sendungen", "meine podcasts",
+    ]},
+    {"name": "SearchMediaIntent", "slots": [{"name": "query", "type": "AMAZON.SearchQuery"}], "samples": [
+        "such in der mediathek nach {query}", "such in der mediathek {query}", "such einen podcast über {query}",
+        "such einen podcast {query}", "such ein hörspiel über {query}", "such ein hörspiel {query}",
+        "such mir ein hörspiel {query}", "such mir einen podcast {query}", "such eine sendung über {query}",
+        "such hörspiele über {query}", "such podcasts über {query}", "such was zum hören über {query}",
+        "finde ein hörspiel {query}", "finde einen podcast {query}",
+    ]},
+    {"name": "ChooseResultIntent", "slots": [{"name": "ordinal", "type": "ORDINAL"},
+                                             {"name": "number", "type": "AMAZON.NUMBER"}], "samples": [
+        "die {ordinal}", "das {ordinal}", "den {ordinal}", "{ordinal}", "die {ordinal} bitte",
+        "nummer {number}", "die nummer {number}", "{number}",
     ]},
     {"name": "PlayAudiobookIntent", "slots": [{"name": "title", "type": "AMAZON.SearchQuery"}], "samples": [
         "spiel {title}", "spiele {title}", "spiel mir {title}", "lies mir {title} vor", "lies {title}",
@@ -97,6 +121,12 @@ BUILTIN_SAMPLES = {
 }
 
 
+def ordinal_type() -> dict:
+    values = {"erste": ["ersten", "erstes", "eins"], "zweite": ["zweiten", "zweites", "zwei"],
+              "dritte": ["dritten", "drittes", "drei", "letzte", "letzten"]}
+    return {"name": "ORDINAL", "values": [{"name": {"value": k, "synonyms": v}} for k, v in values.items()]}
+
+
 def genre_type() -> dict:
     canon: dict[str, list[str]] = {}
     for syn, c in GENRE_SYNONYMS.items():
@@ -120,7 +150,7 @@ def build() -> dict:
                         "samples": [f"{carrier} {{query}}"]})
     return {
         "interactionModel": {
-            "languageModel": {"invocationName": INVOCATION, "intents": intents, "types": [genre_type()]},
+            "languageModel": {"invocationName": INVOCATION, "intents": intents, "types": [genre_type(), ordinal_type()]},
         }
     }
 

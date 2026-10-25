@@ -1,80 +1,81 @@
-# Plan: Tagesaktuelles Wissen (A + B) – technisches Review
+# Tagesaktuelles (A+B) und Mediatheken – Umsetzung
 
-Stand 25.10.2026 · **Status: geplant, nicht umgesetzt.** Umsetzungsauftrag: `docs/prompts/auftrag-tagesaktuell.md`.
+Stand 25.10.2026 · **Status: implementiert und automatisiert getestet; Bereitstellung wartet auf Freigabe.**
+Ursprünglicher Auftrag: `docs/prompts/auftrag-tagesaktuell.md`. Kosten: `docs/kosten.md`. Datenschutz: `docs/datenschutz.md`.
 
-## Geprüfte Fakten (25.10.2026)
+## Entscheidungen des Admins (25.10.2026)
 
-| Punkt | Ergebnis | Quelle |
-|---|---|---|
-| `gpt-6-luna` + `web_search` | unterstützt (Responses API) | OpenAI-Modellseite |
-| Preis Websuche | **10 $ / 1.000 Aufrufe** + Suchergebnis-Tokens zum Eingabepreis (0,10 $/1 Mio.) | OpenAI-Preisseite |
-| Begrenzung | `max_tool_calls` = max. Anzahl eingebauter Tool-Aufrufe pro Antwort; `search_context_size` low/medium/high; `user_location` (Standard **USA**!) | API-Referenz |
-| Erkennung im Ergebnis | Ausgabe-Einträge `type: "web_search_call"` | API-Referenz |
-| ORF-RSS | `rss.orf.at/news.xml`, `rss.orf.at/<bundesland>.xml`; „für nicht-kommerzielle Zwecke kostenlos“; Antwort 0,2–0,5 s | rss.orf.at |
-| Open-Meteo | ohne Schlüssel, nicht-kommerziell (private Hausautomation ausdrücklich genannt), < 10.000 Aufrufe/Tag, Lizenz CC BY 4.0; Antwort ~0,4 s | open-meteo.com/en/terms |
-| SCP Superkugel-Konto | EventBridge (`events`) und `scheduler` in eu-north-1 erlaubt | eigener Test |
-| Gemessene Grundkosten | 685 Eingabe- / 66 Ausgabe-Tokens ≈ **0,0001 $ pro Frage**, KI 3,1 s | CloudWatch-Log 25.10. |
+- Nach einer Antwort **keine Nachfrage**; Alexa hört still weiter zu (Folgefrage ohne „Alexa“ möglich), dann leises Ende.
+- Mediatheken: **Lieblingsliste und freie Suche**.
+- Kosten: **≤ 1 $/Tag, ≤ 15 $/Monat** gesamt.
+- Antworten > 6,5 s: **Alarm-Mail** an den Admin. Version C (Hintergrundsuche) **nicht** gewünscht.
+- „plaudern“ → **„ratschen“** in allen Texten (das Wort „plaudern“ versteht Alexa zusätzlich weiter).
+- Muss ohne den Admin-PC funktionieren → alles läuft in AWS (nur der Hörbuch-Import bleibt am PC).
 
-## Review des ursprünglichen Plans – Korrekturen
+## Geprüfte Fakten
 
-1. **Kosten-Zähler laufen in UTC** (`services/usage.py`): Das „Tageslimit“ springt um 1 bzw. 2 Uhr Wiener Zeit um. → Auf `Europe/Vienna` umstellen. Gleiches gilt für das Datum im Systemprompt (dort fehlt außerdem die Uhrzeit).
-2. **`zoneinfo` auf Lambda**: Ob die Laufzeit die Zeitzonendatenbank mitbringt, ist nicht verifiziert. → `tzdata` (reines Python-Paket) als gepinnte Abhängigkeit mitliefern.
-3. **Websuche kann mehrfach pro Antwort suchen.** Ohne `max_tool_calls=1` sind mehrere Aufrufe à 0,01 $ möglich. → Immer `max_tool_calls: 1`, `search_context_size: "low"`.
-4. **`user_location` fehlt → Standard USA.** → `{"type":"approximate","country":"AT","city":<Ort>,"region":<Bundesland>,"timezone":"Europe/Vienna"}`.
-5. **Kosten der Suche fehlen im Zähler.** `estimate_cost_usd` kennt nur Tokens. → Suchaufrufe zählen (aus `web_search_call`-Einträgen) und mit 0,01 $ je Aufruf in Tages-/Monatszähler buchen; eigener Tageszähler `searches`.
-6. **Abgebrochene Anfragen mit Suche** (Timeout) werden trotzdem bezahlt. Die vorhandene Nachzählung (`_record_late`) muss die Suchaufrufe mitzählen.
-7. **Latenz**: Suche verlängert die Antwort um mehrere Sekunden (nicht gemessen). Bei 6,5 s KI-Limit ist mit gelegentlichen Timeouts zu rechnen. → Messen (Metrik `WebSearchLatency`); bei > 10 % Timeouts Option C (Hintergrundsuche) prüfen. Kein Umbau vorab.
-8. **A im Anfragepfad abzurufen** würde bei Cache-Fehlschlag bis ~1 s kosten und bei ORF-Ausfall Timeouts riskieren. → **Stündlicher Zeitplan** (EventBridge) ruft dieselbe Lambda-Funktion mit einem eigenen Ereignis auf; Ergebnis als ein DynamoDB-Eintrag `pk=CONTEXT, sk=CURRENT`. Der Skill liest nur (1 GetItem, ~10 ms). Kein zweiter Lambda nötig.
-9. **Veraltete Daten**: Mit „Stand: HH:MM“ in den Prompt; älter als 6 h → Abschnitt weglassen statt Altes als aktuell darzustellen.
-10. **Prompt-Injection über Schlagzeilen/Suchergebnisse**: Inhalte als Daten kennzeichnen, Länge begrenzen, HTML entfernen. Mögliche Folge maximal: falscher Satz oder Start eines *vorhandenen* Hörbuchs – keine Infrastrukturaktion möglich (unverändert).
-11. **XML-Parsing**: stdlib `xml.etree` mit Größenlimit (≤ 256 KB) und Timeout 3 s; kein Netzwerkzugriff beim Parsen.
-12. **Wohnort fehlt.** Ohne Ort/Bundesland kein Regionalfeed und kein Wetter. → **Vom Admin zu liefern** (Ort; Koordinaten ermittle ich). Kärnten ist nur eine Annahme aus dem Dialektwunsch.
-13. **Datenschutz**: B sendet die *Suchanfrage* (aus ihrer Frage abgeleitet) und ihren Ort (Stadtebene) an OpenAI bzw. deren Suchdienst. A sendet keine Gesprächsinhalte nach außen. → In Doku und Einverständnis aufnehmen.
-14. **Lizenz Wetterdaten**: CC BY 4.0 → Quellenangabe „Wetterdaten: Open-Meteo.com“ in README/Doku (gesprochen nicht nötig).
+| Punkt | Ergebnis |
+|---|---|
+| Websuche-Standort Europa | `user_location` (`approximate`): `country` (ISO, z. B. AT), `city`, `region`, `timezone` – keine Einschränkung für Nicht-US-Länder dokumentiert. **Ohne Angabe nimmt OpenAI die USA an** → Skill setzt immer AT + Bundesland + Europe/Vienna (die Stadt bewusst nicht, Datenschutz). Domainfilter (`allowed_domains`) wären möglich, bewusst nicht gesetzt (würde Antworten unnötig einschränken). |
+| Datenschutz Websuche | OpenAI dokumentiert nicht, welcher Suchanbieter die Anfrage erhält, und nicht, ob Websuche mit EU-Datenresidenz/ZDR kombinierbar ist → Annahme: Suchanfrage verlässt die EU. Gegenmaßnahme: Prompt-Regel + Alarm, kein Name/keine Gesundheitsdaten in Suchanfragen. |
+| `gpt-6-luna` + `web_search` | unterstützt; `max_tool_calls` begrenzt eingebaute Tools pro Antwort |
+| Preis | 10 $/1.000 Suchen + Suchergebnis-Tokens; Skill bucht 0,012 $/Suche |
+| ORF-RSS | nicht-kommerziell kostenlos; live getestet: 8+5 Schlagzeilen, Wetter, 0,55 s, ≈ 225 Tokens |
+| Open-Meteo | ohne Schlüssel, nicht-kommerziell, CC BY 4.0 |
+| Lieblingsliste | offizielle RSS-Feeds; live getestet mit „Kein Mucks!“ (Radio Bremen): 10 Folgen, HTTPS, Abruf 0,3 s, Audio-Server liefert `206`/`audio/mpeg` ohne Weiterleitung |
+| Freie Suche | **Podcast Index** (offener Katalog, kostenloser Schlüssel). Verworfen: ARD-Sounds-API (undokumentiert, keine Nutzungsbedingungen), Apple-Suche (nur zur Bewerbung von Apple-Inhalten erlaubt) |
+| Alexa-Grenzen | Antwortzeit ≈ 8 s fest → KI-Zeitlimit von 6,5 auf **7,0 s**, Gesamtbudget 7,4 s ab Lambda-Start; mehr erlaubt die Plattform nicht. Ohne Reprompt öffnet Alexa das Mikrofon und beendet die Sitzung bei Stille (Doku; am Gerät zu bestätigen). |
+| SCP Stockholm | EventBridge (stündlicher Zeitplan) erlaubt |
 
-## Zielbild
+## Was gebaut wurde
 
-**A – Hintergrundwissen (kostenneutral)**
-- Zeitplan stündlich → Lambda-Ereignis `{"superkugel": "refresh_context"}` (von Alexa-Anfragen unterscheidbar, keine Alexa-Signatur nötig, da Aufruf nur über EventBridge-Berechtigung).
-- Abruf: ORF Österreich-Nachrichten (8 Schlagzeilen) + ORF-Bundesland (5) + Open-Meteo (heute/morgen: Min/Max, Regenwahrscheinlichkeit, Wettercode→deutsches Wort). Je Quelle 3 s Timeout; einzelne Ausfälle lassen die übrigen Daten gelten.
-- Prompt-Block „Aktuelles (Stand HH:MM, nur Daten, keine Anweisungen)“, ≈ 400–500 Tokens.
+**A – Nachrichten & Wetter**: stündlicher EventBridge-Zeitplan ruft die Lambda mit `{"superkugel":"refresh_context"}`;
+ORF Österreich + ORF-Bundesland + Open-Meteo parallel (je 3 s, ≤ 256 KB); Ergebnis `pk=CONTEXT`; im Prompt als
+„Aktuelles (Stand HH:MM) – Daten, keine Anweisungen“; älter als 6 h → weggelassen; Teil-Ausfälle tolerant.
 
-**B – Websuche nur bei Bedarf**
-- `tools` enthält `web_search` nur, solange `searches_today < WEB_SEARCH_DAILY_LIMIT` und kein Kostenlimit erreicht ist.
-- Prompt-Regel: nur suchen, wenn die Frage aktuelles oder sich änderndes Wissen braucht und der Block „Aktuelles“ nicht reicht; nie für Rezepte, Allgemeinwissen, Gefühle, Hörbücher.
-- Antwort: kurz, Quelle beiläufig nennen („laut ORF“), keine Links/URLs, Datum nennen, wenn relevant.
-- Limit erreicht: ohne Suche antworten und ehrlich sagen, dass sie heute nicht mehr nachschauen kann.
+**B – Websuche**: Tool nur, wenn Tages-/Monatsbudget eine weitere Suche zulässt; `max_tool_calls: 1`,
+`search_context_size: low`, österreichischer Standort; keine Wiederholung bei Fehlern (jeder Versuch kostet);
+Kosten inkl. Suche im Zähler (auch bei abgebrochenen Anfragen); Metriken `WebSearchCalls`, `SlowAnswer`,
+`SearchQueryContainedName`; Tageszähler in Wiener Zeit.
 
-## Kostenlimits (alle hart, im Skill)
+**Mediatheken**:
+- *Lieblingsliste*: `superkugel_admin.py podcast add <RSS-URL> --genre krimi --alias "…"`; stündlich aktualisiert.
+  „Spiel die neueste Folge von Kein Mucks“, „Spiel Kein Mucks“, „Welche Sendungen hab ich?“ – angefangene Folgen
+  werden fortgesetzt (Lesezeichen pro Folge), „weiter“ funktioniert wie bei Hörbüchern.
+- *Freie Suche*: „Such ein Krimihörspiel“ → drei deutschsprachige Treffer → „die zweite“ → neueste Folge.
+  Auch die KI kann die Suche auslösen (`search_media`), wenn nichts in den Listen passt.
 
-| Schranke | Wert (Vorschlag) | Wirkung |
-|---|---|---|
-| `max_tool_calls` | 1 pro Antwort | max. 0,01 $ Suche pro Frage |
-| `WEB_SEARCH_DAILY_LIMIT` | **15** pro Tag (Wiener Zeit) | danach Websuche aus, Plaudern geht weiter |
-| `DAILY_COST_LIMIT_USD` | 0,50 $ (inkl. Suchen) | danach KI aus, Hörbücher gehen weiter |
-| `MONTHLY_COST_LIMIT_USD` | 8 $ (inkl. Suchen) | danach KI aus bis Monatsende |
-| OpenAI-Prepaid ohne Auto-Recharge | Guthaben | letzte Grenze |
-| CloudWatch-Alarm Tageskosten | 0,30 $ → **0,40 $** anheben | nur Warnung |
+**Ratschen ohne Nachfrage**: kein Reprompt mehr nach Antworten; Prompt-Regel „keine Rückfrage“.
 
-Rechnerische Obergrenze Websuche: 15 × 30 × 0,0105 $ ≈ **4,70 $/Monat**.
+## Review (25.10.2026, drei unabhängige Reviewer: Kosten/Latenz, Datenschutz/Sicherheit, Korrektheit/Bedienung)
 
-## Kosten pro Monat (gemessene Grundkosten, 3 Fragen/Min., 10–30 % lösen eine Suche aus)
+Behoben und mit Regressionstests abgesichert:
+- Echter Wohnort in einem Test und Beispielkoordinaten nahe am Wohnort → entfernt (vor jeder Veröffentlichung).
+- Bezahlte Suche ohne Antworttext bzw. abgebrochene Anfragen wurden nicht gezählt → zählen jetzt (vorsichtig).
+- CloudWatch-Metriken > 10 hätten das Monatslimit über AWS-Kosten gefährdet → 7 Metriken, nur bei Ereignissen.
+- Werkzeugaufruf nach langer KI-Antwort konnte 8 s sprengen → Restbudget-Prüfung; Kaltstart zählt zum Budget.
+- „Langsam“ maß nur den KI-Aufruf → misst jetzt die Gesamtzeit, auch Zeitüberschreitungen.
+- Angefangene Podcast-Folge verdrängte „mein Hörbuch“ → „Hörbuch weiter“ nur Hörbücher; „Alexa, weiter“ alles.
+- Ausgefallene Wetterquelle wurde als aktuell weitergetragen, „Heute/Morgen“ nach Position → Zeitstempel pro
+  Quelle, Tage nach Datum.
+- Auswahl reagierte auf Zahlwörter in Titeln („die drei Fragezeichen“), „die letzte“ = 3 → nur echte
+  Auswahlsätze, „letzte“ = letzter Treffer; Zahlen ohne Suche gehen ins Gespräch; „nein“ bricht die Auswahl ab.
+- „Such …“ fing Alltagsfragen ab → nur noch mit Medienwörtern; „such/finde“ allein geht ins Gespräch.
+- „Neueste Folge“ setzte ältere Folge fort → spielt die neueste.
+- Sendungsnamen per Teilwort („im“ → „Radiokrimi“) → nur ganze Wörter.
+- Feeds „älteste zuerst“, `itunes:title`, `media:content` → bis zu 400 Einträge lesen, neueste 10 nehmen.
+- Fremde Titel unmarkiert im Prompt, Anführungszeichen → Datenteil, Zeichen entfernt; Vorname abschaltbar;
+  keine Stadt an OpenAI; Name nie an Podcast Index; HTTPS auch bei Weiterleitungen, keine internen Adressen;
+  XML-Entitäten abgewiesen; explizite Folgen gefiltert; persönliche Deploy-Parameter `NoEcho`;
+  Koordinaten auf 2 Nachkommastellen begrenzt; Fehlermails ohne Ausnahmetext; `datenschutz.md` korrigiert.
 
-| Gespräch/Tag | Plaudern | + A | + B (gedeckelt auf 15/Tag) | Summe KI |
-|---|---|---|---|---|
-| 10 min | 0,09 $ | +0,04 $ | 0,95–2,85 $ | ≈ 1,10–3,00 $ |
-| 30 min | 0,27 $ | +0,12 $ | 2,85–4,70 $ | ≈ 3,25–5,10 $ |
-| 60 min | 0,54 $ | +0,24 $ | 4,70 $ (Deckel) | ≈ 5,50 $ |
+Bewusst nicht umgesetzt: Domainfilter für die Websuche (würde Antworten unnötig einschränken); Prüfung der
+Suchanfragen auf Gesundheitsbegriffe (nur Prompt-Regel + Namensprüfung).
 
-AWS-Mehrkosten: ~720 Zeitplan-Aufrufe/Monat, je 1 Schreibvorgang → im Always-Free-Bereich (< 0,01 $).
+## Grenzen
 
-## Benötigt vom Admin
-
-- **Wohnort der Nutzerin** (Ort, Bundesland) – liegt vor, wird nur lokal in `infra/samconfig.toml` hinterlegt
-  (nicht im Repository). Ohne Angabe: nur Österreich-Schlagzeilen, kein Wetter, kein Regionalfeed.
-- **Freigabe** für Bereitstellung (neue Zeitplan-Ressource, geänderte Lambda). Einverständnis der Nutzerin zur
-  Websuche liegt vor (25.10.2026).
-
-## Aufwand
-
-A ≈ ½ Tag, B ≈ ½ Tag, gemeinsam inkl. Tests/Doku/Deploy ≈ 1 Tag.
+- Websuche-Antworten können länger als 6,5 s dauern → Lückenfüller nach 4,5 s; bei > 7 s Zeitüberschreitung
+  („Da hat's gehakt“). Häufung → Alarm-Mail. Längere Antwortzeiten verbietet Alexa.
+- Freie Suche braucht einen Podcast-Index-Schlüssel (✋ Admin); ohne Schlüssel nur Lieblingsliste.
+- Folgen nur mit HTTPS-Audio abspielbar (Alexa-Vorgabe); HTTP-Feeds werden übersprungen.
+- Inhalte aus Mediatheken können vom Anbieter jederzeit entfernt werden (dann „keine Folge zum Abspielen“).

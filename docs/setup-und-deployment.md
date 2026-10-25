@@ -157,7 +157,7 @@ unter Skills → Meine Skills → *Entwicklung* erscheint „Superkugel“ (dort
 
 **Optionale Vereinfachung (deine Alexa-App):** Routine anlegen
 - Auslöser *Wenn du sagst*: „Mein Krimi“ → Aktion *Benutzerdefiniert*: „sag Superkugel spiel mein Hörbuch weiter“
-- Auslöser: „Ich möchte plaudern“ → Aktion *Skills* → Superkugel
+- Auslöser: „Ich möchte ratschen“ → Aktion *Skills* → Superkugel
 - Bei *Von* bzw. *Gerät* jeweils **ihren Echo** auswählen, damit die Antwort dort kommt.
 
 Danach reicht „Alexa, mein Krimi“. **[am Gerät prüfen – Verhalten der Aktion „Benutzerdefiniert“ ist nicht dokumentiert garantiert]**

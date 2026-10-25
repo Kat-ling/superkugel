@@ -42,6 +42,7 @@ class Services:
     progressive: ProgressiveSender
     clock: Callable[[], float] = time.monotonic
     _audio: AudiobookService | None = field(default=None, repr=False)
+    media_client_factory: Callable[[str, str], Any] | None = None  # Podcast-Index-Client (Tests: Fake)
 
     @property
     def style(self) -> SpeechStyle:
@@ -102,10 +103,14 @@ def end_with(services: Services, handler_input: HandlerInput, text: str) -> Resp
     return handler_input.response_builder.speak(services.say(text)).set_should_end_session(True).response
 
 
-def keep_open(services: Services, handler_input: HandlerInput, text: str, reprompt: str) -> Response:
+def keep_open(services: Services, handler_input: HandlerInput, text: str, reprompt: str | None) -> Response:
+    """Sitzung offen lassen. Ohne ``reprompt`` hört Alexa still zu (keine Nachfrage) und beendet
+    die Sitzung leise, wenn nichts mehr kommt."""
     session_attrs(handler_input)["last_speech"] = text
-    return (handler_input.response_builder.speak(services.say(text))
-            .ask(services.say(reprompt)).set_should_end_session(False).response)
+    rb = handler_input.response_builder.speak(services.say(text))
+    if reprompt:
+        rb.ask(services.say(reprompt))
+    return rb.set_should_end_session(False).response
 
 
 def play_directive(cmd: PlayCommand) -> PlayDirective:

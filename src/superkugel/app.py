@@ -20,6 +20,7 @@ from superkugel.audiobooks.hosting import S3UrlSigner
 from superkugel.config import Settings
 from superkugel.conversation.llm import OpenAIClient
 from superkugel.handlers import audio, conversation, playback
+from superkugel.handlers import media as media_handlers
 from superkugel.handlers.common import Services, end_with
 from superkugel.services.logs import hash_user, log, metric
 from superkugel.services.ops import Mode, ParameterSource
@@ -29,6 +30,8 @@ Handler = Callable[[Services, HandlerInput], Response]
 
 # Zeitpunkt, an dem Lambda die Anfrage erhalten hat (inkl. Kaltstart) – Basis des 8-s-Budgets
 REQUEST_STARTED: contextvars.ContextVar[float | None] = contextvars.ContextVar("request_started", default=None)
+# Beim Kaltstart beginnt die Uhr schon beim Laden des Moduls (Imports zählen zum 8-s-Budget von Alexa).
+_MODULE_LOADED = time.monotonic()
 _PROGRESSIVE_POOL = cf.ThreadPoolExecutor(max_workers=1)
 
 
@@ -113,11 +116,16 @@ def build_skill(services: Services) -> Any:
         (is_request_type("System.ExceptionEncountered"), playback.on_system_exception),
         (is_request_type("SessionEndedRequest"), _session_ended),
         # Hörbuch-Befehle
-        (_intent("ResumeAudiobookIntent", "AMAZON.ResumeIntent"), audio.resume_current),
+        (_intent("ResumeAudiobookIntent"), audio.resume_current),
+        (_intent("AMAZON.ResumeIntent"), audio.resume_any),
         (_intent("PlayAudiobookIntent"), timed(audio.play_title)),
         (_intent("PlayGenreIntent"), lambda s, hi: audio.play_genre(s, hi)),
         (_intent("PlayNewestIntent"), lambda s, hi: audio.play_genre(s, hi, newest=True)),
         (_intent("ListAudiobooksIntent"), audio.list_books),
+        (_intent("PlayShowIntent"), media_handlers.play_show_intent),
+        (_intent("ListShowsIntent"), media_handlers.list_shows),
+        (_intent("SearchMediaIntent"), timed(media_handlers.search_media_intent)),
+        (_intent("ChooseResultIntent"), timed(media_handlers.choose_intent)),
         (_intent("AMAZON.PauseIntent"), audio.pause),
         (_intent("RewindIntent"), audio.rewind),
         (_intent("ForwardIntent"), audio.forward),
@@ -197,13 +205,20 @@ def _emergency_response(req_type: str) -> dict[str, Any]:
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     global _SKILL
-    started = time.monotonic()
+    started = _MODULE_LOADED if _SKILL is None else time.monotonic()
     token = REQUEST_STARTED.set(started)
     req = (event.get("request") or {})
     system = (event.get("context") or {}).get("System") or {}
     user = (system.get("user") or {}).get("userId") or ""
     device = (system.get("device") or {}).get("deviceId") or ""
     try:
+        if event.get("superkugel") == "refresh_context":
+            try:
+                return run_refresh()  # stündlicher Zeitplan (EventBridge), keine Alexa-Anfrage
+            except Exception as exc:  # noqa: BLE001
+                log("refresh_failed", error=type(exc).__name__)
+                metric("ContextRefreshErrors", 1)
+                return {"ok": False}
         if _SKILL is None:
             _SKILL = build_skill(default_services())
         return handle_event(_SKILL, event, context)
@@ -217,6 +232,20 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         # user = pseudonyme Kennung (für superkugel_admin.py reset-progress --user-hash)
         log("request_done", request_type=req.get("type"), intent=intent, user_hash=hash_user(user, device) if user else "",
             ms=int((time.monotonic() - started) * 1000))
+
+
+def run_refresh(services: Services | None = None) -> dict[str, Any]:
+    """Nachrichten/Wetter und Lieblingssendungen aktualisieren – läuft in AWS, nicht auf dem Admin-PC."""
+    from superkugel.audiobooks import media
+    from superkugel.services import current_context
+
+    services = services or default_services()
+    ctx = current_context.refresh(services.store, services.settings)
+    feed_errors = media.refresh_shows(services.store)
+    if feed_errors:
+        metric("ContextRefreshErrors", feed_errors)
+    return {"ok": True, "sources": len([k for k in ("news", "regional", "weather") if k in ctx]),
+            "feed_errors": feed_errors}
 
 
 def _deserialize(event: dict[str, Any]) -> Any:

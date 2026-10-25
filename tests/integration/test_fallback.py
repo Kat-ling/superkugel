@@ -77,7 +77,8 @@ def test_library_outage_does_not_block_chat(harness) -> None:
     harness.openai.text("Hallo")
     r = harness.send(chat())
     assert "Hallo" in speech(r) and ends_session(r) is False
-    assert "tools" not in harness.openai.requests[0]["body"]
+    names = [t.get("name") for t in harness.openai.requests[0]["body"].get("tools", [])]
+    assert "play_audiobook" not in names
 
 
 def test_pause_works_even_if_storage_is_down(harness) -> None:
@@ -115,8 +116,9 @@ def test_timed_out_call_is_still_counted() -> None:
     r = h.send(chat())
     assert "gehakt" in speech(r)
     _t.sleep(1.0)
+    # sofort vorsichtig gebucht (kein unzuverlässiges Nachzählen nach dem Einfrieren der Lambda)
     day = next(k for k in h.store.usage if k.startswith("DAY#"))
-    assert h.store.get_usage(day).input_tokens == 1000
+    assert h.store.get_usage(day).input_tokens >= 1000 and h.store.get_usage(day).searches == 1
 
 
 def test_maintenance_blocks_audiobook_commands_but_not_pause(harness) -> None:

@@ -120,3 +120,24 @@ def test_interaction_model_in_sync_and_every_intent_routed() -> None:
     for it in model["intents"]:
         r = h.send(intent(it["name"], session={}))
         assert r["response"] is not None, it["name"]
+
+
+def test_dynamo_generic_items_counters_and_search_usage(aws) -> None:
+    ddb, _ = aws
+    store = DynamoStore("superkugel", REGION, resource=ddb)
+    store.put_item("CONTEXT", "CURRENT", {"news": {"value": ["a"], "at": 1.5}})
+    assert store.get_item("CONTEXT", "CURRENT")["news"]["at"] == 1.5
+    store.put_item("EPISODES", "EP#x", {"book_id": "x"}, ttl_s=60)
+    assert store.get_item("EPISODES", "EP#x")["book_id"] == "x"
+    store.put_item("EPISODES", "EP#old", {"book_id": "o"}, ttl_s=-10)
+    assert store.get_item("EPISODES", "EP#old") is None
+    store.put_item("PODCASTS", "SHOW#a", {"show_id": "a"})
+    store.put_item("PODCASTS", "SHOW#b", {"show_id": "b"})
+    assert [d["show_id"] for d in store.query_items("PODCASTS", "SHOW#")] == ["a", "b"]
+    store.delete_item("PODCASTS", "SHOW#a")
+    assert len(store.query_items("PODCASTS", "SHOW#")) == 1
+    assert store.incr_counter("MEDIA#2026-10-25", ttl_s=100) == 1
+    assert store.incr_counter("MEDIA#2026-10-25", ttl_s=100) == 2
+    assert store.get_counter("MEDIA#2026-10-25") == 2
+    store.add_usage("2026-10-25", "2026-10", 10, 1, 12000, searches=1)
+    assert store.get_usage("DAY#2026-10-25").searches == 1

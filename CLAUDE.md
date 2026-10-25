@@ -23,6 +23,10 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 - Stimmen nur `alexa|Vicki|Marlene|Hans` (Alexa-Doku). Keine externe TTS (Regel gegen kundenspezifisches `<audio>`, OpenAI-TTS-Abschaltung 6.1.2027).
 - Thalia: keine API → Eingangsordner (`audiobooks/inbox.py`). Kein Login-Scraping.
 - Jeder Fehler: Fallback-Satz + `shouldEndSession=true`. Auf AudioPlayer-/System-Events nie Sprache.
+- Tagesaktuelles/Mediatheken (v1.1): stündlicher EventBridge-Abruf (`services/current_context.py`, `audiobooks/media.py`),
+  Websuche nur mit Budget (`services/usage.py: searches_left`), alle externen Abrufe über `services/net.py`
+  (HTTPS, keine internen Adressen, Größenlimit, keine XML-Entitäten). Fremde Texte nur im Datenteil des Prompts.
+  Kostengrenzen sind Vorgabe des Admins: ≤ 1 $/Tag, ≤ 15 $/Monat gesamt – nicht lockern. Keine Nachfrage nach Antworten.
 - Kontomodell: Developer-Account und Echo der Nutzerin laufen über das Amazon-Konto des Admins.
   Deshalb sind Speicherschlüssel = Hash(userId + deviceId) (`services/logs.py: hash_user`) – Geräte nicht vermischen.
 

@@ -8,6 +8,10 @@ Layout:
   pk=USAGE          sk=DAY#<yyyy-mm-dd>  Token-/Kostenzähler
   pk=USAGE          sk=MONTH#<yyyy-mm>
   pk=OPS            sk=CIRCUIT           Fehlerzähler für die KI-Anbindung
+  pk=OPS            sk=COUNTER#<name>    einfache Zähler (z. B. Mediensuchen pro Tag, mit TTL)
+  pk=CONTEXT        sk=CURRENT           Schlagzeilen + Wetter (stündlich aktualisiert)
+  pk=PODCASTS       sk=SHOW#<id>         Lieblingssendungen mit den neuesten Folgen
+  pk=EPISODES       sk=EP#<id>           abgespielte Folgen (für Lesezeichen/AudioPlayer-Ereignisse)
 """
 
 from __future__ import annotations
@@ -26,6 +30,7 @@ class UsageTotals:
     input_tokens: int = 0
     output_tokens: int = 0
     cost_micro_usd: int = 0
+    searches: int = 0
 
     @property
     def cost_usd(self) -> float:
@@ -55,8 +60,15 @@ class Store(Protocol):
     def put_conversation(self, uid: str, data: dict[str, Any], ttl_s: int) -> None: ...
     def delete_conversation(self, uid: str) -> None: ...
 
-    def add_usage(self, day: str, month: str, inp: int, out: int, cost_micro: int) -> None: ...
+    def add_usage(self, day: str, month: str, inp: int, out: int, cost_micro: int, searches: int = 0) -> None: ...
     def get_usage(self, period_key: str) -> UsageTotals: ...
+    def incr_counter(self, name: str, ttl_s: int = 0) -> int: ...
+    def get_counter(self, name: str) -> int: ...
+
+    def get_item(self, pk: str, sk: str) -> dict[str, Any] | None: ...
+    def put_item(self, pk: str, sk: str, data: dict[str, Any], ttl_s: int = 0) -> None: ...
+    def query_items(self, pk: str, prefix: str) -> list[dict[str, Any]]: ...
+    def delete_item(self, pk: str, sk: str) -> None: ...
 
     def get_circuit(self) -> dict[str, Any]: ...
     def put_circuit(self, data: dict[str, Any]) -> None: ...
@@ -118,16 +130,40 @@ class MemoryStore:
         self.items.pop((f"USER#{uid}", "CONVERSATION"), None)
 
     # Nutzung
-    def add_usage(self, day: str, month: str, inp: int, out: int, cost_micro: int) -> None:
+    def add_usage(self, day: str, month: str, inp: int, out: int, cost_micro: int, searches: int = 0) -> None:
         for key in (f"DAY#{day}", f"MONTH#{month}"):
             t = self.usage.setdefault(key, UsageTotals())
             t.requests += 1
             t.input_tokens += inp
             t.output_tokens += out
             t.cost_micro_usd += cost_micro
+            t.searches += searches
 
     def get_usage(self, period_key: str) -> UsageTotals:
         return self.usage.get(period_key, UsageTotals())
+
+    def incr_counter(self, name: str, ttl_s: int = 0) -> int:
+        item = self.items.setdefault(("OPS", f"COUNTER#{name}"), {"value": 0})
+        item["value"] += 1
+        return int(item["value"])
+
+    def get_counter(self, name: str) -> int:
+        return int(self.items.get(("OPS", f"COUNTER#{name}"), {}).get("value", 0))
+
+    def get_item(self, pk: str, sk: str) -> dict[str, Any] | None:
+        v = self.items.get((pk, sk))
+        if not v or (v.get("expires_at") and v["expires_at"] < time.time()):
+            return None
+        return dict(v)
+
+    def put_item(self, pk: str, sk: str, data: dict[str, Any], ttl_s: int = 0) -> None:
+        self.items[(pk, sk)] = {**data, **({"expires_at": int(time.time()) + ttl_s} if ttl_s else {})}
+
+    def query_items(self, pk: str, prefix: str) -> list[dict[str, Any]]:
+        return [dict(v) for (p, k), v in sorted(self.items.items()) if p == pk and k.startswith(prefix)]
+
+    def delete_item(self, pk: str, sk: str) -> None:
+        self.items.pop((pk, sk), None)
 
     # Betrieb
     def get_circuit(self) -> dict[str, Any]:
@@ -216,13 +252,44 @@ class DynamoStore:
     def delete_conversation(self, uid: str) -> None:
         self.table.delete_item(Key={"pk": f"USER#{uid}", "sk": "CONVERSATION"})
 
-    def add_usage(self, day: str, month: str, inp: int, out: int, cost_micro: int) -> None:
+    def add_usage(self, day: str, month: str, inp: int, out: int, cost_micro: int, searches: int = 0) -> None:
         for sk in (f"DAY#{day}", f"MONTH#{month}"):
             self.table.update_item(
                 Key={"pk": "USAGE", "sk": sk},
-                UpdateExpression="ADD requests :one, input_tokens :i, output_tokens :o, cost_micro_usd :c",
-                ExpressionAttributeValues={":one": 1, ":i": inp, ":o": out, ":c": cost_micro},
+                UpdateExpression="ADD requests :one, input_tokens :i, output_tokens :o, cost_micro_usd :c, searches :s",
+                ExpressionAttributeValues={":one": 1, ":i": inp, ":o": out, ":c": cost_micro, ":s": searches},
             )
+
+    def incr_counter(self, name: str, ttl_s: int = 0) -> int:
+        kwargs: dict[str, Any] = {
+            "Key": {"pk": "OPS", "sk": f"COUNTER#{name}"},
+            "UpdateExpression": "ADD #v :one" + (" SET expires_at = if_not_exists(expires_at, :exp)" if ttl_s else ""),
+            "ExpressionAttributeNames": {"#v": "value"},
+            "ExpressionAttributeValues": {":one": 1, **({":exp": int(time.time()) + ttl_s} if ttl_s else {})},
+            "ReturnValues": "UPDATED_NEW",
+        }
+        resp = self.table.update_item(**kwargs)
+        return int(resp.get("Attributes", {}).get("value", 0))
+
+    def get_counter(self, name: str) -> int:
+        item = self.table.get_item(Key={"pk": "OPS", "sk": f"COUNTER#{name}"}).get("Item") or {}
+        return int(item.get("value", 0))
+
+    def get_item(self, pk: str, sk: str) -> dict[str, Any] | None:
+        d = self._get(pk, sk)
+        if d and d.get("expires_at") and d["expires_at"] < time.time():
+            return None
+        return d
+
+    def put_item(self, pk: str, sk: str, data: dict[str, Any], ttl_s: int = 0) -> None:
+        expires = int(time.time()) + ttl_s if ttl_s else None
+        self._put(pk, sk, {**data, **({"expires_at": expires} if expires else {})}, expires_at=expires)
+
+    def query_items(self, pk: str, prefix: str) -> list[dict[str, Any]]:
+        return self._query(pk, prefix)
+
+    def delete_item(self, pk: str, sk: str) -> None:
+        self.table.delete_item(Key={"pk": pk, "sk": sk})
 
     def get_usage(self, period_key: str) -> UsageTotals:
         item = self.table.get_item(Key={"pk": "USAGE", "sk": period_key}).get("Item") or {}
@@ -231,6 +298,7 @@ class DynamoStore:
             input_tokens=int(item.get("input_tokens", 0)),
             output_tokens=int(item.get("output_tokens", 0)),
             cost_micro_usd=int(item.get("cost_micro_usd", 0)),
+            searches=int(item.get("searches", 0)),
         )
 
     def get_circuit(self) -> dict[str, Any]:

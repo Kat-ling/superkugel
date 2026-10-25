@@ -31,6 +31,7 @@ Parameters:
     Description: Sprechtempo der Antworten („Wie bitte?“ wiederholt immer mit 85 %).
   UserName:
     Type: String
+    NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
     Default: ""
     AllowedPattern: "^[\\p{L} -]{0,40}$"
     Description: Vorname der Nutzerin für Begrüßung und Gespräch (leer = ohne Namen).
@@ -40,11 +41,47 @@ Parameters:
     AllowedValues: [du, sie]
   DailyCostLimitUsd:
     Type: Number
-    Default: 0.5
-    Description: Harte Tagesgrenze im Skill für KI-Kosten (geschätzt). Danach nur noch Hörbücher.
+    Default: 0.9
+    MaxValue: 0.95
+    Description: Harte Tagesgrenze im Skill für KI-Kosten inkl. Websuche (geschätzt). Mit AWS (≈ 0,01 $/Tag) bleibt der Tag unter 1 $.
   MonthlyCostLimitUsd:
     Type: Number
-    Default: 8
+    Default: 14
+    MaxValue: 14.5
+    Description: Harte Monatsgrenze KI inkl. Websuche; mit AWS unter 15 $/Monat.
+  WebSearchDailyLimit:
+    Type: Number
+    Default: 25
+    MinValue: 0
+    MaxValue: 60
+    Description: Höchstzahl Websuchen pro Tag (Wiener Zeit); 0 = Websuche aus.
+  ShareNameWithAi:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Vorname auch der KI mitteilen (sonst nur lokal in Begrüßung/Verabschiedung).
+  UserCity:
+    Type: String
+    NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
+    Default: ""
+    AllowedPattern: '^[\p{L} .-]{0,60}$'
+    Description: Wohnort der Nutzerin (Stadt) für Wetter und Websuche. Nur in samconfig.toml setzen.
+  UserRegion:
+    Type: String
+    NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
+    Default: ""
+    AllowedPattern: '^[\p{L} .-]{0,60}$'
+    Description: Bundesland (für ORF-Regionalnachrichten), z. B. Kärnten.
+  UserLat:
+    Type: String
+    NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
+    Default: ""
+    AllowedPattern: '^(-?[0-9]{1,2}(\.[0-9]{1,2})?)?$'  # max. 2 Nachkommastellen ≈ 1 km
+  UserLon:
+    Type: String
+    NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
+    Default: ""
+    AllowedPattern: '^(-?[0-9]{1,3}(\.[0-9]{1,2})?)?$'
   ReservedConcurrency:
     Type: Number
     Default: 0
@@ -58,7 +95,7 @@ Globals:
     Runtime: python3.14
     Architectures: [arm64]
     MemorySize: 512
-    Timeout: 10
+    Timeout: 30  # Alexa-Anfragen begrenzt der Code selbst auf ~7,4 s; 30 s nur für den stündlichen Abruf
 
 Resources:
   Table:
@@ -151,13 +188,26 @@ Resources:
           ADDRESS_FORM: !Ref AddressForm
           SPEECH_RATE: !Ref SpeechRate
           USER_NAME: !Ref UserName
+          SHARE_NAME_WITH_AI: !Ref ShareNameWithAi
           DAILY_COST_LIMIT_USD: !Ref DailyCostLimitUsd
           MONTHLY_COST_LIMIT_USD: !Ref MonthlyCostLimitUsd
+          WEB_SEARCH_DAILY_LIMIT: !Ref WebSearchDailyLimit
+          USER_CITY: !Ref UserCity
+          USER_REGION: !Ref UserRegion
+          USER_LAT: !Ref UserLat
+          USER_LON: !Ref UserLon
+          TIMEZONE: Europe/Vienna
       Events:
         Alexa:
           Type: AlexaSkill
           Properties:
             SkillId: !Ref SkillId
+        HourlyRefresh:
+          Type: Schedule  # EventBridge – läuft in AWS, unabhängig vom Admin-PC
+          Properties:
+            Schedule: rate(1 hour)
+            Input: '{"superkugel": "refresh_context"}'
+            Description: Nachrichten, Wetter und Lieblingssendungen aktualisieren
       Policies:
         - Statement:
             - Sid: TableAccess
@@ -264,14 +314,59 @@ Resources:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: superkugel-ki-kosten-tag
-      AlarmDescription: Geschätzte KI-Kosten über 0,30 USD an einem Tag (auffällige Nutzung)
+      AlarmDescription: Geschätzte KI-Kosten (inkl. Websuche) über 0,60 USD an einem Tag – Vorwarnung vor der harten Grenze
       Namespace: Superkugel
       MetricName: LlmCostMicroUsd
       Statistic: Sum
       Period: 86400
       EvaluationPeriods: 1
-      Threshold: 300000
+      Threshold: 600000
       ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  SlowAnswerAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-langsame-antworten
+      AlarmDescription: Mindestens 3 KI-Antworten in einer Stunde langsamer als 6,5 s
+      Namespace: Superkugel
+      MetricName: SlowAnswer
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  PrivacyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-datenschutz-websuche
+      AlarmDescription: Eine Websuche enthielt den Vornamen der Nutzerin (Prompt-Regel verletzt)
+      Namespace: Superkugel
+      MetricName: SearchQueryContainedName
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  RefreshErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-abruf-fehler
+      AlarmDescription: Nachrichten/Wetter/Sendungen konnten 6 Stunden lang wiederholt nicht abgerufen werden
+      Namespace: Superkugel
+      MetricName: ContextRefreshErrors
+      Statistic: Sum
+      Period: 21600
+      EvaluationPeriods: 1
+      Threshold: 12
+      ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlertTopic]
 
@@ -284,7 +379,7 @@ Resources:
       Statistic: Sum
       Period: 3600
       EvaluationPeriods: 1
-      Threshold: 3
+      Threshold: 5
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlertTopic]

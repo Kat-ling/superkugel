@@ -9,10 +9,17 @@ from ask_sdk_core.handler_input import HandlerInput
 from ask_sdk_core.utils import get_intent_name, is_intent_name, is_request_type
 from ask_sdk_model import Response
 
+from superkugel.audiobooks import media
 from superkugel.conversation.carriers import is_chat_intent, reconstruct
 from superkugel.conversation.history import History
 from superkugel.conversation.llm import LlmError, LlmReply
-from superkugel.conversation.prompt import PLAY_TOOL, build_instructions
+from superkugel.conversation.prompt import (
+    PLAY_TOOL,
+    SEARCH_MEDIA_TOOL,
+    SHOW_TOOL,
+    build_instructions,
+    web_search_tool,
+)
 from superkugel.handlers.common import (
     Services,
     end_with,
@@ -22,19 +29,15 @@ from superkugel.handlers.common import (
     slot,
     uid,
 )
+from superkugel.services import current_context
 from superkugel.services.logs import log, metric
 from superkugel.services.ops import Mode
+from superkugel.services.usage import TokenUsage
 from superkugel.speech.styles import personalize
 
-_EXECUTOR = cf.ThreadPoolExecutor(max_workers=2)
+_EXECUTOR = cf.ThreadPoolExecutor(max_workers=4)
 
 THINKING = ("Moment, ich überleg kurz.", "Einen Augenblick.", "Lass mich kurz nachdenken.")
-REPROMPTS = ("Magst du noch was wissen?", "Noch etwas?", "Was meinst du dazu?")
-REPROMPTS_SIE = ("Möchten Sie noch etwas wissen?", "Noch etwas?", "Was meinen Sie dazu?")
-
-
-def _reprompt(services: Services) -> str:
-    return random.choice(REPROMPTS if services.settings.address_form == "du" else REPROMPTS_SIE)
 
 
 def handle_launch(services: Services, hi: HandlerInput) -> Response:
@@ -76,23 +79,45 @@ def _call_llm(services: Services, hi: HandlerInput, user: str, history: History,
     key = services.params.openai_api_key()
     if not key:
         raise LlmError("no_key")
+    s = services.settings
     audio = services.audio()
     try:
         books, progress = audio.books(), audio.progress_map(user)
-    except Exception as exc:  # noqa: BLE001 - ohne Bibliothek trotzdem plaudern
+    except Exception as exc:  # noqa: BLE001 - ohne Bibliothek trotzdem ratschen
         log("library_unavailable", error=type(exc).__name__)
         books, progress = [], {}
-    instructions = build_instructions(services.style, books, progress, address=services.settings.address_form,
-                                      user_name=services.settings.user_name)
+    try:
+        shows = media.list_shows(services.store)
+    except Exception as exc:  # noqa: BLE001
+        log("shows_unavailable", error=type(exc).__name__)
+        shows = []
+    context = current_context.prompt_block(services.store, s)
+    searches_left = services.usage.searches_left()
+    tools: list[dict] = []
+    if books:
+        tools.append(PLAY_TOOL)
+    if shows:
+        tools.append(SHOW_TOOL)
+    if services.params.podcast_index_credentials():
+        tools.append(SEARCH_MEDIA_TOOL)
+    if searches_left > 0:
+        tools.append(web_search_tool(s.user_region, s.timezone))
+    instructions = build_instructions(
+        services.style, books, progress, address=s.address_form,
+        user_name=s.user_name if s.share_name_with_ai else "",
+        shows_block="\n".join(media.iter_shows_prompt(shows)), context_block=context,
+        web_search=searches_left > 0 if s.web_search_enabled else None, timezone=s.timezone,
+    )
     client = services.llm_factory(key)
-    tools = [PLAY_TOOL] if books else None
-    future = _EXECUTOR.submit(client.complete, instructions, history.as_input(text), deadline=deadline, tools=tools)
+    messages = history.as_input(text)
+    future = _EXECUTOR.submit(client.complete, instructions, messages, deadline=deadline,
+                              tools=tools, max_tool_calls=1 if searches_left > 0 else None)
     try:
         first_wait = min(services.settings.progressive_after_s, deadline - services.clock())
         return future.result(timeout=max(0.0, first_wait))
     except cf.TimeoutError:
         if deadline - services.clock() <= 0.05:
-            future.add_done_callback(lambda f: _record_late(services, f))
+            _book_unfinished(services, instructions, messages, searches_left > 0)
             raise LlmError("timeout") from None
     # Antwort dauert: kurze Zwischenmeldung, Gesamtlimit bleibt gleich (Alexa-Regel).
     try:
@@ -103,17 +128,18 @@ def _call_llm(services: Services, hi: HandlerInput, user: str, history: History,
     try:
         return future.result(timeout=max(0.1, remaining))
     except cf.TimeoutError as exc:
-        # Die Anfrage läuft weiter und wird bezahlt → Verbrauch nachträglich zählen.
-        future.add_done_callback(lambda f: _record_late(services, f))
+        _book_unfinished(services, instructions, messages, searches_left > 0)
         raise LlmError("timeout") from exc
 
 
-def _record_late(services: Services, future: cf.Future) -> None:
-    try:
-        reply = future.result()
-    except Exception:  # noqa: BLE001
-        return
-    services.usage.record(reply.usage, reply.latency_ms)
+def _book_unfinished(services: Services, instructions: str, messages: list[dict[str, str]], search: bool) -> None:
+    """Abgebrochene Anfrage läuft bei OpenAI weiter und wird bezahlt. Lambda friert nach der Antwort ein,
+    ein späteres Nachzählen ist unzuverlässig → sofort vorsichtig (eher zu hoch) buchen, inkl. möglicher Suche."""
+    chars = len(instructions) + sum(len(m.get("content", "")) for m in messages)
+    est = TokenUsage(input_tokens=chars // 3 + (3000 if search else 0),
+                     output_tokens=services.settings.max_output_tokens, search_calls=1 if search else 0)
+    services.usage.record(est, 0)
+    log("llm_unfinished_booked", searches=est.search_calls)
 
 
 def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: float) -> Response:
@@ -126,11 +152,11 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
     if not text.strip():
         return keep_open(services, hi, services.t("not_understood"), services.t("tip_short"))
     if services.usage.limit_reached():
-        metric("UsageLimitReached", 1)
+        log("usage_limit_reached")
         return _offer_audiobook(services, hi, services.t("limit"))
     circuit = services.circuit
     if circuit.is_open():
-        metric("CircuitOpen", 1)
+        log("circuit_open")
         return end_with(services, hi, services.fallback_text())
 
     user = uid(hi)
@@ -140,6 +166,7 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
     try:
         reply = _call_llm(services, hi, user, history, text, min(deadline, services.clock() + s.llm_timeout_s))
     except LlmError as exc:
+        _measure_total(services, started)
         circuit.record_failure()
         metric("LlmError", 1)
         log("llm_error", kind=exc.kind, status=exc.status)
@@ -154,16 +181,36 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
     attrs["misunderstood"] = 0
     circuit.record_success()
     services.usage.record(reply.usage, reply.latency_ms)
+    _measure_total(services, started)
 
+    _privacy_check(services, reply)
     for call in reply.tool_calls:
         if call.name == "play_audiobook":
             book = services.audio().book(str(call.arguments.get("book_id", "")))
-            if book:  # Modell darf nur vorhandene Bücher starten
+            if book and not book.book_id.startswith("pod-"):  # Modell darf nur vorhandene Bücher starten
                 cmd = services.audio().start_or_resume(user, book)
                 lead = reply.text or f"Gern, hier ist {book.title}."
                 return (hi.response_builder.speak(services.say(lead)).add_directive(play_directive(cmd))
                         .set_should_end_session(True).response)
             log("tool_unknown_book")
+        elif call.name == "play_show":
+            from superkugel.handlers import media as media_handlers
+
+            show_id = str(call.arguments.get("show_id", ""))
+            try:
+                show = next((x for x in media.list_shows(services.store) if x.show_id == show_id), None)
+            except Exception as exc:  # noqa: BLE001
+                log("shows_unavailable", error=type(exc).__name__)
+                show = None
+            if show:
+                return media_handlers.play_show(services, hi, show)
+            log("tool_unknown_show")
+        elif call.name == "search_media":
+            from superkugel.handlers import media as media_handlers
+
+            # Restbudget beachten: nach einer langen KI-Antwort nicht noch Sekunden suchen (Alexa-Limit 8 s)
+            return media_handlers.search_media(services, hi, str(call.arguments.get("query", "")),
+                                               deadline=deadline)
 
     answer = reply.text or services.t("not_understood")
     history.add("user", text)
@@ -175,7 +222,22 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
             services.store.put_conversation(user, {"turns": history.to_attributes()}, s.resume_window_s)
         except Exception as exc:  # noqa: BLE001
             log("conversation_save_failed", error=type(exc).__name__)
-    return keep_open(services, hi, answer, _reprompt(services))
+    # Keine Nachfrage: Alexa hört still weiter zu (Folgefrage ohne „Alexa“ möglich) und beendet dann leise.
+    return keep_open(services, hi, answer, None)
+
+
+def _measure_total(services: Services, started: float) -> None:
+    """„Langsam“ = Zeit seit Eingang der Anfrage (inkl. Kaltstart, Datenbank, Zwischenmeldung, Zeitüberschreitung)."""
+    if (services.clock() - started) * 1000 > services.settings.slow_answer_ms:
+        metric("SlowAnswer", 1)
+
+
+def _privacy_check(services: Services, reply: LlmReply) -> None:
+    """Warnt (Metrik, ohne Inhalt), wenn eine Websuche den Vornamen der Nutzerin enthielt."""
+    name = services.settings.user_name.strip().lower()
+    if name and any(name in q.lower() for q in reply.search_queries):
+        metric("SearchQueryContainedName", 1)
+        log("privacy_search_contains_name")
 
 
 def _offer_audiobook(services: Services, hi: HandlerInput, lead: str) -> Response:
@@ -193,6 +255,13 @@ def _offer_audiobook(services: Services, hi: HandlerInput, lead: str) -> Respons
 def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> Response:
     intent = get_intent_name(hi)
     text = reconstruct(intent, slot(hi, "query"))
+    if session_attrs(hi).get("pending") == "choose_media":
+        # „die erste“ kann bei ChatDieIntent landen → zuerst als Auswahl versuchen
+        from superkugel.handlers import media as media_handlers
+
+        chosen = media_handlers.choose_hit(services, hi, text)
+        if chosen is not None:
+            return chosen
     session_attrs(hi).pop("pending", None)
     return handle_chat_text(services, hi, text, started)
 
@@ -200,6 +269,9 @@ def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> 
 def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response:
     attrs = session_attrs(hi)
     pending = attrs.pop("pending", None)
+    if pending == "choose_media":
+        attrs["pending"] = pending  # „ja“ ist keine Auswahl → weiter auf Nummer warten
+        return keep_open(services, hi, services.t("search_choose"), services.t("search_choose"))
     if pending == "resume_book":
         from superkugel.handlers.audio import resume_current
 
@@ -213,7 +285,11 @@ def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response
 
 def handle_no(services: Services, hi: HandlerInput, started: float) -> Response:
     attrs = session_attrs(hi)
-    if attrs.pop("pending", None) in ("resume_book", "list_books"):
+    pending = attrs.pop("pending", None)
+    if pending == "choose_media":
+        attrs.pop("media_hits", None)  # „nein“ bei der Auswahl = abbrechen
+        return keep_open(services, hi, services.t("search_cancelled"), None)
+    if pending in ("resume_book", "list_books"):
         q = services.t("no_book_then")
         return keep_open(services, hi, q, q)
     return handle_chat_text(services, hi, "nein", started)
@@ -240,8 +316,7 @@ def handle_repeat(services: Services, hi: HandlerInput) -> Response:
     last = session_attrs(hi).get("last_speech")
     if not last:
         return keep_open(services, hi, services.t("nothing_said"), services.t("ask_topic"))
-    return (hi.response_builder.speak(services.say(last, slow=True)).ask(services.say(_reprompt(services)))
-            .set_should_end_session(False).response)
+    return (hi.response_builder.speak(services.say(last, slow=True)).set_should_end_session(False).response)
 
 
 def handle_help(services: Services, hi: HandlerInput) -> Response:

@@ -98,6 +98,26 @@ Bibliothek ansehen / Titel entfernen:
 .venv/Scripts/python scripts/superkugel_admin.py remove mord-im-kraeuterbeet --delete-files
 ```
 
+## Lieblingssendungen und freie Mediensuche
+
+Lieblingssendungen (Podcasts, Hörspielreihen von ARD, ORF, Deutschlandfunk …) über deren **offizielle RSS-Feeds**:
+```powershell
+.venv\Scripts\python.exe scripts\superkugel_admin.py podcast add "https://www.bremenzwei.de/feed/podcast/kein-mucks-104.xml" --name "Kein Mucks" --genre krimi,hörspiel --alias "Pastewka Krimi"
+```
+```powershell
+.venv\Scripts\python.exe scripts\superkugel_admin.py podcast list
+```
+Die Feed-Adresse steht meist auf der Sendungsseite („RSS“/„Podcast abonnieren“) oder bei podnews.net.
+Sendungen mit Sonderzeichen im Namen (z. B. „Die drei ???“) brauchen ein Alias, so wie sie es sagt:
+`--alias "Die drei Fragezeichen"`. Die neuesten
+Folgen holt AWS stündlich; sofort: `superkugel_admin.py refresh`.
+
+Freie Suche („Such ein Hörspiel über Schottland“) über **Podcast Index**: einmalig kostenlos registrieren auf
+https://api.podcastindex.org ✋ und den Schlüssel verdeckt hinterlegen:
+```powershell
+.venv\Scripts\python.exe scripts\superkugel_admin.py set-podcastindex
+```
+
 ## Kostenlose Hörspiele
 
 Podcasts/Hörspiele von ARD, Deutschlandfunk & Co. sind über die **normale Alexa** am einfachsten

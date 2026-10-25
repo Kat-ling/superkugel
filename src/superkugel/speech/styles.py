@@ -57,8 +57,8 @@ STYLES: dict[str, SpeechStyle] = {
             "Sprich klares, gut verständliches Standarddeutsch. Österreichische und bairische "
             "Ausdrücke der Nutzerin verstehst du selbstverständlich."
         ),
-        greeting={"du": "Hallo{n}! Schön, dass du da bist. Worüber magst du plaudern?",
-                  "sie": "Guten Tag{n}! Schön, dass Sie da sind. Worüber möchten Sie plaudern?"},
+        greeting={"du": "Hallo{n}! Schön, dass du da bist. Worüber magst du ratschen?",
+                  "sie": "Guten Tag{n}! Schön, dass Sie da sind. Worüber möchten Sie ratschen?"},
         goodbye={"du": "Bis bald{c}!", "sie": "Auf Wiedersehen{c}, bis bald!"},
     ),
 }

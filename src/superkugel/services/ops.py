@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import Callable
 from enum import StrEnum
@@ -28,6 +29,7 @@ class ParameterSource:
         self._clock = clock
         self._mode: tuple[float, Mode] | None = None
         self._api_key: str | None = settings.openai_api_key or None
+        self._podcast_index: tuple[str, str] | tuple[()] | None = None
 
     def _client(self) -> Any:
         if self._ssm is None:
@@ -57,6 +59,19 @@ class ParameterSource:
         """Nach einem Anmeldefehler: beim nächsten Mal neu aus SSM lesen (Schlüsselwechsel ohne Neudeploy)."""
         if not self.settings.openai_api_key:
             self._api_key = None
+
+    def podcast_index_credentials(self) -> tuple[str, str] | None:
+        """Schlüssel für die freie Mediensuche (SecureString als JSON {"key": …, "secret": …})."""
+        if self._podcast_index is not None:
+            return self._podcast_index or None
+        try:
+            raw = self._client().get_parameter(Name=self.settings.podcast_index_param, WithDecryption=True)
+            d = json.loads(raw["Parameter"]["Value"])
+            self._podcast_index = (str(d["key"]).strip(), str(d["secret"]).strip())
+        except Exception as exc:  # noqa: BLE001 - ohne Schlüssel: nur Lieblingsliste
+            log("podcast_index_unavailable", error=type(exc).__name__)
+            self._podcast_index = ()
+        return self._podcast_index or None
 
     def openai_api_key(self) -> str | None:
         if self._api_key:

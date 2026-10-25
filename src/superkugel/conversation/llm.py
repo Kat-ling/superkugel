@@ -45,6 +45,8 @@ class LlmReply:
     usage: TokenUsage = field(default_factory=TokenUsage)
     truncated: bool = False
     latency_ms: int = 0
+    search_calls: int = 0
+    search_queries: list[str] = field(default_factory=list)  # nur für Datenschutzprüfung, nie loggen
 
 
 def urllib_transport(url: str, headers: dict[str, str], body: bytes, timeout: float) -> tuple[int, bytes]:
@@ -67,7 +69,14 @@ def urllib_transport(url: str, headers: dict[str, str], body: bytes, timeout: fl
 def parse_response(data: dict[str, Any]) -> LlmReply:
     texts: list[str] = []
     calls: list[ToolCall] = []
+    searches = 0
+    queries: list[str] = []
     for item in data.get("output", []) or []:
+        if item.get("type") == "web_search_call":
+            searches += 1  # jeder Aufruf wird berechnet, auch fehlgeschlagene
+            action = item.get("action") or {}
+            queries += [str(q) for q in (action.get("queries") or [action.get("query")]) if q]
+            continue
         if item.get("type") == "message":
             for part in item.get("content", []) or []:
                 if part.get("type") == "output_text":
@@ -83,12 +92,14 @@ def parse_response(data: dict[str, Any]) -> LlmReply:
         input_tokens=int(u.get("input_tokens", 0)),
         cached_input_tokens=int((u.get("input_tokens_details") or {}).get("cached_tokens", 0)),
         output_tokens=int(u.get("output_tokens", 0)),
+        search_calls=searches,
     )
     truncated = data.get("status") == "incomplete"
     text = " ".join(t.strip() for t in texts if t.strip())
-    if not text and not calls:
+    if not text and not calls and not searches:
         raise LlmError("bad_response")
-    return LlmReply(text=text, tool_calls=calls, usage=usage, truncated=truncated)
+    return LlmReply(text=text, tool_calls=calls, usage=usage, truncated=truncated, search_calls=searches,
+                    search_queries=queries)
 
 
 class OpenAIClient:
@@ -104,7 +115,7 @@ class OpenAIClient:
         self.clock = clock
 
     def _payload(self, instructions: str, messages: list[dict[str, str]],
-                 tools: list[dict[str, Any]] | None) -> dict[str, Any]:
+                 tools: list[dict[str, Any]] | None, max_tool_calls: int | None = None) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "model": self.model,
             "instructions": instructions,
@@ -116,16 +127,21 @@ class OpenAIClient:
             payload["reasoning"] = {"effort": self.reasoning_effort}
         if tools:
             payload["tools"] = tools
+        if max_tool_calls is not None:
+            payload["max_tool_calls"] = max_tool_calls  # begrenzt eingebaute Tools (Websuche) pro Antwort
         return payload
 
     def complete(self, instructions: str, messages: list[dict[str, str]], *, deadline: float,
                  tools: list[dict[str, Any]] | None = None, max_attempts: int = 2,
-                 min_retry_budget_s: float = 2.5) -> LlmReply:
+                 min_retry_budget_s: float = 2.5, max_tool_calls: int | None = None) -> LlmReply:
         """Ruft das Modell auf. ``deadline`` ist ein absoluter Zeitpunkt (clock()).
 
         Höchstens ein Wiederholungsversuch, und nur wenn bis zur Deadline genug Zeit bleibt.
         """
-        body = json.dumps(self._payload(instructions, messages, tools)).encode("utf-8")
+        body = json.dumps(self._payload(instructions, messages, tools, max_tool_calls)).encode("utf-8")
+        # Mit Websuche nie wiederholen: jeder Versuch kann eine bezahlte Suche auslösen.
+        if any(t.get("type") == "web_search" for t in tools or []):
+            max_attempts = 1
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         last: LlmError | None = None
         for attempt in range(max_attempts):

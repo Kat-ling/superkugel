@@ -28,10 +28,10 @@ auch wenn das ganze Backend ausgefallen ist.
 
 | Grenze | Auswirkung | Beste Annäherung im Projekt |
 |---|---|---|
-| Start nur mit „Alexa, öffne Superkugel“ | ein fester Satz zu lernen | kurzer Name; optional Routine „Alexa, ich möchte plaudern“ |
+| Start nur mit „Alexa, öffne Superkugel“ | ein fester Satz zu lernen | kurzer Name; optional Routine „Alexa, ich möchte ratschen“ |
 | Mikrofon nur wenige Sekunden offen, 1 Reprompt | lange Denkpausen beenden die Sitzung | kurzer Reprompt; Verlauf 30 Min. gespeichert („Da bin ich wieder. Wo waren wir?“) |
 | Freie Rede nur mit Trägerwort | Sätze, die mit einem unbekannten Wort beginnen, landen im Fallback | 86 typische Satzanfänge; Fallback bittet um Wiederholung, nach 2× Tipp „Sag mal …“ |
-| Konkurrenz Chat ↔ feste Befehle | ~45 feste Sätze beginnen mit einem Trägerwort („ich will plaudern“, „wie bitte“, „mein hörbuch“). Exakte Treffer gewinnen meist, Varianten können im Gespräch landen | Das Modell kennt die Bibliothek und kann per Werkzeug abspielen; **vor Übergabe im Test-Tab der Developer Console prüfen (JSON Input zeigt den Intent)** |
+| Konkurrenz Chat ↔ feste Befehle | ~45 feste Sätze beginnen mit einem Trägerwort („ich will ratschen“, „wie bitte“, „mein hörbuch“). Exakte Treffer gewinnen meist, Varianten können im Gespräch landen | Das Modell kennt die Bibliothek und kann per Werkzeug abspielen; **vor Übergabe im Test-Tab der Developer Console prüfen (JSON Input zeigt den Intent)** |
 | Kein Hineinreden während Alexa spricht (außer mit „Alexa“) | lange Antworten abwarten | Antworten kurz (2–4 Sätze) |
 | ca. 8 s Antwortzeit | lange Denkaufgaben unmöglich | schnelles Modell, Token-Limit, Zwischenmeldung |
 | Spracherkennung = Amazon de-DE | starkes Kärntnerisch evtl. schlecht erkannt | Modell deutet unklare Sätze; nur am Gerät mit ihrer Stimme prüfbar |

@@ -19,7 +19,7 @@ Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Ge
 
 ## Tests
 
-- `pytest`: **134 bestanden** (Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
+- `pytest`: **187 bestanden** (Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
   gemockter OpenAI-API und moto (DynamoDB/S3/SSM). `ruff`, `cfn-lint --regions eu-north-1`, `pip-audit`: ohne Befund.
 - Zwei unabhängige Reviews (Alexa-Konformität, Wiedergabe, Ausfallsicherheit, Sicherheit, Kosten, Bedienbarkeit,
   Import) – alle berechtigten Befunde behoben und mit Regressionstests abgesichert.
@@ -30,9 +30,10 @@ Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Ge
 
 1. Restliche Gerätetests (Kapitelwechsel, Neustart, Ausfallszenarien, Test mit der Stimme der Nutzerin).
 2. Zugriffsschlüssel des Admin-Benutzers deaktivieren, wenn gerade nicht deployt wird (wieder aktivierbar).
-3. Tagesaktuelles Wissen (A: Nachrichten/Wetter, B: Websuche mit Tageslimit): geplant, nicht umgesetzt –
-   `docs/plan-tagesaktuell.md`, Auftrag `docs/prompts/auftrag-tagesaktuell.md`. Wohnort und Einverständnis der
-   Nutzerin liegen dem Admin vor (nur lokal in `infra/samconfig.toml`, nicht im Repository).
+3. **Version 1.1 (implementiert, Bereitstellung wartet auf Freigabe):** Tagesaktuelles (Nachrichten/Wetter, Websuche
+   mit Tageslimit), Lieblingssendungen + freie Mediensuche, „ratschen“, keine Nachfrage nach Antworten,
+   Kostengrenzen 1 $/Tag bzw. 15 $/Monat gesamt – `docs/plan-tagesaktuell.md`, `docs/kosten.md`, `docs/datenschutz.md`.
+   Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
 
 ## Entscheidungen (Details: `docs/architektur.md`)
 

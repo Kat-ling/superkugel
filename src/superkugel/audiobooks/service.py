@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from superkugel.audiobooks import player
 from superkugel.audiobooks.hosting import UrlSigner
-from superkugel.audiobooks.models import Book, Progress
+from superkugel.audiobooks.models import Book, Chapter, Progress
 from superkugel.audiobooks.player import Position
 from superkugel.services.logs import log, metric
 from superkugel.services.storage import Store
@@ -45,15 +45,29 @@ class AudiobookService:
         return self._books
 
     def book(self, book_id: str) -> Book | None:
-        return next((b for b in self.books() if b.book_id == book_id), None)
+        found = next((b for b in self.books() if b.book_id == book_id), None)
+        if found or not book_id.startswith("pod-"):
+            return found
+        # Podcast-Folge: nicht in der Bibliothek, sondern als gemerkte Folge
+        try:
+            d = self.store.get_item("EPISODES", f"EP#{book_id}")
+        except Exception:  # noqa: BLE001
+            return None
+        return Book.from_dict(d) if d else None
+
+    def url_for(self, chapter: Chapter) -> str:
+        return chapter.url or self.signer.url_for(chapter.s3_key)
 
     def progress_map(self, uid: str) -> dict[str, Progress]:
         return {p.book_id: p for p in self.store.list_progress(uid)}
 
-    def current_book(self, uid: str) -> tuple[Book, Progress] | None:
-        """Das zuletzt gehörte, nicht beendete Buch."""
+    def current_book(self, uid: str, include_podcasts: bool = False) -> tuple[Book, Progress] | None:
+        """Das zuletzt gehörte, nicht beendete Hörbuch. Podcast-Folgen nur, wenn ausdrücklich gewünscht
+        („Alexa, weiter“) – sonst würde eine angefangene Folge „mein Hörbuch“ verdrängen."""
         state = self.store.get_state(uid)
         progress = self.progress_map(uid)
+        if not include_podcasts:
+            progress = {k: v for k, v in progress.items() if not k.startswith("pod-")}
         candidates = []
         if state.get("book_id") in progress:
             candidates.append(progress[state["book_id"]])
@@ -71,7 +85,7 @@ class AudiobookService:
         pos = player.clamp(book, pos)
         chapter = book.chapters[pos.chapter]
         token = player.make_token(book.book_id, pos.chapter)
-        url = self.signer.url_for(chapter.s3_key)
+        url = self.url_for(chapter)
         if behavior == "REPLACE_ALL":
             if persist_position:
                 self._save(uid, book.book_id, pos.chapter, pos.offset_ms, started=True, reset_failures=True)
@@ -167,5 +181,5 @@ class AudiobookService:
         self.store.put_progress(uid, p)
         pos = player.clamp(book, Position(parsed[1], offset_ms))
         chapter = book.chapters[pos.chapter]
-        return PlayCommand(url=self.signer.url_for(chapter.s3_key), token=token, offset_ms=pos.offset_ms,
+        return PlayCommand(url=self.url_for(chapter), token=token, offset_ms=pos.offset_ms,
                            behavior="REPLACE_ALL", expected_previous_token=None, book=book, chapter=pos.chapter)

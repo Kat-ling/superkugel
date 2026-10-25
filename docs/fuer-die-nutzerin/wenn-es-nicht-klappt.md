@@ -6,7 +6,7 @@
 | Sie redet zu lang. | „Alexa“ sagen – sie hört sofort auf. Mit „Alexa, stopp“ ist Schluss. |
 | Es ist still geworden, sie hört nicht mehr zu. | „Alexa, öffne Superkugel.“ Sie weiß noch, worüber ihr gesprochen habt. |
 | Sie sagt: „Das klappt gerade leider nicht.“ | Kein Problem. Alexa geht trotzdem ganz normal. Später nochmal probieren. Wenn es morgen noch so ist: Familie anrufen. |
-| Sie sagt: „Für heute haben wir schon sehr viel geplaudert.“ | Später geht's wieder. Hörbücher gehen trotzdem – sag einfach „ja“, wenn sie fragt. |
+| Sie sagt: „Für heute haben wir schon sehr viel geratscht.“ | Später geht's wieder. Hörbücher gehen trotzdem – sag einfach „ja“, wenn sie fragt. |
 | Sie sagt: „Die Superkugel macht gerade eine kleine Pause.“ | Die Familie kümmert sich gerade darum. Alexa geht normal. |
 | Statt dem Hörbuch kommt Radio. | „Alexa, sag Superkugel, spiel meinen Krimi weiter.“ |
 | Das falsche Hörbuch läuft. | „Alexa, stopp.“ Dann: „Alexa, frag Superkugel, welche Hörbücher hab ich?“ |

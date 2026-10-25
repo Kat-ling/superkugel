@@ -7,11 +7,11 @@ TEXTS: dict[str, tuple[str, str]] = {
     "fallback": ("Das klappt gerade leider nicht. Du kannst Alexa aber ganz normal weiterverwenden.",
                  "Das klappt gerade leider nicht. Sie können Alexa aber ganz normal weiterverwenden."),
     "maintenance": ("Die Superkugel macht gerade eine kleine Pause. Alexa funktioniert ganz normal weiter.",) * 2,
-    "limit": ("Für heute haben wir schon sehr viel geplaudert, ich mach jetzt Feierabend. "
+    "limit": ("Für heute haben wir schon sehr viel geratscht, ich mach jetzt Feierabend. "
               "Hörbücher kann ich trotzdem gern abspielen, und Alexa funktioniert ganz normal.",) * 2,
-    "ai_off": ("Plaudern geht gerade nicht, aber Hörbücher kann ich abspielen. Sag zum Beispiel: Spiel mein Hörbuch weiter.",
-               "Plaudern geht gerade nicht, aber Hörbücher kann ich abspielen. Sagen Sie zum Beispiel: Spiel mein Hörbuch weiter."),
-    "ai_off_short": ("Plaudern geht gerade leider nicht, aber Hörbücher schon.",) * 2,
+    "ai_off": ("Ratschen geht gerade nicht, aber Hörbücher kann ich abspielen. Sag zum Beispiel: Spiel mein Hörbuch weiter.",
+               "Ratschen geht gerade nicht, aber Hörbücher kann ich abspielen. Sagen Sie zum Beispiel: Spiel mein Hörbuch weiter."),
+    "ai_off_short": ("Ratschen geht gerade leider nicht, aber Hörbücher schon.",) * 2,
     "glitch": ("Da hat's gerade gehakt. Sag's bitte nochmal.", "Da hat's gerade gehakt. Sagen Sie es bitte nochmal."),
     "not_understood": ("Das hab ich nicht ganz verstanden. Sag's bitte nochmal, gern mit anderen Worten.",
                        "Das hab ich nicht ganz verstanden. Sagen Sie es bitte nochmal, gern mit anderen Worten."),
@@ -21,22 +21,23 @@ TEXTS: dict[str, tuple[str, str]] = {
     "give_up": ("Ich versteh dich gerade schlecht. Ruf mich einfach später wieder, mit: Alexa, öffne Superkugel.",
                 "Ich verstehe Sie gerade schlecht. Rufen Sie mich einfach später wieder, mit: Alexa, öffne Superkugel."),
     # Gespräch
-    "ask_topic": ("Worüber magst du plaudern?", "Worüber möchten Sie plaudern?"),
-    "start_chat": ("Gern! Worüber magst du plaudern?", "Gern! Worüber möchten Sie plaudern?"),
-    "no_book_then": ("Gut. Worüber magst du plaudern?", "Gut. Worüber möchten Sie plaudern?"),
-    "choose": ("Magst du plaudern, oder soll ich dein Hörbuch weiterspielen?",
-               "Möchten Sie plaudern, oder soll ich Ihr Hörbuch weiterspielen?"),
+    "ask_topic": ("Worüber magst du ratschen?", "Worüber möchten Sie ratschen?"),
+    "start_chat": ("Gern! Worüber magst du ratschen?", "Gern! Worüber möchten Sie ratschen?"),
+    "no_book_then": ("Gut. Worüber magst du ratschen?", "Gut. Worüber möchten Sie ratschen?"),
+    "choose": ("Magst du ratschen, oder soll ich dein Hörbuch weiterspielen?",
+               "Möchten Sie ratschen, oder soll ich Ihr Hörbuch weiterspielen?"),
     "resume_q": ("Soll ich dein Hörbuch weiterspielen?", "Soll ich Ihr Hörbuch weiterspielen?"),
     "welcome_back": ("Da bin ich wieder. Wo waren wir?", "Da bin ich wieder. Wo waren wir stehen geblieben?"),
-    "nothing_said": ("Ich hab noch nichts gesagt. Worüber magst du plaudern?",
-                     "Ich hab noch nichts gesagt. Worüber möchten Sie plaudern?"),
-    "help": ("Du kannst einfach mit mir plaudern, zum Beispiel: Sag mal, was koch ich heute? "
-             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Zum Aufhören sag: Stopp.",
-             "Sie können einfach mit mir plaudern, zum Beispiel: Sag mal, was koch ich heute? "
+    "nothing_said": ("Ich hab noch nichts gesagt. Worüber magst du ratschen?",
+                     "Ich hab noch nichts gesagt. Worüber möchten Sie ratschen?"),
+    "help": ("Du kannst einfach mit mir ratschen, zum Beispiel: Sag mal, was koch ich heute? "
+             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Sendungen: Spiel die neueste Folge von Kein Mucks. "
+             "Zum Aufhören sag: Stopp.",
+             "Sie können einfach mit mir ratschen, zum Beispiel: Sag mal, was koch ich heute? "
              "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Zum Aufhören sagen Sie: Stopp."),
     "help_q": ("Was magst du machen?", "Was möchten Sie machen?"),
-    "forgotten": ("Erledigt, ich hab unser Gespräch vergessen. Worüber magst du plaudern?",
-                  "Erledigt, ich hab unser Gespräch vergessen. Worüber möchten Sie plaudern?"),
+    "forgotten": ("Erledigt, ich hab unser Gespräch vergessen. Worüber magst du ratschen?",
+                  "Erledigt, ich hab unser Gespräch vergessen. Worüber möchten Sie ratschen?"),
     # Hörbücher
     "no_books": ("In deiner Bibliothek ist noch kein Hörbuch. Das richtet dir die Familie ein.",
                  "In Ihrer Bibliothek ist noch kein Hörbuch. Das richtet Ihnen die Familie ein."),
@@ -58,6 +59,27 @@ TEXTS: dict[str, tuple[str, str]] = {
     "last_chapter": ("Das war schon das letzte Kapitel.",) * 2,
     "nothing_playing": ("Gerade läuft kein Hörbuch.",) * 2,
     "unsupported": ("Das geht bei Hörbüchern leider nicht.",) * 2,
+    # Sendungen / Mediatheken
+    "show_latest": ("Gern, die neueste Folge von {name}: {title}.", "Gern, die neueste Folge von {name}: {title}."),
+    "show_resume": ("Gern, es geht weiter mit {name}: {title}.",) * 2,
+    "show_no_episodes": ("Von {name} hab ich gerade keine Folge zum Abspielen.",) * 2,
+    "which_show": ("Welche Sendung magst du hören?", "Welche Sendung möchten Sie hören?"),
+    "no_shows": ("Du hast noch keine Lieblingssendungen. Du kannst aber suchen, zum Beispiel: Such ein Krimihörspiel.",
+                 "Sie haben noch keine Lieblingssendungen. Sie können aber suchen, zum Beispiel: Such ein Krimihörspiel."),
+    "you_have_shows": ("Deine Sendungen sind: {listing}.", "Ihre Sendungen sind: {listing}."),
+    "search_what": ("Was soll ich suchen?",) * 2,
+    "search_unavailable": ("In den Mediatheken suchen kann ich gerade nicht. Deine Hörbücher und Sendungen gehen aber.",
+                           "In den Mediatheken suchen kann ich gerade nicht. Ihre Hörbücher und Sendungen gehen aber."),
+    "search_limit": ("Für heute hab ich schon genug gesucht. Morgen wieder.",) * 2,
+    "search_failed": ("Die Suche hat gerade nicht geklappt. Probier's später nochmal.",
+                      "Die Suche hat gerade nicht geklappt. Bitte später nochmal probieren."),
+    "search_none": ("Dazu hab ich leider nichts gefunden.",) * 2,
+    "search_results": ("Ich hab gefunden – {results}. Welche magst du hören?",
+                       "Ich habe gefunden – {results}. Welche möchten Sie hören?"),
+    "search_later": ("Das hat jetzt zu lang gedauert. Sag bitte nochmal: Such {query}.",
+                     "Das hat jetzt zu lang gedauert. Sagen Sie bitte nochmal: Such {query}."),
+    "search_cancelled": ("Gut, dann nicht.",) * 2,
+    "search_choose": ("Sag einfach die Nummer, zum Beispiel: die erste.", "Sagen Sie einfach die Nummer, zum Beispiel: die erste."),
 }
 
 

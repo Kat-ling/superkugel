@@ -14,6 +14,7 @@ class Chapter:
     duration_ms: int
     sha256: str
     size_bytes: int = 0
+    url: str = ""  # externe HTTPS-Quelle (Podcast-Folge) statt eigener S3-Datei
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,7 @@ class Book:
                     duration_ms=int(c.get("duration_ms", 0)),
                     sha256=str(c.get("sha256", "")),
                     size_bytes=int(c.get("size_bytes", 0)),
+                    url=str(c.get("url", "")),
                 )
                 for c in sorted(d.get("chapters", []), key=lambda c: int(c["index"]))
             ),

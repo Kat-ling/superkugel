@@ -1,8 +1,8 @@
 # Deine Superkugel – so einfach geht's
 
-Dein Lautsprecher kann jetzt mit dir plaudern und dir Hörbücher vorspielen.
+Dein Lautsprecher kann jetzt mit dir ratschen und dir Hörbücher vorspielen.
 
-## Plaudern
+## Ratschen
 
 1. Sag: **„Alexa, öffne Superkugel.“**
 2. Die Superkugel begrüßt dich. Jetzt einfach reden, zum Beispiel:
@@ -39,6 +39,13 @@ Während das Hörbuch läuft:
 | „Alexa, nächstes.“ | nächstes Kapitel |
 
 Du musst dir nie merken, wo du warst. Das macht die Superkugel.
+
+## Sendungen, Hörspiele und Neuigkeiten
+
+- **„Alexa, sag Superkugel, spiel die neueste Folge von Kein Mucks.“** – deine Lieblingssendungen.
+- **„Alexa, sag Superkugel, such ein Krimihörspiel.“** – sie nennt dir drei Treffer, du sagst z. B. **„die zweite“**.
+- Im Gespräch kannst du auch nach Neuigkeiten fragen: „Was gibt's Neues in Kärnten?“ oder
+  „Wie wird das Wetter morgen?“ – manchmal schaut sie kurz im Internet nach, dann dauert es ein paar Sekunden.
 
 ## Neue Hörbücher
 

@@ -114,7 +114,7 @@ def cmd_inbox(args: argparse.Namespace) -> int:
 
 def _log_failure(folder: Path, exc: Exception, notifier=None) -> None:
     """Schreibt Fehler des unbeaufsichtigten Laufs nach <Eingang>/sync-fehler.log (+ Mail, wenn möglich)."""
-    line = f"{dt.datetime.now():%Y-%m-%d %H:%M:%S} {type(exc).__name__}: {str(exc)[:300]}\n"
+    line = f"{dt.datetime.now():%Y-%m-%d %H:%M:%S} {type(exc).__name__}\n"  # ohne Text: kann Titel/Pfade enthalten
     try:
         folder.mkdir(parents=True, exist_ok=True)
         with (folder / "sync-fehler.log").open("a", encoding="utf-8") as f:
@@ -164,12 +164,70 @@ def cmd_mode(args: argparse.Namespace) -> int:
 
 
 def cmd_usage(_: argparse.Namespace) -> int:
+    from zoneinfo import ZoneInfo
+
     store = _store(_session())
-    now = dt.datetime.now(dt.UTC)
+    now = dt.datetime.now(ZoneInfo("Europe/Vienna"))  # Zähler laufen in Wiener Zeit
     for label, key in (("Heute", f"DAY#{now:%Y-%m-%d}"), ("Monat", f"MONTH#{now:%Y-%m}")):
         u = store.get_usage(key)
-        print(f"{label}: {u.requests} KI-Anfragen, {u.input_tokens} Eingabe- / {u.output_tokens} Ausgabe-Tokens, "
-              f"geschätzt {u.cost_usd:.4f} USD")
+        print(f"{label}: {u.requests} KI-Anfragen, {u.searches} Websuchen, {u.input_tokens} Eingabe- / "
+              f"{u.output_tokens} Ausgabe-Tokens, geschätzt {u.cost_usd:.4f} USD")
+    return 0
+
+
+def cmd_podcast(args: argparse.Namespace) -> int:
+    from superkugel.audiobooks import media
+
+    store = _store(_session())
+    if args.action == "list":
+        for show in media.list_shows(store):
+            latest = show.episodes[0].title if show.episodes else "–"
+            print(f"{show.show_id:30} {show.name[:40]:40} {','.join(show.genres):18} neueste: {latest[:50]}")
+        return 0
+    if args.action == "remove":
+        if not store.get_item("PODCASTS", f"SHOW#{args.value}"):
+            sys.exit(f"Keine Sendung mit show_id={args.value!r} (siehe: podcast list).")
+        store.delete_item("PODCASTS", f"SHOW#{args.value}")
+        print(f"Entfernt: {args.value}")
+        return 0
+    # add: Feed prüfen (HTTPS, abspielbare Folgen), dann speichern
+    title, episodes = media.fetch_feed(args.value)
+    if not episodes:
+        sys.exit("Der Feed enthält keine abspielbaren HTTPS-Audiofolgen – nicht hinzugefügt.")
+    name = args.name or title or "Sendung"
+    show_id = media.slug(name)
+    existing = store.get_item("PODCASTS", f"SHOW#{show_id}")
+    if existing and existing.get("feed_url") != args.value:
+        sys.exit(f"Es gibt schon eine andere Sendung mit show_id={show_id!r}. Bitte mit --name einen anderen Namen wählen.")
+    show = media.Show(show_id=show_id, name=name, feed_url=args.value,
+                      genres=[g.strip().lower() for g in (args.genre or "").split(",") if g.strip()],
+                      aliases=[a.strip() for a in (args.alias or "").split(",") if a.strip()],
+                      episodes=episodes, refreshed_at=time.time())
+    media.save_show(store, show)
+    print(f"Hinzugefügt: {show.name} (show_id={show.show_id}), {len(episodes)} Folgen, neueste: {episodes[0].title}")
+    return 0
+
+
+def cmd_refresh(_: argparse.Namespace) -> int:
+    """Löst den stündlichen Abruf (Nachrichten, Wetter, Sendungen) sofort in AWS aus."""
+    resp = _session().client("lambda").invoke(FunctionName="superkugel-skill",
+                                              Payload=json.dumps({"superkugel": "refresh_context"}).encode())
+    print(resp["Payload"].read().decode("utf-8"))
+    return 0
+
+
+def cmd_set_podcastindex(_: argparse.Namespace) -> int:
+    """Podcast-Index-Schlüssel verdeckt abfragen und als SecureString speichern (nie in Dateien)."""
+    import getpass
+
+    key = getpass.getpass("Podcast Index API Key: ").strip()
+    secret = getpass.getpass("Podcast Index API Secret: ").strip()
+    if not key or not secret:
+        sys.exit("Abgebrochen: Schlüssel oder Secret leer.")
+    _session().client("ssm").put_parameter(
+        Name=os.environ.get("PODCAST_INDEX_PARAM", "/superkugel/podcastindex"), Type="SecureString", Overwrite=True,
+        Value=json.dumps({"key": key, "secret": secret}))
+    print("Gespeichert. Wirkt nach dem nächsten Kaltstart der Funktion (spätestens nach einem Deploy).")
     return 0
 
 
@@ -224,6 +282,16 @@ def main() -> int:
     md.add_argument("value", nargs="?", choices=["normal", "audiobooks_only", "maintenance"])
     md.set_defaults(fn=cmd_mode)
     sub.add_parser("usage", help="KI-Nutzung und geschätzte Kosten").set_defaults(fn=cmd_usage)
+    pc = sub.add_parser("podcast", help="Lieblingssendungen verwalten (add <RSS-URL> | list | remove <show_id>)")
+    pc.add_argument("action", choices=["add", "list", "remove"])
+    pc.add_argument("value", nargs="?", default="")
+    pc.add_argument("--name")
+    pc.add_argument("--genre", help="z. B. krimi,hörspiel")
+    pc.add_argument("--alias", help="weitere Namen, kommagetrennt (wie sie es sagen würde)")
+    pc.set_defaults(fn=cmd_podcast)
+    sub.add_parser("refresh", help="Nachrichten/Wetter/Sendungen jetzt in AWS aktualisieren").set_defaults(fn=cmd_refresh)
+    sub.add_parser("set-podcastindex", help="Schlüssel für die freie Mediensuche hinterlegen").set_defaults(
+        fn=cmd_set_podcastindex)
     rp = sub.add_parser("reset-progress", help="Fortschritt eines Buchs zurücksetzen")
     rp.add_argument("book_id")
     rp.add_argument("--user-hash", dest="user_hash")

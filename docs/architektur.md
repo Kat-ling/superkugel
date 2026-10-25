@@ -46,7 +46,7 @@ flowchart LR
 ```mermaid
 stateDiagram-v2
     [*] --> Begruessung: LaunchRequest
-    Begruessung --> Gespraech: Frage / „plaudern“ / „nein“
+    Begruessung --> Gespraech: Frage / „ratschen“ / „nein“
     Begruessung --> Hoerbuch: „ja“ / „Hörbuch“
     Gespraech --> Gespraech: Frage (Sitzung offen, Verlauf in Session)
     Gespraech --> Hoerbuch: „spiel …“ oder KI ruft play_audiobook

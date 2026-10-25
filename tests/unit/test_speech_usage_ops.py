@@ -137,3 +137,8 @@ def test_launch_uses_configured_address_form() -> None:
 
     assert "Servus" in speech(make_harness(Settings(address_form="du", progressive_after_s=5)).send(launch()))
     assert "Grüß Gott" in speech(make_harness(Settings(address_form="sie", progressive_after_s=5)).send(launch()))
+
+
+def test_region_ascii_spelling_is_normalized(monkeypatch) -> None:
+    monkeypatch.setenv("USER_REGION", "Kaernten")
+    assert Settings.from_env().user_region == "Kärnten"

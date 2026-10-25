@@ -2,7 +2,7 @@
 
 ---
 
-## 1. Plaudern
+## 1. Ratschen
 ### „Alexa, öffne Superkugel.“
 … dann einfach reden: „Sag mal …“
 

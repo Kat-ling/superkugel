@@ -73,6 +73,11 @@ class FakeParams:
     def invalidate_api_key(self) -> None:
         self.invalidated = True
 
+    podcast_creds: tuple[str, str] | None = None
+
+    def podcast_index_credentials(self) -> tuple[str, str] | None:
+        return self.podcast_creds
+
 
 @dataclass
 class FakeOpenAI:

@@ -34,17 +34,19 @@ def _play(services: Services, hi: HandlerInput, book: Book, pos: Position | None
 
 
 def _intro(book: Book, chapter: int, resumed: bool) -> str:
+    if book.source == "podcast":
+        return f"Gern, es geht weiter mit {book.author}: {book.title}." if resumed else f"Gern, {book.title}."
     if resumed:
         return f"Gern, es geht weiter mit {book.title}, Kapitel {chapter + 1}."
     return f"Gern. {book.title}" + (f" von {book.author}." if book.author else ".")
 
 
-def resume_current(services: Services, hi: HandlerInput) -> Response:
+def resume_current(services: Services, hi: HandlerInput, include_podcasts: bool = False) -> Response:
     if services.params.mode() is Mode.MAINTENANCE:
         return end_with(services, hi, services.t("books_paused"))
     audio = services.audio()
     user = uid(hi)
-    cur = audio.current_book(user)
+    cur = audio.current_book(user, include_podcasts=include_podcasts)
     if not cur:
         if not audio.books():
             return end_with(services, hi, services.t("no_books"))
@@ -53,23 +55,41 @@ def resume_current(services: Services, hi: HandlerInput) -> Response:
     return _play(services, hi, book, intro=_intro(book, p.chapter, resumed=p.started))
 
 
+def resume_any(services: Services, hi: HandlerInput) -> Response:
+    """„Alexa, weiter“: das zuletzt Gehörte – Hörbuch oder Sendung."""
+    return resume_current(services, hi, include_podcasts=True)
+
+
 def play_title(services: Services, hi: HandlerInput, started: float | None = None) -> Response:
     raw = slot(hi, "title") or ""
+    from superkugel.audiobooks import media
+    from superkugel.handlers import media as media_handlers
+
+    chosen = media_handlers.choose_hit(services, hi, raw)  # „spiel die erste“ nach einer Suche
+    if chosen is not None:
+        return chosen
     norm = matching.normalize(raw)
     if "weiter" in norm.split():
         return resume_current(services, hi)
     newest = any(w in norm.split() for w in ("neu", "neue", "neuen", "neues", "neuesten", "neuste"))
     audio = services.audio()
     books = audio.books()
-    if not books:
-        return end_with(services, hi, services.t("no_books"))
     genre = matching.detect_genre(raw)
-    book, candidates = matching.best_match(raw, books)
+    book, candidates = matching.best_match(raw, books) if books else (None, [])
     if book is None and candidates:
         names = " oder ".join(f"{m.book.title}" for m in candidates[:2])
         return keep_open(services, hi, services.t("did_you_mean", names=names), services.t("say_title_again"))
     if book is None and (genre or newest):
         book = matching.pick_by_genre(books, genre, audio.progress_map(uid(hi)), newest=newest)
+    if book is None and raw.strip():
+        try:
+            show = media.match_show(raw, media.list_shows(services.store))
+        except Exception:  # noqa: BLE001
+            show = None
+        if show:
+            return media_handlers.play_show(services, hi, show)
+    if book is None and not books:
+        return end_with(services, hi, services.t("no_books"))
     if book is None and raw.strip() and services.params.mode() is Mode.NORMAL:
         # Kein Treffer im Titel/Autor (z. B. „Sherlock Holmes“, „die Lady Detectives“): die KI darf aus der
         # vorhandenen Bibliothek wählen (nur bekannte book_ids werden abgespielt) oder ehrlich verneinen.

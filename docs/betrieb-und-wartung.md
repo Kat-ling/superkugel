@@ -8,6 +8,20 @@
 4. Alarm-Mails des Monats durchsehen.
 5. Einmal im Quartal: `pip-audit -r src/requirements.txt`, ggf. Abhängigkeiten aktualisieren, Tests laufen lassen, neu deployen.
 
+## Tagesaktuelles und Sendungen
+
+| Aufgabe | Befehl / Ort |
+|---|---|
+| Nachrichten/Wetter/Sendungen sofort aktualisieren | `superkugel_admin.py refresh` |
+| Lieblingssendung hinzufügen / anzeigen / entfernen | `superkugel_admin.py podcast add <RSS-URL> …` / `podcast list` / `podcast remove <show_id>` |
+| Websuche abschalten | `WebSearchDailyLimit=0` in `infra/samconfig.toml`, dann `sam deploy` |
+| Limits ändern | `WebSearchDailyLimit`, `DailyCostLimitUsd` (max. 0,95), `MonthlyCostLimitUsd` (max. 14,50) |
+| Wohnort ändern | `UserCity`, `UserRegion`, `UserLat`, `UserLon` in `infra/samconfig.toml` (nur lokal) |
+| Suchen heute | `superkugel_admin.py usage` zeigt KI-Anfragen und Websuchen |
+
+Alarm-Mails: Tageskosten > 0,60 $, ≥ 3 langsame Antworten (> 6,5 s) pro Stunde, Vorname in einer Websuche,
+wiederholte Abruffehler (Nachrichten/Wetter/Feeds).
+
 ## Betriebsmodus (Fernschalter)
 
 ```bash
@@ -19,7 +33,7 @@
 | Modus | Verhalten |
 |---|---|
 | `normal` | alles an |
-| `audiobooks_only` | KI aus („Plaudern geht gerade nicht, aber Hörbücher …“) – z. B. bei OpenAI-Problemen oder Kostenspitzen |
+| `audiobooks_only` | KI aus („Ratschen geht gerade nicht, aber Hörbücher …“) – z. B. bei OpenAI-Problemen oder Kostenspitzen |
 | `maintenance` | Skill sagt nur „Die Superkugel macht gerade eine kleine Pause. Alexa funktioniert ganz normal weiter.“ |
 
 Wirkt nach spätestens 60 Sekunden (Cache). Ist der Parameter-Speicher kurz nicht erreichbar, gilt der zuletzt gelesene Wert weiter (nach einem Kaltstart ohne Verbindung: `normal`). Stopp/Pause funktionieren in jedem Modus.
@@ -29,7 +43,7 @@ Wirkt nach spätestens 60 Sekunden (Cache). Ist der Parameter-Speicher kurz nich
 | Symptom | Ursache prüfen | Lösung |
 |---|---|---|
 | „Das klappt gerade leider nicht“ bei jeder Frage | Logs: `llm_error` mit `kind` | `auth` → Schlüssel erneuern (Setup §3.4); `quota` → Guthaben aufladen; `timeout` → OpenAI-Status prüfen, ggf. `OPENAI_MODEL` wechseln |
-| „Für heute haben wir schon sehr viel geplaudert“ | Tageslimit erreicht | `usage` prüfen; Limit in samconfig erhöhen oder bis morgen warten |
+| „Für heute haben wir schon sehr viel geratscht“ | Tageslimit erreicht | `usage` prüfen; Limit in samconfig erhöhen oder bis morgen warten |
 | Alexa: „Problem mit der Antwort des Skills“ | Lambda-Fehler (Alarm-Mail) | CloudWatch Logs `/aws/lambda/superkugel-skill`, Ereignis `unhandled_error` |
 | Hörbuch startet nicht | Logs: `playback_failed` | Datei in S3 vorhanden? `list`; Endpoint/Region; MP3-Format |
 | Skill reagiert gar nicht mehr | Developer Console → Test → „Development“ noch aktiv? Endpoint gesetzt? | wieder aktivieren; Interaction Model neu bauen |

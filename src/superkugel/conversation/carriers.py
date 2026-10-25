@@ -27,6 +27,7 @@ CARRIERS: tuple[str, ...] = (
     "das", "der", "die", "es", "dann", "jetzt", "heute", "gestern", "morgen", "vorhin",
     "gibt es", "ist es", "ist das", "hast du", "bist du", "hab ich", "habe ich",
     "servus", "grüß gott", "hallo", "guten morgen", "guten abend", "danke für",
+    "such", "suche", "such mir", "finde", "find mir",
     "bei uns", "im garten", "meine tochter", "mein sohn", "mein enkel", "meine enkelin",
 )
 

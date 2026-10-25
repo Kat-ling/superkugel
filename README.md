@@ -4,7 +4,7 @@ Ein privater Alexa-Skill, der einen vorhandenen **Echo Dot 5** zu einer geduldig
 KI-Gesprächspartnerin mit **Hörbuch-Lesezeichen** macht – gebaut für eine ältere Dame in Kärnten.
 Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 
-> „Alexa, öffne Superkugel.“ – „Grüß Gott! Schön, dass Sie da sind. Möchten Sie plaudern,
+> „Alexa, öffne Superkugel.“ – „Grüß Gott! Schön, dass Sie da sind. Möchten Sie ratschen,
 > oder soll ich Ihr Hörbuch weiterspielen?“
 
 ## Funktionen
@@ -23,6 +23,11 @@ Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 - **Ausfallsicher**: Jeder Fehler endet mit „Das klappt gerade leider nicht. Sie können Alexa aber
   ganz normal weiterverwenden.“ und geschlossener Sitzung. Circuit-Breaker, Fernschalter
   (`normal` / `audiobooks_only` / `maintenance`).
+- **Tagesaktuell**: ORF-Schlagzeilen (Österreich + Bundesland) und Wetter, stündlich in AWS abgerufen; bei Bedarf
+  Websuche mit österreichischem Standort – höchstens 1 Suche pro Antwort und 25 pro Tag.
+- **Mediatheken**: Lieblingssendungen über offizielle RSS-Feeds (z. B. ARD-Krimihörspiele) und freie Suche über
+  Podcast Index („Such ein Krimihörspiel“ → „die zweite“), mit Lesezeichen pro Folge.
+- **Ratschen ohne Nachfrage**: Nach der Antwort hört Alexa still weiter zu, statt „Noch etwas?“ zu fragen.
 - **Kostenkontrolle**: harte Tages-/Monatsgrenze im Skill, Token-Zählung ohne Inhalte,
   CloudWatch-Alarme, AWS-Budget.
 - **Datenschutz**: keine Gesprächsinhalte in Logs, pseudonyme IDs, `store: false` bei OpenAI,
@@ -64,7 +69,7 @@ Interaction Model nach Änderungen an Trägerwörtern/Intents neu erzeugen:
 
 | Für wen | Dokument |
 |---|---|
-| Admin | [Technische Verifikation](docs/01-technische-verifikation.md) · [Einrichtung & Deployment](docs/setup-und-deployment.md) · [Hörbücher & Thalia](docs/hoerbuecher-und-thalia.md) · [Betrieb, Wartung, Backup](docs/betrieb-und-wartung.md) · [Kosten](docs/kosten.md) · [Plattformgrenzen & Fallback](docs/plattformgrenzen-und-fallback.md) · [Stimmen & Dialekt](docs/stimmen-und-dialekt.md) · [Akzeptanztests & Hardware-Testplan](tests/acceptance/ACCEPTANCE_TESTS.md) · [Projektstatus](PROJECT_STATUS.md) |
+| Admin | [Technische Verifikation](docs/01-technische-verifikation.md) · [Einrichtung & Deployment](docs/setup-und-deployment.md) · [Hörbücher & Thalia](docs/hoerbuecher-und-thalia.md) · [Betrieb, Wartung, Backup](docs/betrieb-und-wartung.md) · [Kosten](docs/kosten.md) · [Plattformgrenzen & Fallback](docs/plattformgrenzen-und-fallback.md) · [Stimmen & Dialekt](docs/stimmen-und-dialekt.md) · [Datenschutz](docs/datenschutz.md) · [Tagesaktuelles & Mediatheken](docs/plan-tagesaktuell.md) · [Akzeptanztests & Hardware-Testplan](tests/acceptance/ACCEPTANCE_TESTS.md) · [Projektstatus](PROJECT_STATUS.md) |
 | Nutzerin | [Kurzanleitung](docs/fuer-die-nutzerin/kurzanleitung.md) · [Spickzettel](docs/fuer-die-nutzerin/spickzettel.md) · [Wenn es nicht klappt](docs/fuer-die-nutzerin/wenn-es-nicht-klappt.md) |
 
 ## Ehrliche Grenzen
@@ -77,3 +82,5 @@ Mehr in [docs/plattformgrenzen-und-fallback.md](docs/plattformgrenzen-und-fallba
 ## Lizenz
 
 MIT. Keine Hörbuchdateien, Schlüssel oder personenbezogenen Daten im Repository.
+Nachrichten: ORF.at (RSS, nicht-kommerziell). Wetterdaten: [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
+Podcast-Suche: [Podcast Index](https://podcastindex.org/).

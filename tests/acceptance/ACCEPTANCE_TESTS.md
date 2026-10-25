@@ -28,14 +28,22 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 16 | Abgelaufener Audio-Link | ✅ | ⏳ | `test_expired_link_playback_failed_replays_with_fresh_url` | `AUDIO_URL_EXPIRY_S=60`, Kapitel > 2 min, Pause 3 min, „weiter“ |
 | 17 | Nicht vorhandener Titel | ✅ | ⏳ | `test_unknown_title_and_empty_library` | „…spiel Harry Potter“ → „hab ich leider nicht“ |
 | 18 | Längere Wiedergabe | ✅ (Einreihen) | ⏳ | `test_nearly_finished_enqueues_next_with_expected_token` | 2 h am Stück laufen lassen, Kapitelwechsel lückenlos |
-| 19 | Fehlerhafte Eingaben | ✅ | ⏳ | `test_fallback_escalates_and_ends_after_three`, `test_unknown_intent_handled_like_fallback`, `test_history_from_attributes_rejects_garbage` | Unsinn sagen → kurze Rückfrage, nach 3× freundliches Ende |
+| 19 | Fehlerhafte Eingaben | ✅ | ⏳ | `test_fallback_is_patient_and_ends_only_after_limit`, `test_unknown_intent_handled_like_fallback`, `test_history_from_attributes_rejects_garbage` | Unsinn sagen → kurze Rückfrage, nach 3× freundliches Ende |
 | 20 | Kosten- und Nutzungslimits | ✅ | ⏳ | `test_usage_limit_blocks_ai_but_not_audiobooks`, `test_usage_limit_daily_and_monthly` | `DAILY_COST_LIMIT_USD=0.001` → nach 1–2 Fragen „Feierabend“, Hörbuch geht |
 | 21 | Neues Thalia-Hörbuch erkennen | 🚫 (keine Thalia-API) / ✅ Ersatzprozess | ⏳ | `test_inbox_processes_moves_logs_and_notifies` | Thalia-ZIP in Eingangsordner → Mail „importiert“ → „…spiel meinen neuen Gartenkrimi“ |
 | 22 | Bereits synchronisierter Titel erneut | ✅ | ⏳ | `test_import_folder_metadata_and_dedupe`, `test_same_files_under_other_title_detected` | Gleiches ZIP nochmal einlegen → „bereits vorhanden“, kein Duplikat |
 | 23 | Nicht-Audio-Thalia-Titel | ✅ | ⏳ | `test_ebook_only_is_not_audio`, `test_classify_formats` | E-Book-Download einlegen → Ordner `kein-hoerbuch/`, nicht in Bibliothek |
 | 24 | OpenAI-Ausfall → normale Alexa | ✅ (Sitzungsende) | ⏳ | `test_quota_exhausted_ends_session`, `test_circuit_breaker_skips_api_after_repeated_failures` | Nach Fallback-Satz sofort „Alexa, wie spät ist es?“ → normale Antwort |
-| 25 | Totalausfall Backend | 🚫 lokal (Lambda selbst weg) | ⏳ | `test_exception_in_audio_event_returns_silent_empty_response`, `test_storage_outage_during_chat_still_answers_or_ends_cleanly` | Endpoint in Console auf ungültige ARN → Alexa-Fehlermeldung; danach Timer stellen |
+| 25 | Totalausfall Backend | 🚫 lokal (Lambda selbst weg) | ⏳ | `test_exception_in_audio_event_returns_silent_empty_response`, `test_library_outage_does_not_block_chat` | Endpoint in Console auf ungültige ARN → Alexa-Fehlermeldung; danach Timer stellen |
 | 26 | Nach Wiederherstellung erneut starten | ✅ | ⏳ | `test_recovery_after_backend_returns` | Endpoint zurücksetzen → Skill startet normal |
+| 27 | Antwort ohne Nachfrage, Folgefrage ohne „Alexa“ | ✅ | ⏳ | `test_answer_has_no_reprompt_but_keeps_listening` | Frage stellen → keine Nachfrage; innerhalb ~8 s Folgefrage ohne „Alexa“; danach leises Ende |
+| 28 | Nachrichten/Wetter | ✅ | ⏳ | `test_context_block_and_web_search_tool_with_austrian_location`, `test_refresh_stores_all_sources_and_prompt_block` | „Was gibt's Neues in Kärnten?“, „Wie wird das Wetter morgen?“ → Antwort mit „laut ORF“, ohne Wartezeit |
+| 29 | Websuche | ✅ | ⏳ | `test_web_search_removed_when_daily_quota_used`, `test_payload_with_web_search_has_max_tool_calls_and_no_retry` | „Wer hat gestern das Skispringen gewonnen?“ → Antwort < 7 s (Stoppuhr), Logs: `searches=1` |
+| 30 | Tageslimit Websuche | ✅ | ⏳ | `test_search_quota_and_cost_reserve` | `WebSearchDailyLimit=1`, zwei Suchfragen → zweite: „heute nicht mehr nachschauen“ |
+| 31 | Lieblingssendung | ✅ | ⏳ | `test_play_show_latest_then_resume` | „…spiel die neueste Folge von Kein Mucks“ → spielt; Pause; erneut → setzt fort |
+| 32 | Freie Mediensuche | ✅ | ⏳ | `test_search_choose_and_play` | „…such ein Krimihörspiel“ → drei Treffer → „die zweite“ → spielt |
+| 33 | Datenschutz-Alarm | ✅ | – | `test_privacy_metric_when_search_contains_name` | – |
+| 34 | Ohne Admin-PC | ✅ (Zeitplan in AWS) | ⏳ | `test_refresh_event_runs_without_alexa` | PC aus, nächster Morgen: Nachrichten aktuell (Stand-Uhrzeit nennen lassen) |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine
