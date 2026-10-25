@@ -69,7 +69,8 @@ def play_show_intent(services: Services, hi: HandlerInput) -> Response:
 def list_shows(services: Services, hi: HandlerInput) -> Response:
     shows = _shows(services)
     if not shows:
-        return keep_open(services, hi, services.t("no_shows"), None)
+        key = "no_shows" if services.params.podcast_index_credentials() else "no_shows_nosearch"
+        return keep_open(services, hi, services.t(key), None)
     names = [s.name for s in shows[:5]]
     listing = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " und " + names[-1]
     return keep_open(services, hi, services.t("you_have_shows", listing=listing), None)

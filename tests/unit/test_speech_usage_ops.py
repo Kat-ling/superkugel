@@ -17,6 +17,11 @@ def test_ssml_escapes_and_wraps_voice() -> None:
     assert '<break time="350ms"/>' in s
 
 
+def test_ssml_no_pause_inside_date() -> None:
+    s = to_ssml("Morgen, am Montag, dem 26. Oktober, regnet es. Dann Sonne.", voice="Vicki", rate="100%")
+    assert "26. Oktober" in s and s.count("<break") == 1
+
+
 def test_ssml_default_voice_has_no_voice_tag() -> None:
     assert "<voice" not in to_ssml("Hallo.", voice="alexa", rate="100%")
     assert 'rate="85%"' in to_ssml("Hallo.", slow=True)

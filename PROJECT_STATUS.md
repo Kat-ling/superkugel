@@ -1,7 +1,7 @@
 # Projektstatus – Superkugel
 
-**Stand:** 25.10.2026 · **Version 1.0 (MVP): implementiert, automatisiert getestet, bereitgestellt und im Alltag auf einem
-Echo Dot 5 in Betrieb.** Nicht alle Akzeptanztests sind auf dem Gerät abgearbeitet (siehe unten).
+**Stand:** 25.10.2026 · **Version 1.1: bereitgestellt (eu-north-1) und live per Lambda-Aufruf getestet.** Version 1.0
+ist im Alltag auf einem Echo Dot 5 in Betrieb; die Gerätetests für 1.1 (Prüfpunkte 27–34) stehen aus.
 
 ## Was läuft
 
@@ -12,14 +12,21 @@ Echo Dot 5 in Betrieb.** Nicht alle Akzeptanztests sind auf dem Gerät abgearbei
 | Gespräch | OpenAI `gpt-6-luna` (Responses API, `store=false`), Kärntner Färbung, Du-Form mit Vornamen, Stimme Vicki 100 %, Verlauf + 30-Min-Wiederaufnahme, Lückenfüller erst nach 4,5 s |
 | Hörbücher | AudioPlayer mit Lesezeichen pro Gerät, Kapitelwechsel, Spulen, Titel-/Genre-Suche mit KI-Rückfall auf die vorhandene Bibliothek |
 | Import | Eingangsordner + stündliche Windows-Aufgabe, eigener IAM-Benutzer mit Minimalrechten, Mail bei Import/Fehler |
+| Tagesaktuelles (1.1) | stündlicher Abruf in AWS (ORF + Wetter), Websuche mit Tageslimit, Lieblingssendungen; freie Mediensuche erst mit Podcast-Index-Schlüssel |
 | Schutz | harte Tages-/Monatskostengrenze, Circuit-Breaker, Fernschalter, Prepaid bei OpenAI, Budget-Warnung im Management-Konto |
 
 Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Gesprächsantwort 3,2 s gesamt
 (KI 3,1 s) bei ≈ 0,0001 $ pro Frage. Signierte Audio-Links liefern `206 Partial Content`.
 
+Gemessen v1.1 (25.10.2026, Testnutzer per `aws lambda invoke`, kein Gerätetest): Abruf 1,3 s, 3 Quellen ohne Fehler;
+„Was gibt's Neues?“ aus dem ORF-Datenteil ohne Websuche, KI 2,0 s, 0,0006 $ (≈ 6.000 Eingabe-Tokens, davon
+im Prompt-Cache 0,00008 $); Wetter 1,3 s; Frage mit Websuche 4,6 s, 0,024 $ (OpenAI meldete 2 Suchvorgänge –
+beide gezählt). Live gefunden und behoben: erste Anfrage nach dem stündlichen Abruf erbte die Kaltstart-Uhr und
+brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde dem ORF zugeschrieben; Pause in „26. Oktober“.
+
 ## Tests
 
-- `pytest`: **187 bestanden** (Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
+- `pytest`: **190 bestanden** (Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
   gemockter OpenAI-API und moto (DynamoDB/S3/SSM). `ruff`, `cfn-lint --regions eu-north-1`, `pip-audit`: ohne Befund.
 - Zwei unabhängige Reviews (Alexa-Konformität, Wiedergabe, Ausfallsicherheit, Sicherheit, Kosten, Bedienbarkeit,
   Import) – alle berechtigten Befunde behoben und mit Regressionstests abgesichert.
@@ -30,10 +37,12 @@ Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Ge
 
 1. Restliche Gerätetests (Kapitelwechsel, Neustart, Ausfallszenarien, Test mit der Stimme der Nutzerin).
 2. Zugriffsschlüssel des Admin-Benutzers deaktivieren, wenn gerade nicht deployt wird (wieder aktivierbar).
-3. **Version 1.1 (implementiert, Bereitstellung wartet auf Freigabe):** Tagesaktuelles (Nachrichten/Wetter, Websuche
+3. **Version 1.1 (bereitgestellt, Gerätetests 27–34 offen):** Tagesaktuelles (Nachrichten/Wetter, Websuche
    mit Tageslimit), Lieblingssendungen + freie Mediensuche, „ratschen“, keine Nachfrage nach Antworten,
    Kostengrenzen 1 $/Tag bzw. 15 $/Monat gesamt – `docs/plan-tagesaktuell.md`, `docs/kosten.md`, `docs/datenschutz.md`.
    Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
+4. Lieblingssendungen eintragen (`podcast add`), Podcast-Index-Schlüssel hinterlegen (`set-podcastindex`),
+   OpenAI-Projektlimit 14 $/Monat setzen.
 
 ## Entscheidungen (Details: `docs/architektur.md`)
 

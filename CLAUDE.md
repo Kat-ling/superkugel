@@ -41,7 +41,7 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 
 ## Status (25.10.2026)
 
-Version 1.0 (MVP) bereitgestellt (eu-north-1) und im Alltag in Betrieb. Offene Punkte und nächster Ausbau
-(Tagesaktuelles A+B): `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`, `docs/prompts/auftrag-tagesaktuell.md`.
+Version 1.0 im Alltag in Betrieb, Version 1.1 (Tagesaktuelles A+B, Mediatheken) bereitgestellt, Gerätetests offen.
+Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.

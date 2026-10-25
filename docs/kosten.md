@@ -9,8 +9,10 @@ Preise Stand 25.10.2026, USD, Region eu-north-1 (Stockholm). 1 USD ≈ 0,9 EUR.
 ## Grundlagen
 
 - `gpt-6-luna`: 0,10 $ / 1 Mio. Eingabe-Tokens, 0,01 $ gecacht, 0,50 $ / 1 Mio. Ausgabe.
-- **Gemessen** (25.10.2026): ein Gesprächswechsel ≈ 685 Eingabe- / 66 Ausgabe-Tokens ≈ **0,0001 $**.
-  Mit Nachrichten/Wetter im Prompt (+ ≈ 225 Tokens, live gemessen) ≈ 0,00012 $.
+- **Gemessen** (25.10.2026): ein Gesprächswechsel v1.0 ≈ 685 Eingabe- / 66 Ausgabe-Tokens ≈ **0,0001 $**.
+  v1.1 (Websuche angeboten, Nachrichten/Wetter im Prompt) ≈ 6.000 Eingabe-Tokens: **0,0006 $** ohne Cache,
+  **0,00008 $** wenn der Prompt im Cache liegt (Folgefragen kurz danach). Rechenwert unten: 0,0002 $ pro Wechsel.
+  Live wurden bei einer Antwort mit Websuche 2 Suchvorgänge gemeldet (0,024 $) – der Skill zählt und bucht jeden.
 - **Websuche**: 10 $ pro 1.000 Aufrufe + Suchergebnis-Tokens zum Eingabepreis. Der Skill bucht vorsichtig
   **0,012 $ pro Suche** (mit Puffer für die Suchergebnisse).
 - Annahme: 3 Wortwechsel pro Gesprächsminute, 10–30 % davon brauchen eine Suche.
@@ -18,11 +20,11 @@ Preise Stand 25.10.2026, USD, Region eu-north-1 (Stockholm). 1 USD ≈ 0,9 EUR.
 
 ## Monatlich (Schätzung)
 
-| Gespräch/Tag | Ratschen | + Aktuelles (A) | + Websuche (B, max. 25/Tag) | AWS | **Summe** |
-|---|---|---|---|---|---|
-| 10 min | 0,09 $ | +0,02 $ | 1,10–3,30 $ | ≈ 0,30 $ | **≈ 1,50–3,70 $** |
-| 30 min | 0,27 $ | +0,06 $ | 3,30–9,00 $ | ≈ 0,30 $ | **≈ 3,90–9,60 $** |
-| 60 min | 0,54 $ | +0,12 $ | 9,00 $ (Deckel 25/Tag) | ≈ 0,30 $ | **≈ 10,00 $** |
+| Gespräch/Tag | Ratschen inkl. Aktuelles | + Websuche (B, max. 25/Tag) | AWS | **Summe** |
+|---|---|---|---|---|
+| 10 min | 0,18 $ | 1,10–3,30 $ | ≈ 0,30 $ | **≈ 1,60–3,80 $** |
+| 30 min | 0,54 $ | 3,30–9,00 $ | ≈ 0,30 $ | **≈ 4,10–9,80 $** |
+| 60 min | 1,08 $ | 9,00 $ (Deckel 25/Tag) | ≈ 0,30 $ | **≈ 10,40 $** |
 
 AWS: Lambda/DynamoDB/S3-Streaming im Always-Free-Rahmen; S3-Speicher ≈ 0,10 $; 7 eigene CloudWatch-Metriken
 (≤ 10 sind frei; Metriken werden nur bei Ereignissen geschrieben); Rest Cent-Beträge.

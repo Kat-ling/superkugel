@@ -190,6 +190,8 @@ def default_services(settings: Settings | None = None) -> Services:
 
 
 _SKILL: Any = None
+# Nur der allererste Aufruf nach dem Laden zählt die Importzeit mit – auch wenn er der stündliche Abruf ist.
+_COLD_START_PENDING = True
 
 
 _EMERGENCY_SPEECH = ("<speak>Das klappt gerade leider nicht. Alexa funktioniert aber ganz normal weiter.</speak>")
@@ -204,8 +206,9 @@ def _emergency_response(req_type: str) -> dict[str, Any]:
 
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
-    global _SKILL
-    started = _MODULE_LOADED if _SKILL is None else time.monotonic()
+    global _SKILL, _COLD_START_PENDING
+    started = _MODULE_LOADED if _COLD_START_PENDING else time.monotonic()
+    _COLD_START_PENDING = False
     token = REQUEST_STARTED.set(started)
     req = (event.get("request") or {})
     system = (event.get("context") or {}).get("System") or {}

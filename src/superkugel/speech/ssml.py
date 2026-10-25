@@ -6,7 +6,8 @@ import re
 from xml.sax.saxutils import escape
 
 MAX_SPEECH_CHARS = 1400  # deutlich unter dem Alexa-Limit (8000 Zeichen), hält Antworten hörbar kurz
-_SENTENCE_END = re.compile(r"(?<=[.!?…])\s+")
+# Kein Satzende nach Ordinalzahlen („am 26. Oktober“) – sonst liest Alexa eine Pause mitten ins Datum.
+_SENTENCE_END = re.compile(r"(?<=[.!?…])(?<!\d\.)\s+")
 _MARKDOWN = re.compile(r"(\*\*|__|`|#+\s|^\s*[-*•]\s+)", re.MULTILINE)
 _URL = re.compile(r"https?://\S+")
 

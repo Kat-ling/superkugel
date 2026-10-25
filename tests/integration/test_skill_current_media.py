@@ -218,6 +218,23 @@ def test_refresh_event_runs_without_alexa(monkeypatch) -> None:
     assert out == {"ok": True} and called["ok"]
 
 
+def test_request_after_refresh_does_not_inherit_cold_start_clock(monkeypatch) -> None:
+    # Live gefunden: Der stündliche Abruf wärmt die Lambda; die erste Alexa-Anfrage danach startete die Uhr beim
+    # Modul-Laden (35 s früher) und brach sofort mit Zeitüberschreitung ab.
+    import superkugel.app as app
+
+    seen = []
+    monkeypatch.setattr(app, "_COLD_START_PENDING", True)
+    monkeypatch.setattr(app, "_MODULE_LOADED", app.time.monotonic() - 35)
+    monkeypatch.setattr(app, "run_refresh", lambda: seen.append(app.REQUEST_STARTED.get()) or {"ok": True})
+    monkeypatch.setattr(app, "_SKILL", object())
+    monkeypatch.setattr(app, "handle_event", lambda *a: seen.append(app.REQUEST_STARTED.get()) or {})
+    app.lambda_handler({"superkugel": "refresh_context"}, None)
+    app.lambda_handler({"request": {"type": "LaunchRequest"}}, None)
+    assert app.time.monotonic() - seen[0] >= 35  # erster Aufruf zählt den Kaltstart
+    assert app.time.monotonic() - seen[1] < 5  # danach eigene Uhr pro Anfrage
+
+
 def test_launch_still_works(harness) -> None:
     assert ends_session(harness.send(launch())) is False
 

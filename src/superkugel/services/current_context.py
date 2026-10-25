@@ -187,7 +187,7 @@ def prompt_block(store: Store, settings: Settings, clock: Callable[[], float] = 
             parts.append(f"{round(w['min'])} bis {round(w['max'])} Grad")
         if w.get("rain") is not None:
             parts.append(f"Regenwahrscheinlichkeit {round(w['rain'])} Prozent")
-        lines.append(f"Wetter {label} an ihrem Wohnort: " + ", ".join(p for p in parts if p))
+        lines.append(f"Wetter {label} an ihrem Wohnort (Wettervorhersage): " + ", ".join(p for p in parts if p))
         stamps.append(float(data["weather"]["at"]))
     if not lines:
         return ""

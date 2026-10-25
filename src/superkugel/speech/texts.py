@@ -66,6 +66,7 @@ TEXTS: dict[str, tuple[str, str]] = {
     "which_show": ("Welche Sendung magst du hören?", "Welche Sendung möchten Sie hören?"),
     "no_shows": ("Du hast noch keine Lieblingssendungen. Du kannst aber suchen, zum Beispiel: Such ein Krimihörspiel.",
                  "Sie haben noch keine Lieblingssendungen. Sie können aber suchen, zum Beispiel: Such ein Krimihörspiel."),
+    "no_shows_nosearch": ("Du hast noch keine Lieblingssendungen.", "Sie haben noch keine Lieblingssendungen."),
     "you_have_shows": ("Deine Sendungen sind: {listing}.", "Ihre Sendungen sind: {listing}."),
     "search_what": ("Was soll ich suchen?",) * 2,
     "search_unavailable": ("In den Mediatheken suchen kann ich gerade nicht. Deine Hörbücher und Sendungen gehen aber.",

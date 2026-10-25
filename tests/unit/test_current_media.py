@@ -66,7 +66,7 @@ def test_refresh_stores_all_sources_and_prompt_block() -> None:
     assert any("kaernten.xml" in u for u in urls) and any("latitude=47.00" in u for u in urls)
     block = cc.prompt_block(store, settings(), clock=lambda: at + 600)
     assert "Stand" in block and "Schlagzeilen Kärnten" in block and "Teststadt" not in block
-    assert "Wetter Heute an ihrem Wohnort: überwiegend sonnig, 3 bis 14 Grad" in block
+    assert "Wetter Heute an ihrem Wohnort (Wettervorhersage): überwiegend sonnig, 3 bis 14 Grad" in block
 
 
 def test_partial_failure_keeps_other_sources() -> None:
@@ -247,7 +247,7 @@ def test_weather_label_by_date_not_position() -> None:
     cc.refresh(store, settings(), fetch=lambda u: METEO if "open-meteo" in u else RDF, clock=lambda: fetched)
     later = dt.datetime(2026, 10, 25, 23, 30, tzinfo=dt.UTC).timestamp()  # 00:30 am 26.10. in Wien
     block = cc.prompt_block(store, settings(), clock=lambda: later)
-    assert "Wetter Heute an ihrem Wohnort: leichter Regen" in block and "Morgen" not in block
+    assert "Wetter Heute an ihrem Wohnort (Wettervorhersage): leichter Regen" in block and "Morgen" not in block
 
 
 def test_entities_and_unsafe_urls_rejected() -> None:

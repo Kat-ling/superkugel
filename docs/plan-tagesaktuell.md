@@ -1,6 +1,6 @@
 # Tagesaktuelles (A+B) und Mediatheken – Umsetzung
 
-Stand 25.10.2026 · **Status: implementiert und automatisiert getestet; Bereitstellung wartet auf Freigabe.**
+Stand 25.10.2026 · **Status: bereitgestellt und live per Lambda-Aufruf getestet (siehe `PROJECT_STATUS.md`); Gerätetests offen.**
 Ursprünglicher Auftrag: `docs/prompts/auftrag-tagesaktuell.md`. Kosten: `docs/kosten.md`. Datenschutz: `docs/datenschutz.md`.
 
 ## Entscheidungen des Admins (25.10.2026)

@@ -44,7 +44,10 @@ search_media mit wenigen Suchwörtern auf.
 
 CURRENT_RULES = """Aktuelles:
 - Für Nachrichten und Wetter nutze zuerst „Aktuelles“ im Datenteil und nenne beiläufig, woher es stammt \
-(zum Beispiel „laut ORF“). Das Wetter gilt für ihren Wohnort. Gibt es dort nichts Passendes, sag das ehrlich."""
+(zum Beispiel „laut ORF“). Das Wetter gilt für ihren Wohnort und stammt nicht vom ORF \
+(sag höchstens „laut Wettervorhersage“). Gibt es dort nichts Passendes, sag das ehrlich.
+- Allgemeine Fragen wie „Was gibt's Neues?“, „Was sind die Nachrichten?“ oder „Wie wird das Wetter?“ beantwortest \
+du NUR aus „Aktuelles“, ohne Websuche. Suche nur, wenn nach etwas Bestimmtem gefragt wird, das dort fehlt."""
 
 SEARCH_RULES = """Websuche:
 - Du darfst im Web suchen (Funktion web_search), aber NUR, wenn die Frage aktuelles oder sich änderndes Wissen \
