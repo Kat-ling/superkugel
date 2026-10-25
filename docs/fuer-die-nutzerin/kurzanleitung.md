@@ -1,0 +1,57 @@
+# Deine Superkugel – so einfach geht's
+
+Dein Lautsprecher kann jetzt mit dir plaudern und dir Hörbücher vorspielen.
+
+## Plaudern
+
+1. Sag: **„Alexa, öffne Superkugel.“**
+2. Die Superkugel begrüßt dich. Jetzt einfach reden, zum Beispiel:
+   - „Sag mal, wie mach ich einen Apfelstrudel?“
+   - „Was bedeutet eigentlich Inflation?“
+   - „Erzähl mir was über Kärnten.“
+3. Nach der Antwort kannst du gleich weiterfragen – ohne „Alexa“.
+4. Fertig? Sag **„Danke, das war's.“** oder **„Stopp.“**
+
+Tipp: Am besten fängst du deine Frage mit „Sag mal …“, „Was …“, „Wie …“ oder „Warum …“ an.
+
+Nicht verstanden? Sag **„Wie bitte?“** – dann sagt sie es noch einmal, langsamer.
+
+Redet sie zu lang? Sag einfach **„Alexa“** – sie hört sofort auf und hört dir zu.
+Mit **„Alexa, stopp“** ist das Gespräch zu Ende.
+
+Wenn du länger nachdenkst, wird es irgendwann still. Das ist normal. Sag einfach wieder
+„Alexa, öffne Superkugel“ – sie weiß noch, worüber ihr gerade gesprochen habt.
+
+## Hörbücher
+
+- Weiterhören: **„Alexa, öffne Superkugel“** und dann **„Hörbuch“** (oder „ja“, wenn sie fragt).
+- Oder direkt: **„Alexa, sag Superkugel, spiel meinen Krimi weiter.“**
+- Etwas Neues: **„Alexa, sag Superkugel, spiel meinen neuen Krimi.“**
+- Was hab ich? **„Alexa, frag Superkugel, welche Krimis hab ich?“**
+
+Während das Hörbuch läuft:
+
+| Du sagst | Es passiert |
+|---|---|
+| „Alexa, Pause.“ | hält an – die Stelle wird gemerkt |
+| „Alexa, weiter.“ | spielt weiter |
+| „Alexa, zurück.“ | ein Stück zurück (eine halbe Minute) |
+| „Alexa, nächstes.“ | nächstes Kapitel |
+
+Du musst dir nie merken, wo du warst. Das macht die Superkugel.
+
+## Neue Hörbücher
+
+Kauf Hörbücher wie gewohnt bei Thalia (Hörbuch als „MP3-Download“) und sag der Familie kurz Bescheid.
+Die sorgt dafür, dass das neue Buch bald in der Superkugel ist. Du musst nichts herunterladen.
+
+## Und die normale Alexa?
+
+Die bleibt ganz normal: „Alexa, wie wird das Wetter?“, „Alexa, stell einen Wecker“, Radio – alles
+wie immer. Wenn die Superkugel gerade läuft, sag zuerst **„Alexa, stopp“**.
+
+Wenn die Superkugel einmal sagt „Das klappt gerade leider nicht“, ist das nicht schlimm.
+Alexa funktioniert trotzdem. Probier es später wieder oder ruf die Familie an.
+
+Die Superkugel ist ein Computerprogramm, kein Mensch. Bei Gesundheitsfragen frag bitte
+immer auch deinen Arzt oder die Apotheke. **Im Notfall: 144 (Rettung) oder 112.**

@@ -1,0 +1,304 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Superkugel – privater Alexa-Skill (KI-Gespräch + Hörbücher).
+  Eine Lambda-Funktion, eine DynamoDB-Tabelle, ein privater S3-Bucket, Alarme per E-Mail.
+  Den OpenAI-Schlüssel legt der Administrator separat als SSM SecureString an (nie im Template).
+
+Parameters:
+  SkillId:
+    Type: String
+    Description: Alexa Skill ID (amzn1.ask.skill....). Nur dieser Skill darf die Funktion aufrufen.
+    AllowedPattern: "^amzn1\\.ask\\.skill\\.[0-9a-f-]+$"
+  AlertEmail:
+    Type: String
+    Description: E-Mail-Adresse für Alarme und Budgetwarnungen (Bestätigungsmail kommt von AWS).
+  OpenAiModel:
+    Type: String
+    Default: gpt-6-luna
+  SpeechStyle:
+    Type: String
+    Default: kaernten
+    AllowedValues: [kaernten, bayern, standard]
+  AlexaVoice:
+    Type: String
+    Default: alexa
+    AllowedValues: [alexa, Vicki, Marlene, Hans]
+  SpeechRate:
+    Type: String
+    Default: "100%"
+    AllowedValues: ["85%", "90%", "95%", "100%", "105%"]
+    Description: Sprechtempo der Antworten („Wie bitte?“ wiederholt immer mit 85 %).
+  UserName:
+    Type: String
+    Default: ""
+    AllowedPattern: "^[\\p{L} -]{0,40}$"
+    Description: Vorname der Nutzerin für Begrüßung und Gespräch (leer = ohne Namen).
+  AddressForm:
+    Type: String
+    Default: sie
+    AllowedValues: [du, sie]
+  DailyCostLimitUsd:
+    Type: Number
+    Default: 0.5
+    Description: Harte Tagesgrenze im Skill für KI-Kosten (geschätzt). Danach nur noch Hörbücher.
+  MonthlyCostLimitUsd:
+    Type: Number
+    Default: 8
+  ReservedConcurrency:
+    Type: Number
+    Default: 0
+    Description: 0 = nicht gesetzt. Setzen nur, wenn das Kontolimit es erlaubt (mind. 10 müssen frei bleiben).
+
+Conditions:
+  HasReservedConcurrency: !Not [!Equals [!Ref ReservedConcurrency, 0]]
+
+Globals:
+  Function:
+    Runtime: python3.14
+    Architectures: [arm64]
+    MemorySize: 512
+    Timeout: 10
+
+Resources:
+  Table:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: superkugel
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      TimeToLiveSpecification: { AttributeName: expires_at, Enabled: true }
+      # Kein PITR: es würde Gesprächstexte 35 Tage aufbewahren (Zusage: max. 30 Minuten).
+      # Backups des Fortschritts: siehe docs/betrieb-und-wartung.md (On-Demand-Backup).
+      SSESpecification: { SSEEnabled: true }
+
+  AudioBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "superkugel-audio-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ ObjectOwnership: BucketOwnerEnforced }]
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      VersioningConfiguration: { Status: Suspended }
+      LifecycleConfiguration:
+        Rules:
+          - Id: abort-incomplete-uploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload: { DaysAfterInitiation: 7 }
+
+  AudioBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AudioBucket
+      PolicyDocument:
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt AudioBucket.Arn, !Sub "${AudioBucket.Arn}/*"]
+            Condition: { Bool: { "aws:SecureTransport": "false" } }
+
+  ModeParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /superkugel/mode
+      Type: String
+      Value: normal
+      AllowedPattern: "^(normal|audiobooks_only|maintenance)$"
+      Description: Fernschalter – normal | audiobooks_only | maintenance
+
+  SkillLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/superkugel-skill
+      RetentionInDays: 30
+
+  SkillFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: SkillLogGroup
+    Properties:
+      FunctionName: superkugel-skill
+      CodeUri: ../src/
+      Handler: lambda_function.lambda_handler
+      ReservedConcurrentExecutions: !If [HasReservedConcurrency, !Ref ReservedConcurrency, !Ref "AWS::NoValue"]
+      Environment:
+        Variables:
+          SKILL_ID: !Ref SkillId
+          TABLE_NAME: !Ref Table
+          AUDIO_BUCKET: !Ref AudioBucket
+          OPENAI_MODEL: !Ref OpenAiModel
+          OPENAI_API_KEY_PARAM: /superkugel/openai-api-key
+          MODE_PARAM: !Ref ModeParameter
+          SPEECH_STYLE: !Ref SpeechStyle
+          ALEXA_VOICE: !Ref AlexaVoice
+          ADDRESS_FORM: !Ref AddressForm
+          SPEECH_RATE: !Ref SpeechRate
+          USER_NAME: !Ref UserName
+          DAILY_COST_LIMIT_USD: !Ref DailyCostLimitUsd
+          MONTHLY_COST_LIMIT_USD: !Ref MonthlyCostLimitUsd
+      Events:
+        Alexa:
+          Type: AlexaSkill
+          Properties:
+            SkillId: !Ref SkillId
+      Policies:
+        - Statement:
+            - Sid: TableAccess
+              Effect: Allow
+              Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:Query]
+              Resource: !GetAtt Table.Arn
+            - Sid: SignAudioUrls
+              Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub "${AudioBucket.Arn}/audiobooks/*"
+            - Sid: ReadOwnParameters
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/superkugel/*"
+            - Sid: DecryptSecureStringViaSsm
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals: { "kms:ViaService": !Sub "ssm.${AWS::Region}.amazonaws.com" }
+
+  # Eigener Benutzer für den automatischen Hörbuch-Import am Admin-PC (Windows-Aufgabe).
+  # Darf nur: Hörbuchdateien hochladen/prüfen, Bibliothek lesen/ergänzen, Benachrichtigung senden.
+  # Den Zugriffsschlüssel legt der Admin per CLI an (nie im Template oder in Ausgaben).
+  ImporterUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: superkugel-importer
+      Policies:
+        - PolicyName: superkugel-import
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AudioUpload
+                Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:AbortMultipartUpload]
+                Resource: !Sub "${AudioBucket.Arn}/audiobooks/*"
+              - Sid: ListForExistenceCheck  # sonst liefert HeadObject 403 statt 404
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt AudioBucket.Arn
+              - Sid: Library
+                Effect: Allow
+                Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
+                Resource: !GetAtt Table.Arn
+              - Sid: Notify
+                Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref AlertTopic
+
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: superkugel-alerts
+      Subscription:
+        - { Protocol: email, Endpoint: !Ref AlertEmail }
+
+  ErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-lambda-errors
+      AlarmDescription: Lambda-Fehler oder unerwartete Ausnahmen im Skill
+      Namespace: Superkugel
+      MetricName: UnhandledError
+      Statistic: Sum
+      Period: 900
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  LambdaErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-lambda-crashes
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref SkillFunction }]
+      Statistic: Sum
+      Period: 900
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  LlmErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-ki-ausfall
+      AlarmDescription: KI-Anbindung (OpenAI) wiederholt fehlgeschlagen
+      Namespace: Superkugel
+      MetricName: LlmError
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  DailyCostAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-ki-kosten-tag
+      AlarmDescription: Geschätzte KI-Kosten über 0,30 USD an einem Tag (auffällige Nutzung)
+      Namespace: Superkugel
+      MetricName: LlmCostMicroUsd
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 300000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  PlaybackFailedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-hoerbuch-fehler
+      Namespace: Superkugel
+      MetricName: PlaybackFailed
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+Outputs:
+  ImporterUserName:
+    Description: IAM-Benutzer für den automatischen Hörbuch-Import
+    Value: !Ref ImporterUser
+  SkillFunctionArn:
+    Description: In der Alexa Developer Console als Endpoint (Europa) eintragen
+    Value: !GetAtt SkillFunction.Arn
+  AudioBucketName:
+    Value: !Ref AudioBucket
+  TableName:
+    Value: !Ref Table
+  AlertTopicArn:
+    Value: !Ref AlertTopic

@@ -1,0 +1,12 @@
+# Laufzeit-Abhängigkeiten der Lambda-Funktion (von `sam build` installiert).
+# boto3 ist in der Lambda-Python-Laufzeit enthalten und wird bewusst nicht mitgepackt.
+ask-sdk-core==1.19.0
+ask-sdk-model==1.82.0
+ask-sdk-runtime==1.19.0
+python-dateutil==2.9.0.post0
+six==1.17.0
+requests==2.34.2
+urllib3==2.8.0
+certifi==2026.10.23
+charset-normalizer==3.5.2
+idna==3.20

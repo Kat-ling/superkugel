@@ -1,0 +1,26 @@
+[project]
+name = "superkugel"
+version = "1.0.0"
+description = "Privater Alexa-Skill: KI-Gespräche und Hörbücher mit Lesezeichen für den Echo Dot"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+addopts = "-p no:cacheprovider"
+markers = ["live: echte externe Dienste (nicht in CI)"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003", "S101", "S311", "UP040"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B", "SIM"]
+"scripts/**" = ["S603", "S607"]

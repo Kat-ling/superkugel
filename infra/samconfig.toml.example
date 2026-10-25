@@ -1,0 +1,9 @@
+# Kopieren nach infra/samconfig.toml (in .gitignore) und Werte eintragen.
+version = 0.1
+[default.deploy.parameters]
+stack_name = "superkugel"
+region = "eu-north-1"
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+resolve_s3 = true
+confirm_changeset = true
+parameter_overrides = "SkillId=amzn1.ask.skill.XXXXXXXX AlertEmail=you@example.com SpeechStyle=kaernten AlexaVoice=Vicki SpeechRate=100% AddressForm=du UserName=Vorname"

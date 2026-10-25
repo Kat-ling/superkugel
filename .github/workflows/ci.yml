@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: cfn-lint infra/template.yaml --regions eu-north-1
+      - run: python scripts/build_interaction_model.py && git diff --exit-code skill-package/
+      - run: pytest -q
+      - run: pip-audit -r src/requirements.txt -r requirements-dev.txt
+      - name: Keine Audiodateien oder Schlüssel im Repo
+        run: |
+          if git ls-files | grep -Ei '\.(mp3|m4a|m4b|aax|zip|pem|docx)$'; then echo "Audio/ZIP/Schlüssel im Repo!"; exit 1; fi
+          if git grep -nE 'sk-(proj-)?[A-Za-z0-9_-]{20,}' -- ':!tests/*'; then echo "API-Schlüssel im Repo!"; exit 1; fi

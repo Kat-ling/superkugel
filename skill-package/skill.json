@@ -1,0 +1,41 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "de-DE": {
+          "name": "Superkugel",
+          "summary": "Private KI-Gesprächspartnerin mit Hörbuchwiedergabe.",
+          "description": "Privater Skill für den Eigengebrauch: freundliche Gespräche mit einer KI und Wiedergabe eigener, kopierschutzfreier Hörbücher mit Lesezeichen.",
+          "examplePhrases": [
+            "Alexa, öffne Superkugel",
+            "Alexa, sag Superkugel spiel mein Hörbuch weiter",
+            "Alexa, frag Superkugel welche Krimis hab ich"
+          ],
+          "keywords": ["Gespräch", "Hörbuch"]
+        }
+      },
+      "isAvailableWorldwide": false,
+      "distributionCountries": ["AT", "DE"],
+      "testingInstructions": "Privater Skill, nicht zur Veröffentlichung vorgesehen.",
+      "category": "NOVELTY"
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "arn:aws:lambda:eu-north-1:ACCOUNT_ID:function:superkugel-skill"
+        },
+        "interfaces": [
+          { "type": "AUDIO_PLAYER" }
+        ]
+      }
+    },
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false
+    }
+  },
+  "manifestVersion": "1.0"
+}

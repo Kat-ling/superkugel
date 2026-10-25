@@ -1,0 +1,33 @@
+# Geheimnisse und lokale Konfiguration
+.env
+*.pem
+samconfig.toml
+# Hörbücher und private Audiodateien niemals ins Repo
+*.mp3
+*.m4a
+*.m4b
+*.aac
+*.aax
+*.zip
+inbox/
+hoerbuch-eingang/
+# Python / Build
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.aws-sam/
+build/
+dist/
+*.egg-info/
+# Alexa CLI
+.ask/
+# Hörproben werden lokal erzeugt
+docs/voice-samples/*.mp3
+# Ursprungsnotizen (privat)
+pre-info.docx
+
+# Eingangsordner mit gekauften Büchern/Hörbüchern – privat
+superkugel-eingang/
+*.epub

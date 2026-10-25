@@ -1,0 +1,1412 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "superkugel",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": [
+            "was kannst du",
+            "was kann ich sagen",
+            "hilfe bitte"
+          ]
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "danke das wars",
+            "das wars",
+            "ende",
+            "tschüss",
+            "pfiat di",
+            "servus und danke",
+            "auf wiederschauen",
+            "schluss"
+          ]
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.PauseIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ResumeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.PreviousIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StartOverIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.RepeatIntent",
+          "samples": [
+            "wie bitte",
+            "was hast du gesagt",
+            "sag das nochmal",
+            "nochmal bitte",
+            "das hab ich nicht verstanden",
+            "bitte wiederholen"
+          ]
+        },
+        {
+          "name": "AMAZON.LoopOnIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.LoopOffIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ShuffleOnIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ShuffleOffIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "ResumeAudiobookIntent",
+          "slots": [],
+          "samples": [
+            "spiel meinen krimi weiter",
+            "spiel mein hörbuch weiter",
+            "mach mit meinem hörbuch weiter",
+            "mach mit meinem krimi weiter",
+            "weiterhören",
+            "ich will weiterhören",
+            "spiel weiter",
+            "wo war ich",
+            "mein hörbuch",
+            "mein hörbuch weiter",
+            "lies weiter",
+            "weiter vorlesen",
+            "das hörbuch weiter",
+            "mach weiter mit dem buch",
+            "mein buch weiter",
+            "spiel das hörbuch weiter",
+            "hörbuch",
+            "das hörbuch",
+            "hörbuch bitte",
+            "hörbuch weiterspielen",
+            "weiterspielen",
+            "krimi",
+            "den krimi",
+            "mein krimi",
+            "lieber hörbuch",
+            "lieber das hörbuch",
+            "hörbuch hören"
+          ]
+        },
+        {
+          "name": "StartChatIntent",
+          "slots": [],
+          "samples": [
+            "plaudern",
+            "ich will plaudern",
+            "ich möchte plaudern",
+            "lieber plaudern",
+            "reden",
+            "ich will reden",
+            "unterhalten",
+            "ich möchte mich unterhalten",
+            "plaudern bitte",
+            "ein bisschen plaudern"
+          ]
+        },
+        {
+          "name": "PlayAudiobookIntent",
+          "slots": [
+            {
+              "name": "title",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "spiel {title}",
+            "spiele {title}",
+            "spiel mir {title}",
+            "lies mir {title} vor",
+            "lies {title}",
+            "ich möchte {title} hören",
+            "ich will {title} hören",
+            "spiel das hörbuch {title}",
+            "spiel das buch {title}",
+            "starte {title}",
+            "spiel bitte {title}"
+          ]
+        },
+        {
+          "name": "PlayGenreIntent",
+          "slots": [
+            {
+              "name": "genre",
+              "type": "GENRE"
+            }
+          ],
+          "samples": [
+            "spiel einen {genre}",
+            "spiel ein {genre}",
+            "spiel mir einen {genre}",
+            "ich möchte einen {genre} hören",
+            "ich will einen {genre} hören",
+            "hast du einen {genre}",
+            "spiel was {genre}",
+            "lies mir einen {genre} vor",
+            "spiel irgendein hörbuch",
+            "spiel irgendwas zum hören"
+          ]
+        },
+        {
+          "name": "PlayNewestIntent",
+          "slots": [
+            {
+              "name": "genre",
+              "type": "GENRE"
+            }
+          ],
+          "samples": [
+            "spiel meinen neuen {genre}",
+            "spiel mein neues {genre}",
+            "spiel den neuen {genre}",
+            "spiel das neue hörbuch",
+            "spiel mein neues hörbuch",
+            "spiel mein neuestes hörbuch",
+            "spiel das neue buch",
+            "was ist neu",
+            "gibt es was neues zum hören"
+          ]
+        },
+        {
+          "name": "ListAudiobooksIntent",
+          "slots": [
+            {
+              "name": "genre",
+              "type": "GENRE"
+            }
+          ],
+          "samples": [
+            "welche {genre} hab ich noch",
+            "welche {genre} habe ich",
+            "welche hörbücher hab ich",
+            "welche hörbücher habe ich",
+            "was hab ich zum hören",
+            "was kann ich hören",
+            "was gibt es zum hören",
+            "was hab ich noch nicht gehört",
+            "welche bücher hab ich",
+            "zeig mir meine hörbücher",
+            "was ist in meiner bibliothek",
+            "welche {genre} gibt es"
+          ]
+        },
+        {
+          "name": "RewindIntent",
+          "slots": [],
+          "samples": [
+            "ein stück zurück",
+            "ein stückchen zurück",
+            "ein bissl zurück",
+            "ein bisschen zurück",
+            "spul zurück",
+            "zurückspulen",
+            "geh ein stück zurück",
+            "nochmal die letzte minute",
+            "das hab ich nicht gehört",
+            "nochmal das letzte stück"
+          ]
+        },
+        {
+          "name": "ForwardIntent",
+          "slots": [],
+          "samples": [
+            "ein stück vor",
+            "ein stückchen vor",
+            "ein bisschen vor",
+            "spul vor",
+            "vorspulen",
+            "geh ein stück vor"
+          ]
+        },
+        {
+          "name": "NextChapterIntent",
+          "slots": [],
+          "samples": [
+            "nächstes kapitel",
+            "das nächste kapitel",
+            "nächste kapitel",
+            "kapitel weiter",
+            "spring zum nächsten kapitel"
+          ]
+        },
+        {
+          "name": "PreviousChapterIntent",
+          "slots": [],
+          "samples": [
+            "voriges kapitel",
+            "vorheriges kapitel",
+            "das vorige kapitel",
+            "letztes kapitel",
+            "kapitel zurück",
+            "ein kapitel zurück"
+          ]
+        },
+        {
+          "name": "WhatIsPlayingIntent",
+          "slots": [],
+          "samples": [
+            "was hör ich gerade",
+            "was läuft gerade",
+            "welches buch ist das",
+            "welches kapitel ist das",
+            "wie heißt das buch"
+          ]
+        },
+        {
+          "name": "ForgetConversationIntent",
+          "slots": [],
+          "samples": [
+            "vergiss unser gespräch",
+            "lösch unser gespräch",
+            "vergiss alles was ich gesagt hab",
+            "lösch das gespräch"
+          ]
+        },
+        {
+          "name": "ChatWasIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "was {query}"
+          ]
+        },
+        {
+          "name": "ChatWerIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wer {query}"
+          ]
+        },
+        {
+          "name": "ChatWenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wen {query}"
+          ]
+        },
+        {
+          "name": "ChatWemIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wem {query}"
+          ]
+        },
+        {
+          "name": "ChatWessenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wessen {query}"
+          ]
+        },
+        {
+          "name": "ChatWieIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wie {query}"
+          ]
+        },
+        {
+          "name": "ChatWoIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wo {query}"
+          ]
+        },
+        {
+          "name": "ChatWoherIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "woher {query}"
+          ]
+        },
+        {
+          "name": "ChatWohinIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wohin {query}"
+          ]
+        },
+        {
+          "name": "ChatWannIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wann {query}"
+          ]
+        },
+        {
+          "name": "ChatWarumIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "warum {query}"
+          ]
+        },
+        {
+          "name": "ChatWiesoIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wieso {query}"
+          ]
+        },
+        {
+          "name": "ChatWeshalbIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "weshalb {query}"
+          ]
+        },
+        {
+          "name": "ChatWelcheIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "welche {query}"
+          ]
+        },
+        {
+          "name": "ChatWelcherIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "welcher {query}"
+          ]
+        },
+        {
+          "name": "ChatWelchesIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "welches {query}"
+          ]
+        },
+        {
+          "name": "ChatWieVielIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wie viel {query}"
+          ]
+        },
+        {
+          "name": "ChatWieVieleIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wie viele {query}"
+          ]
+        },
+        {
+          "name": "ChatWozuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wozu {query}"
+          ]
+        },
+        {
+          "name": "ChatWomitIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "womit {query}"
+          ]
+        },
+        {
+          "name": "ChatKannstDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "kannst du {query}"
+          ]
+        },
+        {
+          "name": "ChatKoenntestDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "könntest du {query}"
+          ]
+        },
+        {
+          "name": "ChatWeisstDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "weißt du {query}"
+          ]
+        },
+        {
+          "name": "ChatGlaubstDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "glaubst du {query}"
+          ]
+        },
+        {
+          "name": "ChatMeinstDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "meinst du {query}"
+          ]
+        },
+        {
+          "name": "ChatFindestDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "findest du {query}"
+          ]
+        },
+        {
+          "name": "ChatErzaehlMirIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "erzähl mir {query}"
+          ]
+        },
+        {
+          "name": "ChatErzaehlIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "erzähl {query}"
+          ]
+        },
+        {
+          "name": "ChatErklaerMirIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "erklär mir {query}"
+          ]
+        },
+        {
+          "name": "ChatErklaerIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "erklär {query}"
+          ]
+        },
+        {
+          "name": "ChatSagMalIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "sag mal {query}"
+          ]
+        },
+        {
+          "name": "ChatSagMirIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "sag mir {query}"
+          ]
+        },
+        {
+          "name": "ChatHoerMalIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "hör mal {query}"
+          ]
+        },
+        {
+          "name": "ChatStellDirVorIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "stell dir vor {query}"
+          ]
+        },
+        {
+          "name": "ChatIchHabEineFrageIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ich hab eine frage {query}"
+          ]
+        },
+        {
+          "name": "ChatEineFrageIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "eine frage {query}"
+          ]
+        },
+        {
+          "name": "ChatIchIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ich {query}"
+          ]
+        },
+        {
+          "name": "ChatMirIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "mir {query}"
+          ]
+        },
+        {
+          "name": "ChatMichIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "mich {query}"
+          ]
+        },
+        {
+          "name": "ChatMeinIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "mein {query}"
+          ]
+        },
+        {
+          "name": "ChatMeineIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "meine {query}"
+          ]
+        },
+        {
+          "name": "ChatWirIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wir {query}"
+          ]
+        },
+        {
+          "name": "ChatUnserIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "unser {query}"
+          ]
+        },
+        {
+          "name": "ChatUnsereIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "unsere {query}"
+          ]
+        },
+        {
+          "name": "ChatDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "du {query}"
+          ]
+        },
+        {
+          "name": "ChatDirIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "dir {query}"
+          ]
+        },
+        {
+          "name": "ChatDichIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "dich {query}"
+          ]
+        },
+        {
+          "name": "ChatUndIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "und {query}"
+          ]
+        },
+        {
+          "name": "ChatAberIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "aber {query}"
+          ]
+        },
+        {
+          "name": "ChatAlsoIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "also {query}"
+          ]
+        },
+        {
+          "name": "ChatNaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "na {query}"
+          ]
+        },
+        {
+          "name": "ChatNajaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "naja {query}"
+          ]
+        },
+        {
+          "name": "ChatJaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ja {query}"
+          ]
+        },
+        {
+          "name": "ChatNeinIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "nein {query}"
+          ]
+        },
+        {
+          "name": "ChatDochIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "doch {query}"
+          ]
+        },
+        {
+          "name": "ChatGutIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "gut {query}"
+          ]
+        },
+        {
+          "name": "ChatSchonIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "schon {query}"
+          ]
+        },
+        {
+          "name": "ChatDasIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "das {query}"
+          ]
+        },
+        {
+          "name": "ChatDerIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "der {query}"
+          ]
+        },
+        {
+          "name": "ChatDieIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "die {query}"
+          ]
+        },
+        {
+          "name": "ChatEsIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "es {query}"
+          ]
+        },
+        {
+          "name": "ChatDannIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "dann {query}"
+          ]
+        },
+        {
+          "name": "ChatJetztIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "jetzt {query}"
+          ]
+        },
+        {
+          "name": "ChatHeuteIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "heute {query}"
+          ]
+        },
+        {
+          "name": "ChatGesternIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "gestern {query}"
+          ]
+        },
+        {
+          "name": "ChatMorgenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "morgen {query}"
+          ]
+        },
+        {
+          "name": "ChatVorhinIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "vorhin {query}"
+          ]
+        },
+        {
+          "name": "ChatGibtEsIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "gibt es {query}"
+          ]
+        },
+        {
+          "name": "ChatIstEsIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ist es {query}"
+          ]
+        },
+        {
+          "name": "ChatIstDasIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ist das {query}"
+          ]
+        },
+        {
+          "name": "ChatHastDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "hast du {query}"
+          ]
+        },
+        {
+          "name": "ChatBistDuIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "bist du {query}"
+          ]
+        },
+        {
+          "name": "ChatHabIchIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "hab ich {query}"
+          ]
+        },
+        {
+          "name": "ChatHabeIchIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "habe ich {query}"
+          ]
+        },
+        {
+          "name": "ChatServusIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "servus {query}"
+          ]
+        },
+        {
+          "name": "ChatGruessGottIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "grüß gott {query}"
+          ]
+        },
+        {
+          "name": "ChatHalloIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "hallo {query}"
+          ]
+        },
+        {
+          "name": "ChatGutenMorgenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "guten morgen {query}"
+          ]
+        },
+        {
+          "name": "ChatGutenAbendIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "guten abend {query}"
+          ]
+        },
+        {
+          "name": "ChatDankeFuerIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "danke für {query}"
+          ]
+        },
+        {
+          "name": "ChatBeiUnsIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "bei uns {query}"
+          ]
+        },
+        {
+          "name": "ChatImGartenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "im garten {query}"
+          ]
+        },
+        {
+          "name": "ChatMeineTochterIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "meine tochter {query}"
+          ]
+        },
+        {
+          "name": "ChatMeinSohnIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "mein sohn {query}"
+          ]
+        },
+        {
+          "name": "ChatMeinEnkelIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "mein enkel {query}"
+          ]
+        },
+        {
+          "name": "ChatMeineEnkelinIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "meine enkelin {query}"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "GENRE",
+          "values": [
+            {
+              "name": {
+                "value": "gartenkrimi",
+                "synonyms": [
+                  "garten krimi",
+                  "gartenkrimis"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "geschichte",
+                "synonyms": [
+                  "geschichten"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "humor",
+                "synonyms": [
+                  "lustiges"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "hörspiel",
+                "synonyms": [
+                  "hoerspiel",
+                  "hörspiele"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "krimi",
+                "synonyms": [
+                  "detektivgeschichte",
+                  "kriminalroman",
+                  "krimis"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "märchen",
+                "synonyms": []
+              }
+            },
+            {
+              "name": {
+                "value": "regionalkrimi",
+                "synonyms": [
+                  "alpenkrimi",
+                  "heimatkrimi",
+                  "regionalkrimis",
+                  "österreich krimi"
+                ]
+              }
+            },
+            {
+              "name": {
+                "value": "roman",
+                "synonyms": [
+                  "romane"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
