@@ -1,7 +1,7 @@
 # Superkugel 🗣️📚
 
 Ein privater Alexa-Skill, der einen vorhandenen **Echo Dot 5** zu einer geduldigen
-KI-Gesprächspartnerin mit **Hörbuch-Lesezeichen** macht – gebaut für eine ältere Dame in Kärnten.
+KI-Gesprächspartnerin mit **Hörbuch-Lesezeichen** macht – gebaut für ältere Menschen; Sprache leicht Dialekt-gefärbt.
 Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 
 > „Alexa, öffne Superkugel.“ – „Grüß Gott! Schön, dass Sie da sind. Möchten Sie ratschen,
