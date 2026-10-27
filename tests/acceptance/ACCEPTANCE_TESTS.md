@@ -44,6 +44,20 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 32 | Freie Mediensuche | ✅ | ⏳ | `test_search_choose_and_play` | „…such ein Krimihörspiel“ → drei Treffer → „die zweite“ → spielt |
 | 33 | Datenschutz-Alarm | ✅ | – | `test_privacy_metric_when_search_contains_name` | – |
 | 34 | Ohne Admin-PC | ✅ (Zeitplan in AWS) | ⏳ | `test_refresh_event_runs_without_alexa` | PC aus, nächster Morgen: Nachrichten aktuell (Stand-Uhrzeit nennen lassen) |
+| 35 | Erinnerungs-Berechtigung fehlt | ✅ | ⏳ | `test_missing_permission_sends_consent_card` | Vor dem Erteilen: „…erinner mich morgen um zehn an den Arzt“ → Hinweis + Karte in der Alexa-App |
+| 36 | Erinnerung anlegen und klingeln | ✅ | ⏳ | `test_reminder_full_flow_with_confirmation` | Berechtigung erteilt; „…erinner mich in zwei Minuten an den Test“ → „Passt das?“ → „ja“ → klingelt **am Echo der Nutzerin**, erscheint in der Alexa-App |
+| 37 | Erinnerung: Uhrzeit/Inhalt nachfragen, „nein“ | ✅ | ⏳ | `test_reminder_asks_for_time_then_text_and_accepts_chat_answers`, `test_reminder_no_cancels_and_correction` | „…erinner mich an die Tabletten“ → „Wann?“ → „morgen um acht“ → bestätigen; zweiter Versuch mit „nein“ → nichts angelegt |
+| 38 | Erinnerungen auflisten/löschen | ✅ | ⏳ | `test_list_and_delete_with_number_and_confirmation` | „Welche Erinnerungen hab ich?“, „Lösch eine Erinnerung“ → „die erste“ → „ja“ → in der App weg |
+| 39 | Vergangene Uhrzeit, „jeden Tag“ | ✅ | ⏳ | `test_reminder_past_and_repeat_rejected` | ehrliche Ablehnung, nichts angelegt |
+| 40 | Radio starten (Synonyme) | ✅ | ⏳ | `test_play_radio_by_synonym_does_not_touch_bookmark`, `test_station_synonyms_and_region` | „…spiel Radio Kärnten“, „…spiel Ö eins“, „…spiel FM vier“ → Sender läuft innerhalb ~2 s |
+| 41 | Radio Pause/Weiter/Nächster, Gerätetasten | ✅ | ⏳ | `test_radio_pause_resume_next_previous_and_seek`, `test_playback_controller_on_radio` | „Alexa, Pause“ → „Alexa, weiter“ (live) → „Alexa, nächstes“ (anderer Sender); Taste am Echo |
+| 42 | Hörbuch-Lesezeichen nach Radio | ✅ | ⏳ | `test_play_radio_by_synonym_does_not_touch_bookmark` | Hörbuch hören → Pause → Radio → „…spiel mein Hörbuch weiter“ → gleiche Stelle |
+| 43 | Toter Sender | ✅ | – | `test_dead_station_honest_and_play_title_route`, `test_health_check_and_down_logic` | – (nur simulierbar) |
+| 44 | Morgengruß | ✅ | ⏳ | `test_morning_briefing_once_without_ai`, `test_morning_compose_filters_and_formats` | Erstes Öffnen 5–11 Uhr → Datum, Wetter, zwei Schlagzeilen ohne Unglücksmeldungen; zweites Öffnen → normale Begrüßung |
+| 45 | Morgengruß abschalten | ✅ | ⏳ | `test_morning_not_after_eleven_and_switchable` | „…lass den Morgengruß weg“ → nächster Morgen ohne; „…mach den Morgengruß wieder“ |
+| 46 | Rätselrunde | ✅ | ⏳ | `test_quiz_flow_right_wrong_give_up_and_stop` | „…mach ein Rätsel mit mir“ → richtig/falsch/„weiß nicht“ → „genug“ → Lob mit Tageszahl; **mit ihrer Stimme** (Erkennung freier Antworten!) |
+| 47 | Rätsel ohne Wiederholung | ✅ | ⏳ | `test_quiz_no_repeat_within_seven_days`, `test_quiz_no_repeat_across_sessions` | an zwei Tagen spielen: keine Frage doppelt |
+| 48 | Wochenbericht | ✅ | ⏳ | `test_report_contains_only_numbers`, `test_report_due_once_per_week_and_only_at_eight`, `test_run_weekly_report_error_path` | Montag 8 Uhr Mail im Postfach des Admins, nur Zahlen |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine

@@ -19,7 +19,7 @@ from ask_sdk_model.services.directive import Header, SendDirectiveRequest, Speak
 from superkugel.audiobooks.hosting import S3UrlSigner
 from superkugel.config import Settings
 from superkugel.conversation.llm import OpenAIClient
-from superkugel.handlers import audio, conversation, playback
+from superkugel.handlers import audio, conversation, morning, playback, quiz, radio, reminders
 from superkugel.handlers import media as media_handlers
 from superkugel.handlers.common import Services, end_with
 from superkugel.services.logs import hash_user, log, metric
@@ -65,6 +65,7 @@ class SafetyNet(AbstractExceptionHandler):
         req_type = getattr(handler_input.request_envelope.request, "object_type", "")
         log("unhandled_error", error=type(exception).__name__, request_type=req_type)
         metric("UnhandledError", 1)
+        self.services.count("errors")
         if req_type.startswith(("AudioPlayer.", "PlaybackController.", "System.", "SessionEndedRequest")):
             return handler_input.response_builder.response  # dort ist keine Sprache erlaubt
         return end_with(self.services, handler_input, self.services.fallback_text())
@@ -84,7 +85,26 @@ def _is_playing(hi: HandlerInput) -> bool:
 def _stop(services: Services, hi: HandlerInput) -> Response:
     if _is_playing(hi):
         return audio.pause(services, hi)
+    if quiz.current_item(hi) is not None:  # „genug“ im Rätsel: freundlich mit Lob beenden
+        return quiz.finish(services, hi)
+    from superkugel.handlers.common import has_session, session_attrs
+
+    if has_session(hi) and str(session_attrs(hi).get("pending", "")).startswith("reminder_"):
+        return reminders.cancel(services, hi)  # „Abbrechen“ im Erinnerungsdialog beendet nicht die Superkugel
     return conversation.handle_goodbye(services, hi)
+
+
+def _choose(services: Services, hi: HandlerInput, started: float) -> Response:
+    """„die zweite“ / Zahl: Erinnerung zum Löschen, Rätselantwort (Rechnen) oder Suchtreffer."""
+    from superkugel.handlers.common import session_attrs, slot
+
+    pending = session_attrs(hi).get("pending")
+    if pending in ("reminder_delete_choose", "quiz", "reminder_time", "reminder_confirm", "reminder_text"):
+        choice = slot(hi, "number") or slot(hi, "ordinal")
+        routed = conversation.route_pending(services, hi, choice, started)
+        if routed is not None:
+            return routed
+    return media_handlers.choose_intent(services, hi, started)
 
 
 def _session_ended(services: Services, hi: HandlerInput) -> Response:
@@ -125,7 +145,19 @@ def build_skill(services: Services) -> Any:
         (_intent("PlayShowIntent"), media_handlers.play_show_intent),
         (_intent("ListShowsIntent"), media_handlers.list_shows),
         (_intent("SearchMediaIntent"), timed(media_handlers.search_media_intent)),
-        (_intent("ChooseResultIntent"), timed(media_handlers.choose_intent)),
+        (_intent("ChooseResultIntent"), timed(_choose)),
+        # v1.2: Radio, Erinnerungen, Rätsel, Morgengruß
+        (_intent("PlayRadioIntent"), radio.play_intent),
+        (_intent("ListRadioIntent"), radio.list_intent),
+        (_intent("RemindMeIntent"), reminders.start_free),
+        (_intent("SetReminderIntent"), reminders.start_slots),
+        (_intent("ReminderTimeIntent"), reminders.answer_time),
+        (_intent("ListRemindersIntent"), reminders.list_reminders),
+        (_intent("DeleteReminderIntent"), reminders.delete_start),
+        (_intent("StartQuizIntent"), quiz.start),
+        (_intent("QuizAnswerIntent"), timed(quiz.answer_intent)),
+        (_intent("MorningOffIntent"), morning.turn_off),
+        (_intent("MorningOnIntent"), morning.turn_on),
         (_intent("AMAZON.PauseIntent"), audio.pause),
         (_intent("RewindIntent"), audio.rewind),
         (_intent("ForwardIntent"), audio.forward),
@@ -222,6 +254,8 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 log("refresh_failed", error=type(exc).__name__)
                 metric("ContextRefreshErrors", 1)
                 return {"ok": False}
+        if event.get("superkugel") == "weekly_report":
+            return run_weekly_report(force=bool(event.get("force")))
         if _SKILL is None:
             _SKILL = build_skill(default_services())
         return handle_event(_SKILL, event, context)
@@ -247,8 +281,33 @@ def run_refresh(services: Services | None = None) -> dict[str, Any]:
     feed_errors = media.refresh_shows(services.store)
     if feed_errors:
         metric("ContextRefreshErrors", feed_errors)
+    try:
+        from superkugel.radio import stations
+
+        radio_down = len(stations.check_health(services.store, services.settings))
+    except Exception as exc:  # noqa: BLE001 - Radioprüfung darf den Abruf nicht verhindern
+        log("radio_health_failed", error=type(exc).__name__)
+        radio_down = -1
     return {"ok": True, "sources": len([k for k in ("news", "regional", "weather") if k in ctx]),
-            "feed_errors": feed_errors}
+            "feed_errors": feed_errors, "radio_down": radio_down}
+
+
+def run_weekly_report(services: Services | None = None, publish: Any = None, force: bool = False) -> dict[str, Any]:
+    """Wochenbericht (Zeitplan montags früh). Fehler → Metrik + Log, nie ein Absturz."""
+    from superkugel.services import report
+
+    try:
+        services = services or default_services()
+        s = services.settings
+        if publish is None:
+            if not s.alert_topic_arn:
+                raise RuntimeError("no_topic")
+            publish = report.sns_publisher(s.alert_topic_arn, s.aws_region)
+        return report.send(services.store, s, publish, force=force)
+    except Exception as exc:  # noqa: BLE001
+        log("weekly_report_failed", error=type(exc).__name__)
+        metric("WeeklyReportFailed", 1)
+        return {"ok": False}
 
 
 def _deserialize(event: dict[str, Any]) -> Any:

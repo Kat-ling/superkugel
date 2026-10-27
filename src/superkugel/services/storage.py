@@ -10,6 +10,13 @@ Layout:
   pk=OPS            sk=CIRCUIT           Fehlerzähler für die KI-Anbindung
   pk=OPS            sk=COUNTER#<name>    einfache Zähler (z. B. Mediensuchen pro Tag, mit TTL)
   pk=CONTEXT        sk=CURRENT           Schlagzeilen + Wetter (stündlich aktualisiert)
+  pk=STATS          sk=DAY#<yyyy-mm-dd>  reine Tageszähler für den Wochenbericht (TTL 45 Tage, keine Inhalte)
+  pk=RADIO          sk=HEALTH            Erreichbarkeit der Radiosender (stündlich geprüft)
+  pk=USER#<hash>    sk=DAYFLAGS          Tagesmerker pro Gerät: Morgengruß gesagt, Rätsel-Zähler (TTL 2 Tage)
+  pk=USER#<hash>    sk=PREFS             Einstellungen pro Gerät (z. B. Morgengruß aus)
+  pk=USER#<hash>    sk=RADIO             zuletzt gehörter Sender (für „Alexa, weiter“, TTL 30 Tage)
+  pk=USER#<hash>    sk=REMINDERS         Kennungen (alertToken) der an diesem Gerät angelegten Erinnerungen – ohne Text
+  pk=USER#<hash>    sk=QUIZSEEN          zuletzt gestellte Rätsel (IDs + Tag, für „keine Wiederholung in 7 Tagen“)
   pk=PODCASTS       sk=SHOW#<id>         Lieblingssendungen mit den neuesten Folgen
   pk=EPISODES       sk=EP#<id>           abgespielte Folgen (für Lesezeichen/AudioPlayer-Ereignisse)
 """
@@ -72,6 +79,9 @@ class Store(Protocol):
 
     def get_circuit(self) -> dict[str, Any]: ...
     def put_circuit(self, data: dict[str, Any]) -> None: ...
+
+    def add_stats(self, day: str, fields: dict[str, int], ttl_s: int) -> None: ...
+    def get_stats(self, day: str) -> dict[str, int]: ...
 
 
 class MemoryStore:
@@ -171,6 +181,15 @@ class MemoryStore:
 
     def put_circuit(self, data: dict[str, Any]) -> None:
         self.items[("OPS", "CIRCUIT")] = dict(data)
+
+    def add_stats(self, day: str, fields: dict[str, int], ttl_s: int) -> None:
+        item = self.items.setdefault(("STATS", f"DAY#{day}"), {"expires_at": int(time.time()) + ttl_s})
+        for k, v in fields.items():
+            item[k] = int(item.get(k, 0)) + int(v)
+
+    def get_stats(self, day: str) -> dict[str, int]:
+        item = self.items.get(("STATS", f"DAY#{day}"), {})
+        return {k: int(v) for k, v in item.items() if k != "expires_at"}
 
 
 class DynamoStore:
@@ -306,3 +325,17 @@ class DynamoStore:
 
     def put_circuit(self, data: dict[str, Any]) -> None:
         self._put("OPS", "CIRCUIT", data)
+
+    def add_stats(self, day: str, fields: dict[str, int], ttl_s: int) -> None:
+        """Ein UpdateItem für alle Zähler des Tages (atomar, ohne vorheriges Lesen)."""
+        names = {f"#f{i}": k for i, k in enumerate(fields)}
+        values: dict[str, Any] = {f":v{i}": int(v) for i, v in enumerate(fields.values())}
+        values[":exp"] = int(time.time()) + ttl_s
+        adds = ", ".join(f"#f{i} :v{i}" for i in range(len(fields)))
+        self.table.update_item(Key={"pk": "STATS", "sk": f"DAY#{day}"},
+                               UpdateExpression=f"ADD {adds} SET expires_at = if_not_exists(expires_at, :exp)",
+                               ExpressionAttributeNames=names, ExpressionAttributeValues=values)
+
+    def get_stats(self, day: str) -> dict[str, int]:
+        item = self.table.get_item(Key={"pk": "STATS", "sk": f"DAY#{day}"}).get("Item") or {}
+        return {k: int(v) for k, v in item.items() if k not in ("pk", "sk", "expires_at")}

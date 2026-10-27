@@ -16,6 +16,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from superkugel.audiobooks.matching import GENRE_SYNONYMS  # noqa: E402
 from superkugel.conversation.carriers import CARRIERS, chat_intent_name  # noqa: E402
+from superkugel.quiz.items import ITEMS  # noqa: E402
+from superkugel.radio.stations import NATIONAL, REGIONAL  # noqa: E402
 
 INVOCATION = "superkugel"
 
@@ -104,6 +106,64 @@ AUDIO_INTENTS = [
     ]},
 ]
 
+REMINDER_SLOTS = [{"name": "date", "type": "AMAZON.DATE"}, {"name": "time", "type": "AMAZON.TIME"},
+                  {"name": "duration", "type": "AMAZON.DURATION"}]
+
+# v1.2 – Radio, Erinnerungen, Rätsel, Morgengruß
+EXTRA_INTENTS = [
+    {"name": "PlayRadioIntent", "slots": [{"name": "station", "type": "RADIO_STATION"}], "samples": [
+        "spiel {station}", "spiel radio {station}", "spiel den sender {station}", "mach {station} an",
+        "dreh {station} auf", "schalt {station} ein", "ich will {station} hören", "ich möchte {station} hören",
+        "radio {station}", "spiel radio", "mach das radio an", "radio",
+        "radio hören", "ich will radio hören", "ich möchte radio hören",
+    ]},
+    {"name": "ListRadioIntent", "slots": [], "samples": [
+        "welche sender gibt es", "welche radiosender hast du", "welche sender hab ich", "welche sender hast du",
+        "was für radiosender gibt es", "welche radios gibt es",
+    ]},
+    {"name": "RemindMeIntent", "slots": [{"name": "query", "type": "AMAZON.SearchQuery"}], "samples": [
+        "erinner mich {query}", "erinnere mich {query}", "erinner mich bitte {query}", "erinnere mich bitte {query}",
+        "stell eine erinnerung {query}", "mach eine erinnerung {query}", "ich brauch eine erinnerung {query}",
+        "neue erinnerung {query}", "erinner mich", "erinnere mich", "stell eine erinnerung", "neue erinnerung",
+        "ich brauch eine erinnerung", "mach eine erinnerung",
+    ]},
+    # Ohne Freitext (AMAZON.SearchQuery und Datums-Slots bewusst getrennt, siehe Plandatei)
+    {"name": "SetReminderIntent", "slots": REMINDER_SLOTS, "samples": [
+        "erinnerung für {date} um {time}", "erinnerung am {date} um {time}", "erinnerung um {time}",
+        "erinnerung in {duration}", "stell eine erinnerung für {date} um {time}", "erinnerung für {date}",
+    ]},
+    # Nur als Antwort auf „Wann soll ich dich erinnern?“ – ohne Dialog wie „nicht verstanden“
+    {"name": "ReminderTimeIntent", "slots": REMINDER_SLOTS, "samples": [
+        "um {time}", "{date} um {time}", "am {date} um {time}", "am {date}", "in {duration}", "um {time} uhr",
+        "{date} um {time} uhr",
+    ]},
+    {"name": "ListRemindersIntent", "slots": [], "samples": [
+        "welche erinnerungen hab ich", "welche erinnerungen habe ich", "meine erinnerungen",
+        "was sind meine erinnerungen", "an was erinnerst du mich", "lies meine erinnerungen vor",
+        "hab ich erinnerungen",
+    ]},
+    {"name": "DeleteReminderIntent", "slots": [], "samples": [
+        "lösch eine erinnerung", "lösche eine erinnerung", "erinnerung löschen", "lösch die erinnerung",
+        "erinnerung entfernen", "ich will eine erinnerung löschen", "lösch meine erinnerung",
+    ]},
+    {"name": "StartQuizIntent", "slots": [], "samples": [
+        "mach ein rätsel mit mir", "spielen wir was", "ein rätsel", "rätsel", "quiz", "mach ein quiz",
+        "gedächtnistraining", "lass uns rätseln", "stell mir ein rätsel", "gib mir ein rätsel",
+        "spielen wir ein spiel", "ich will rätseln", "rätseln", "noch ein rätsel",
+    ]},
+    {"name": "QuizAnswerIntent", "slots": [{"name": "answer", "type": "QUIZ_ANSWER"}], "samples": [
+        "{answer}", "die antwort ist {answer}", "{answer} vielleicht",
+    ]},
+    {"name": "MorningOffIntent", "slots": [], "samples": [
+        "lass den morgengruß weg", "kein morgengruß mehr", "morgengruß aus", "ich will keinen morgengruß",
+        "schalt den morgengruß aus", "keinen morgengruß",
+    ]},
+    {"name": "MorningOnIntent", "slots": [], "samples": [
+        "mach den morgengruß wieder", "morgengruß wieder an", "ich will wieder einen morgengruß",
+        "schalt den morgengruß ein", "morgengruß an",
+    ]},
+]
+
 BUILTIN = [
     "AMAZON.CancelIntent", "AMAZON.HelpIntent", "AMAZON.StopIntent", "AMAZON.NavigateHomeIntent",
     "AMAZON.FallbackIntent", "AMAZON.PauseIntent", "AMAZON.ResumeIntent", "AMAZON.NextIntent",
@@ -116,7 +176,8 @@ BUILTIN_SAMPLES = {
     "AMAZON.RepeatIntent": ["wie bitte", "was hast du gesagt", "sag das nochmal", "nochmal bitte",
                             "das hab ich nicht verstanden", "bitte wiederholen"],
     "AMAZON.StopIntent": ["danke das wars", "das wars", "ende", "tschüss", "pfiat di", "servus und danke",
-                          "auf wiederschauen", "schluss"],
+                          "auf wiederschauen", "schluss", "genug", "es ist genug", "das reicht", "hören wir auf",
+                          "aufhören"],
     "AMAZON.HelpIntent": ["was kannst du", "was kann ich sagen", "hilfe bitte"],
 }
 
@@ -135,11 +196,41 @@ def genre_type() -> dict:
     return {"name": "GENRE", "values": values}
 
 
+def radio_type() -> dict:
+    """Ohne bloße Ortsnamen („wien“, „tirol“ …) als Synonym – die kollidierten mit Rätselantworten.
+    Der Code erkennt sie trotzdem (offener Slot), aber nur für das eigene Bundesland."""
+    places = {p.lower() for p in REGIONAL}
+
+    def syn(s):
+        return sorted(a for a in set(s.aliases) - {s.name.lower()} if a not in places)
+
+    values = [{"id": s.station_id, "name": {"value": s.name.lower(), "synonyms": syn(s)}}
+              for s in (*NATIONAL, *REGIONAL.values())]
+    return {"name": "RADIO_STATION", "values": values}
+
+
+def quiz_type() -> dict:
+    """Antworten aller Rätsel (ohne Zahlen – die kommen über AMAZON.NUMBER) + „weiß nicht“."""
+    seen: set[str] = set()
+    values = []
+    for item in ITEMS:
+        for a in item.answers:
+            v = a.lower()
+            if not v.isdigit() and v not in seen:
+                seen.add(v)
+                values.append({"name": {"value": v}})
+    for v in ("weiß nicht", "keine ahnung", "ich weiß es nicht", "sag es mir", "auflösung", "erklär mir das"):
+        if v not in seen:
+            values.append({"name": {"value": v}})
+    return {"name": "QUIZ_ANSWER", "values": values}
+
+
 def build() -> dict:
     intents: list[dict] = []
     for name in BUILTIN:
         intents.append({"name": name, "samples": BUILTIN_SAMPLES.get(name, [])})
     intents.extend(AUDIO_INTENTS)
+    intents.extend(EXTRA_INTENTS)
     seen: set[str] = set()
     for carrier in CARRIERS:
         name = chat_intent_name(carrier)
@@ -150,7 +241,8 @@ def build() -> dict:
                         "samples": [f"{carrier} {{query}}"]})
     return {
         "interactionModel": {
-            "languageModel": {"invocationName": INVOCATION, "intents": intents, "types": [genre_type(), ordinal_type()]},
+            "languageModel": {"invocationName": INVOCATION, "intents": intents,
+                              "types": [genre_type(), ordinal_type(), radio_type(), quiz_type()]},
         }
     }
 

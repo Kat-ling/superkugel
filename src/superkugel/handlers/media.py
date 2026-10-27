@@ -34,6 +34,7 @@ def _start_episode(services: Services, hi: HandlerInput, show_name: str, genres:
     book = media.episode_book(show_name, genres, ep, source_id)
     media.remember_episode(services.store, book)
     cmd = services.audio().start_or_resume(uid(hi), book)
+    services.count("show")
     return (hi.response_builder.speak(services.say(intro)).add_directive(play_directive(cmd))
             .set_should_end_session(True).response)
 
@@ -112,6 +113,7 @@ def search_media(services: Services, hi: HandlerInput, query: str, deadline: flo
         return keep_open(services, hi, services.t("search_later", query=query), None)
     client = (services.media_client_factory or media.PodcastIndex)(*creds)
     services.usage.record_media_search()
+    services.count("media_search")
     try:
         hits = client.search(query, timeout=timeout)
     except Exception as exc:  # noqa: BLE001

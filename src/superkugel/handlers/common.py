@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -43,6 +44,8 @@ class Services:
     clock: Callable[[], float] = time.monotonic
     _audio: AudiobookService | None = field(default=None, repr=False)
     media_client_factory: Callable[[str, str], Any] | None = None  # Podcast-Index-Client (Tests: Fake)
+    reminder_transport: Any = None  # Tests: gefälschte Reminders-API (sonst urllib)
+    now: Callable[[], dt.datetime] = field(default=lambda: dt.datetime.now(dt.UTC))  # Wanduhr (Tests: fest)
 
     @property
     def style(self) -> SpeechStyle:
@@ -70,6 +73,12 @@ class Services:
     def fallback_text(self) -> str:
         return self.t("fallback")
 
+    def count(self, field_name: str, n: int = 1) -> None:
+        """Tageszähler für den Wochenbericht (nie Inhalte)."""
+        from superkugel.services import stats
+
+        stats.count(self.store, self.settings, field_name, n, now=self.now())
+
 
 def uid(handler_input: HandlerInput) -> str:
     system = handler_input.request_envelope.context.system
@@ -88,6 +97,11 @@ def slot(handler_input: HandlerInput, name: str) -> str:
 
 def session_attrs(handler_input: HandlerInput) -> dict[str, Any]:
     return handler_input.attributes_manager.session_attributes
+
+
+def has_session(handler_input: HandlerInput) -> bool:
+    """Außerhalb einer Sitzung („Alexa, weiter“ beim Hören) gibt es keine Sitzungsattribute."""
+    return handler_input.request_envelope.session is not None
 
 
 def audio_context(handler_input: HandlerInput) -> tuple[str | None, int | None]:

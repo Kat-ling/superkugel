@@ -82,6 +82,16 @@ Parameters:
     NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
     Default: ""
     AllowedPattern: '^(-?[0-9]{1,3}(\.[0-9]{1,2})?)?$'
+  MorningBriefing:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Morgengruß beim ersten Öffnen zwischen 5 und 11 Uhr (pro Gerät auch per Sprache abschaltbar).
+  WeeklyReport:
+    Type: String
+    Default: ENABLED
+    AllowedValues: [ENABLED, DISABLED]
+    Description: Wöchentlicher Nutzungsbericht (nur Zahlen) per Mail an den Admin, montags 8 Uhr Wiener Zeit.
   ReservedConcurrency:
     Type: Number
     Default: 0
@@ -197,6 +207,8 @@ Resources:
           USER_LAT: !Ref UserLat
           USER_LON: !Ref UserLon
           TIMEZONE: Europe/Vienna
+          MORNING_BRIEFING: !Ref MorningBriefing
+          ALERT_TOPIC_ARN: !Ref AlertTopic
       Events:
         Alexa:
           Type: AlexaSkill
@@ -208,6 +220,15 @@ Resources:
             Schedule: rate(1 hour)
             Input: '{"superkugel": "refresh_context"}'
             Description: Nachrichten, Wetter und Lieblingssendungen aktualisieren
+        WeeklyReport:
+          # Klassische EventBridge-Regel (wie der stündliche Abruf, von der SCP erlaubt). Regeln rechnen in UTC:
+          # 6 und 7 Uhr UTC = 8 Uhr Wien im Sommer bzw. Winter; der Code sendet nur in der 8-Uhr-Stunde, 1×/Woche.
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 6,7 ? * MON *)
+            Input: '{"superkugel": "weekly_report"}'
+            Description: Wochenbericht (nur Zahlen) an den Admin
+            State: !Ref WeeklyReport
       Policies:
         - Statement:
             - Sid: TableAccess
@@ -222,6 +243,10 @@ Resources:
               Effect: Allow
               Action: ssm:GetParameter
               Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/superkugel/*"
+            - Sid: WeeklyReportMail
+              Effect: Allow
+              Action: sns:Publish
+              Resource: !Ref AlertTopic
             - Sid: DecryptSecureStringViaSsm
               Effect: Allow
               Action: kms:Decrypt
@@ -380,6 +405,36 @@ Resources:
       Period: 3600
       EvaluationPeriods: 1
       Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  ReminderApiAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-erinnerungen-fehler
+      AlarmDescription: Die Alexa-Erinnerungs-API ist wiederholt fehlgeschlagen (nicht wegen fehlender Berechtigung)
+      Namespace: Superkugel
+      MetricName: ReminderApiError
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlertTopic]
+
+  WeeklyReportAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: superkugel-wochenbericht-fehler
+      AlarmDescription: Der Wochenbericht konnte nicht erstellt oder versendet werden
+      Namespace: Superkugel
+      MetricName: WeeklyReportFailed
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlertTopic]

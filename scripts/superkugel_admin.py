@@ -8,6 +8,7 @@ Beispiele:
   python scripts/superkugel_admin.py remove <book_id> [--delete-files]
   python scripts/superkugel_admin.py mode [normal|audiobooks_only|maintenance]
   python scripts/superkugel_admin.py usage
+  python scripts/superkugel_admin.py report                # Wochenbericht (nur Zahlen) lokal anzeigen
   python scripts/superkugel_admin.py reset-progress <book_id>
 
 Konfiguration über Umgebungsvariablen bzw. .env: AWS_PROFILE, AWS_REGION, TABLE_NAME,
@@ -175,6 +176,16 @@ def cmd_usage(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_report(args: argparse.Namespace) -> int:
+    """Derselbe Wochenbericht wie die Montagsmail – nur Zahlen, aus DynamoDB gelesen, nichts wird gesendet."""
+    from superkugel.config import Settings
+    from superkugel.services import report
+
+    settings = Settings.from_env()
+    print(report.render(report.build(_store(_session()), settings)))
+    return 0
+
+
 def cmd_podcast(args: argparse.Namespace) -> int:
     from superkugel.audiobooks import media
 
@@ -282,6 +293,7 @@ def main() -> int:
     md.add_argument("value", nargs="?", choices=["normal", "audiobooks_only", "maintenance"])
     md.set_defaults(fn=cmd_mode)
     sub.add_parser("usage", help="KI-Nutzung und geschätzte Kosten").set_defaults(fn=cmd_usage)
+    sub.add_parser("report", help="Wochenbericht (letzte 7 Tage, nur Zahlen) anzeigen").set_defaults(fn=cmd_report)
     pc = sub.add_parser("podcast", help="Lieblingssendungen verwalten (add <RSS-URL> | list | remove <show_id>)")
     pc.add_argument("action", choices=["add", "list", "remove"])
     pc.add_argument("value", nargs="?", default="")

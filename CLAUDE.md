@@ -30,6 +30,12 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 - Kontomodell: Developer-Account und Echo der Nutzerin laufen über das Amazon-Konto des Admins.
   Deshalb sind Speicherschlüssel = Hash(userId + deviceId) (`services/logs.py: hash_user`) – Geräte nicht vermischen.
 
+- v1.2 (Details: docs/plan-erweiterungen-v1.2.md): Erinnerungen über die Reminders API (stdlib, 3 s, immer mit
+  Bestätigung, Text nie in DynamoDB/Logs), Radio nur ORF-HTTPS-Streams mit Token `radio-…` (überschreibt nie
+  Hörbuch-Lesezeichen), Morgengruß/Rätsel ohne KI, Wochenbericht nur Zahlen. Dialogzustände nur in Sitzungsattributen
+  (`pending`); freie Sätze laufen zuerst durch `conversation.route_pending`. Höchstens 10 eigene CloudWatch-Metriken
+  (aktuell 10 – für neue eine alte ersetzen).
+
 ## Regeln
 
 - Keine Gesprächsinhalte, Titel oder rohen User-IDs loggen (`services/logs.py` filtert, trotzdem nicht übergeben).
@@ -39,9 +45,10 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 - Simulator-/Unit-Tests nie als Gerätetest ausgeben (`tests/acceptance/ACCEPTANCE_TESTS.md`).
 - Neue Intents: in `scripts/build_interaction_model.py` + Route in `app.py` + Test.
 
-## Status (25.10.2026)
+## Status (27.10.2026)
 
 Version 1.0 im Alltag in Betrieb, Version 1.1 (Tagesaktuelles A+B, Mediatheken) bereitgestellt, Gerätetests offen.
-Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
+Version 1.2 (Erinnerungen, Radio, Morgengruß, Rätsel, Wochenbericht) lokal committet, nicht deployt.
+Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`, `docs/plan-erweiterungen-v1.2.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.

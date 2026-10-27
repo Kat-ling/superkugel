@@ -1,7 +1,17 @@
 # Projektstatus – Superkugel
 
-**Stand:** 25.10.2026 · **Version 1.1: bereitgestellt (eu-north-1) und live per Lambda-Aufruf getestet.** Version 1.0
-ist im Alltag auf einem Echo Dot 5 in Betrieb; die Gerätetests für 1.1 (Prüfpunkte 27–34) stehen aus.
+**Stand:** 27.10.2026 · **Version 1.2: umgesetzt, automatisiert getestet, lokal committet – nicht gepusht, nicht
+deployt (Change Set liegt zur Freigabe bereit).** Version 1.1 ist bereitgestellt (eu-north-1), Version 1.0 im Alltag
+auf einem Echo Dot 5 in Betrieb; Gerätetests für 1.1 (Prüfpunkte 27–34) und 1.2 (35–48) stehen aus.
+
+## Version 1.2 (27.10.2026)
+
+Erinnerungen (Alexa Reminders API, immer mit Bestätigung), Radio live (ORF: Ö1, Ö3, FM4, Regionalradio),
+Morgengruß ohne KI, Rätsel & Gedächtnistraining (78 Einträge + erzeugte Rechnungen), Wochenbericht an den Admin
+(nur Zahlen). Details, geprüfte Fakten mit Quellen, Review-Ergebnis und Grenzen: `docs/plan-erweiterungen-v1.2.md`.
+Tests: **315 bestanden**; `ruff`, `cfn-lint --regions eu-north-1`, `pip-audit` ohne Befund. Drei unabhängige
+Reviews eingearbeitet. Kostenwirkung ≈ 0 (`docs/kosten.md`), neue Datenflüsse in `docs/datenschutz.md`.
+**Kein Gerätetest** – alle neuen Prüfpunkte offen.
 
 ## Was läuft
 
@@ -43,6 +53,10 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
    Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
 4. Lieblingssendungen eintragen (`podcast add`), Podcast-Index-Schlüssel hinterlegen (`set-podcastindex`),
    OpenAI-Projektlimit 14 $/Monat setzen.
+5. **Version 1.2:** Change Set ausführen, Interaction Model + Reminders-Berechtigung in der Developer Console,
+   Berechtigung in der Alexa-App erteilen, Gerätetests 35–48, Push + Tag `v1.2.0` (alles ✋ Admin).
+6. GitHub: Autor-E-Mail im Web-Editor-Commit `81850c6` ist öffentlich → „Keep my email addresses private“;
+   lokale Zweige `archiv/*` enthalten persönliche Werte → löschen oder nur privat sichern, nie mit `--all` pushen.
 
 ## Entscheidungen (Details: `docs/architektur.md`)
 

@@ -4,7 +4,7 @@
       "locales": {
         "de-DE": {
           "name": "Superkugel",
-          "summary": "Private KI-Gesprächspartnerin mit Hörbuchwiedergabe.",
+          "summary": "Private KI-Gesprächspartnerin mit Hörbüchern, Radio, Erinnerungen und Rätseln.",
           "description": "Privater Skill für den Eigengebrauch: freundliche Gespräche mit einer KI und Wiedergabe eigener, kopierschutzfreier Hörbücher mit Lesezeichen.",
           "examplePhrases": [
             "Alexa, öffne Superkugel",
@@ -29,6 +29,9 @@
         ]
       }
     },
+    "permissions": [
+      { "name": "alexa::alerts:reminders:skill:readwrite" }
+    ],
     "privacyAndCompliance": {
       "allowsPurchases": false,
       "usesPersonalInfo": false,

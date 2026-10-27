@@ -6,4 +6,4 @@ region = "eu-north-1"
 capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
 resolve_s3 = true
 confirm_changeset = true
-parameter_overrides = "SkillId=amzn1.ask.skill.XXXXXXXX AlertEmail=you@example.com SpeechStyle=kaernten AlexaVoice=Vicki SpeechRate=100% AddressForm=du UserName=Vorname ShareNameWithAi=true UserCity=Ort UserRegion=Bundesland UserLat=47.00 UserLon=15.00 WebSearchDailyLimit=25"
+parameter_overrides = "SkillId=amzn1.ask.skill.XXXXXXXX AlertEmail=you@example.com SpeechStyle=kaernten AlexaVoice=Vicki SpeechRate=100% AddressForm=du UserName=Vorname ShareNameWithAi=true UserCity=Ort UserRegion=Bundesland UserLat=47.00 UserLon=15.00 WebSearchDailyLimit=25 MorningBriefing=true WeeklyReport=ENABLED"

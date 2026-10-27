@@ -119,6 +119,10 @@ class Settings:
     share_name_with_ai: bool = True  # Vorname auch der KI nennen (sonst nur in Begrüßung/Verabschiedung)
     misunderstood_limit: int = 5  # so oft „nicht verstanden“, bevor sich der Skill verabschiedet
 
+    # v1.2: Morgengruß, Wochenbericht
+    morning_briefing: bool = True
+    alert_topic_arn: str = ""  # SNS-Thema für den Wochenbericht (dasselbe wie für Alarme)
+
     # Hörbuch
     audio_url_expiry_s: int = 6 * 3600
     rewind_s: int = 30
@@ -176,6 +180,8 @@ class Settings:
             user_name=re.sub(r"[^\w\- ]", "", _env("USER_NAME", ""))[:40].strip(),
             misunderstood_limit=max(2, _int("MISUNDERSTOOD_LIMIT", 5)),
             share_name_with_ai=_env("SHARE_NAME_WITH_AI", "true").lower() in ("1", "true", "ja", "yes"),
+            morning_briefing=_env("MORNING_BRIEFING", "true").lower() in ("1", "true", "ja", "yes"),
+            alert_topic_arn=_env("ALERT_TOPIC_ARN", ""),
             audio_url_expiry_s=_int("AUDIO_URL_EXPIRY_S", 6 * 3600),
             rewind_s=_int("REWIND_S", 30),
             forward_s=_int("FORWARD_S", 30),

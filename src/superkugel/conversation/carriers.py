@@ -29,6 +29,8 @@ CARRIERS: tuple[str, ...] = (
     "servus", "grüß gott", "hallo", "guten morgen", "guten abend", "danke für",
     "such", "suche", "such mir", "finde", "find mir",
     "bei uns", "im garten", "meine tochter", "mein sohn", "mein enkel", "meine enkelin",
+    # v1.2: Antworten auf „Woran soll ich dich erinnern?“ / „Wann?“
+    "an", "ans", "daran", "dass", "übermorgen",
 )
 
 

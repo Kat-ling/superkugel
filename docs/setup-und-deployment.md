@@ -112,7 +112,9 @@ erhalten, die Lesezeichen beginnen von vorne.
    - Name „Superkugel“, Sprache **Deutsch (DE)**, Modell **Custom**, Hosting **Provision your own**.
    - Vorlage „Start from Scratch“.
 2. **Skill-ID** kopieren (amzn1.ask.skill.…).
-3. Build → Interfaces → **Audio Player** einschalten.
+3. Build → Interfaces → **Audio Player** einschalten. Build → **Permissions** → **Reminders** einschalten (ab v1.2;
+   entspricht `permissions` in `skill-package/skill.json`), danach in der Alexa-App die Berechtigung erteilen
+   (`betrieb-und-wartung.md`, Abschnitt Version 1.2).
 4. Build → JSON Editor → Inhalt von `skill-package/interactionModels/custom/de-DE.json` einfügen → **Save** → **Build Model**.
    Alternativ per CLI (nach `ask configure` ✋):
    ```bash

@@ -27,6 +27,8 @@ def _play(services: Services, hi: HandlerInput, book: Book, pos: Position | None
           intro: str | None = None) -> Response:
     audio = services.audio()
     cmd = audio.start_or_resume(uid(hi), book) if pos is None else audio.command(uid(hi), book, pos)
+    if pos is None:
+        services.count("audiobook")
     rb = hi.response_builder.add_directive(play_directive(cmd)).set_should_end_session(True)
     if intro:
         rb.speak(services.say(intro))
@@ -56,18 +58,41 @@ def resume_current(services: Services, hi: HandlerInput, include_podcasts: bool 
 
 
 def resume_any(services: Services, hi: HandlerInput) -> Response:
-    """„Alexa, weiter“: das zuletzt Gehörte – Hörbuch oder Sendung."""
+    """„Alexa, weiter“: das zuletzt Gehörte – Hörbuch, Sendung oder Radio (Radio startet live neu)."""
+    from superkugel.handlers import radio
+
+    station = radio.current(services, hi)
+    if station is None:
+        last = radio.last_played(services, hi)
+        if last:
+            try:
+                newest = max((p.updated_at for p in services.audio().progress_map(uid(hi)).values()), default=0.0)
+            except Exception:  # noqa: BLE001
+                newest = 0.0
+            station = last[0] if last[1] > newest else None
+    if station is not None:
+        return radio.play(services, hi, station)
     return resume_current(services, hi, include_podcasts=True)
 
 
 def play_title(services: Services, hi: HandlerInput, started: float | None = None) -> Response:
-    raw = slot(hi, "title") or ""
+    return play_raw(services, hi, slot(hi, "title") or "", started)
+
+
+def play_raw(services: Services, hi: HandlerInput, raw: str, started: float | None = None) -> Response:
+    """„Spiel …“ mit freiem Titel: Suchtreffer-Auswahl, Radiosender, Hörbuch, Sendung oder KI-Rückfall."""
     from superkugel.audiobooks import media
     from superkugel.handlers import media as media_handlers
 
     chosen = media_handlers.choose_hit(services, hi, raw)  # „spiel die erste“ nach einer Suche
     if chosen is not None:
         return chosen
+    from superkugel.handlers import radio
+    from superkugel.radio import stations
+
+    station = stations.match(raw, services.settings)  # „Spiel Ö1“ landet oft hier statt bei PlayRadioIntent
+    if station:
+        return radio.play(services, hi, station)
     norm = matching.normalize(raw)
     if "weiter" in norm.split():
         return resume_current(services, hi)
@@ -152,6 +177,17 @@ def pause(services: Services, hi: HandlerInput) -> Response:
 
 
 def _seek(services: Services, hi: HandlerInput, kind: str) -> Response:
+    from superkugel.handlers import radio
+
+    station = radio.current(services, hi, active_only=True)
+    if station is not None:  # live: kein Spulen; „nächstes/voriges“ wechselt den Sender, „von vorn“ startet neu
+        if kind in ("next", "previous", "back"):
+            return radio.switch(services, hi, station, 1 if kind == "next" else -1)
+        if kind == "startover":
+            return radio.play(services, hi, station)
+        return radio.no_seek(services, hi)
+    if kind == "back":
+        kind = "rewind"
     audio = services.audio()
     user = uid(hi)
     token, offset = audio_context(hi)
@@ -190,8 +226,9 @@ def next_chapter(services: Services, hi: HandlerInput) -> Response:
 
 
 def previous(services: Services, hi: HandlerInput) -> Response:
-    """AMAZON.PreviousIntent („Alexa, zurück“): ein Stück zurück – für Hörbücher hilfreicher als ein ganzes Kapitel."""
-    return _seek(services, hi, "rewind")
+    """AMAZON.PreviousIntent („Alexa, zurück“): ein Stück zurück – für Hörbücher hilfreicher als ein ganzes Kapitel.
+    Beim Radio: vorheriger Sender."""
+    return _seek(services, hi, "back")
 
 
 def previous_chapter(services: Services, hi: HandlerInput) -> Response:
@@ -203,6 +240,11 @@ def start_over(services: Services, hi: HandlerInput) -> Response:
 
 
 def whats_playing(services: Services, hi: HandlerInput) -> Response:
+    from superkugel.handlers import radio
+
+    station = radio.current(services, hi, active_only=True)
+    if station is not None:
+        return radio.whats_playing(services, hi, station)
     token, offset = audio_context(hi)
     found = services.audio().position_from_context(uid(hi), token, offset)
     if not found:
