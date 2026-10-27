@@ -1,8 +1,16 @@
 # Projektstatus – Superkugel
 
-**Stand:** 27.10.2026 · **Version 1.2: umgesetzt, automatisiert getestet, lokal committet – nicht gepusht, nicht
-deployt (Change Set liegt zur Freigabe bereit).** Version 1.1 ist bereitgestellt (eu-north-1), Version 1.0 im Alltag
-auf einem Echo Dot 5 in Betrieb; Gerätetests für 1.1 (Prüfpunkte 27–34) und 1.2 (35–48) stehen aus.
+**Stand:** 27.10.2026 · **Version 1.2: bereitgestellt (eu-north-1, Change Set am 27.10.2026 ausgeführt) und live per
+Lambda-Aufruf getestet; lokal committet, nicht gepusht.** Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb;
+Gerätetests für 1.1 (Prüfpunkte 27–34) und 1.2 (35–48) stehen aus.
+
+Gemessen v1.2 (27.10.2026, Testkennung per `aws lambda invoke`, **kein Gerätetest**): stündlicher Abruf inkl.
+Radio-Prüfung 1,8 s (Kaltstart-Init 1,0 s), 3 Quellen, **0 von 4 Sendern tot – ORF-Streams sind aus AWS Stockholm
+erreichbar**; Start 0,32 s; Radio-Start (auch „Spiel Ö eins“ über den Hörbuch-Intent) 0,02 s; Rätsel 0,02 s;
+Erinnerungs-Bestätigung 0,005 s; „ja“ mit ungültigem Token → Berechtigungskarte nach 0,12 s (echter API-Aufruf);
+Wochenbericht an SNS 0,33 s, gesendet. Keine KI-Kosten. Morgengruß live nicht prüfbar (Test nach 11 Uhr) – am
+nächsten Morgen am Gerät prüfen (Prüfpunkt 44). Die Testkennung zählt im ersten Wochenbericht mit (1 Sitzung,
+2 Radio-Starts, 1 Rätselrunde).
 
 ## Version 1.2 (27.10.2026)
 
@@ -53,10 +61,11 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
    Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
 4. Lieblingssendungen eintragen (`podcast add`), Podcast-Index-Schlüssel hinterlegen (`set-podcastindex`),
    OpenAI-Projektlimit 14 $/Monat setzen.
-5. **Version 1.2:** Change Set ausführen, Interaction Model + Reminders-Berechtigung in der Developer Console,
-   Berechtigung in der Alexa-App erteilen, Gerätetests 35–48, Push + Tag `v1.2.0` (alles ✋ Admin).
-6. GitHub: Autor-E-Mail im Web-Editor-Commit `81850c6` ist öffentlich → „Keep my email addresses private“;
-   lokale Zweige `archiv/*` enthalten persönliche Werte → löschen oder nur privat sichern, nie mit `--all` pushen.
+5. **Version 1.2:** Interaction Model + Reminders-Berechtigung in der Developer Console, Berechtigung in der
+   Alexa-App erteilen, Gerätetests 35–48, Push + Tag `v1.2.0` (alles ✋ Admin). Backend ist bereitgestellt.
+6. GitHub: „Keep my email addresses private“ und „Block command line pushes that expose my email“ sind seit
+   27.10.2026 an; die Adresse im bereits öffentlichen Commit `81850c6` bleibt sichtbar (Entfernen nur per
+   Force-Push). Lokale Zweige `archiv/*` gelöscht (waren nie auf GitHub).
 
 ## Entscheidungen (Details: `docs/architektur.md`)
 

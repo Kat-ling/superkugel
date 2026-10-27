@@ -1,6 +1,6 @@
 # Superkugel 1.2 – Erinnerungen, Radio, Morgengruß, Rätsel, Wochenbericht
 
-Stand 27.10.2026 · **Status: umgesetzt und automatisiert getestet, lokal committet, nicht gepusht, nicht deployt.**
+Stand 27.10.2026 · **Status: bereitgestellt (Change Set ausgeführt) und live per Lambda-Aufruf getestet (`PROJECT_STATUS.md`); nicht gepusht.**
 Gerätetests offen (Prüfpunkte 35–48 in `tests/acceptance/ACCEPTANCE_TESTS.md`).
 Auftrag: `docs/prompts/auftrag-erweiterungen-v1.2.md`. Kosten: `docs/kosten.md`. Datenschutz: `docs/datenschutz.md`.
 
@@ -20,7 +20,7 @@ Auftrag: `docs/prompts/auftrag-erweiterungen-v1.2.md`. Kosten: `docs/kosten.md`.
 | EventBridge | Klassische Zeitplan-Regeln: cron **nur in UTC**; EventBridge Scheduler (`ScheduleV2`) kann `ScheduleExpressionTimezone`, legt aber eine eigene IAM-Rolle und einen anderen Dienst an. | [Scheduled rules](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-scheduled-rule-pattern.html), [SAM ScheduleV2](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-schedulev2.html) |
 | ORF-Streams | `https://orf-live.ors-shoutcast.at/<sender>-q2a` – vom ORF selbst veröffentlicht (Ö1-Seite „Ö1 Webradio“). Live geprüft 27.10.2026: Ö1, Ö3, FM4 und alle 9 Regionalradios liefern über HTTPS direkt `206`/`audio/mpeg`, 192 kbit/s, ohne Weiterleitung; HEAD → `200 audio/mpeg`. | [oe1.orf.at „Ö1 Webradio“](https://oe1.orf.at/artikel/583280/Oe1-Webradio) |
 | ORF-Nutzungsbedingungen für Skills | **Nicht gefunden.** Der ORF bietet eigene Alexa-Skills an; ausdrückliche Bedingungen für die Einbindung der Streams in fremde Skills sind nicht veröffentlicht. Bewertung: private, nicht-kommerzielle Nutzung eines öffentlich verlinkten Webradio-Streams im eigenen Haushalt. → **Freigabe durch den Admin** (siehe Freigabeliste); weitere Sender ohne geprüfte Bedingungen wurden **weggelassen**. | Suche ohne Treffer; [der.orf.at Radiothek](https://der.orf.at/unternehmen/aktuell/radiothek102.html) |
-| Geoblocking | ORF-**TV** ist geogeblockt; die Radio-Streams waren aus dem Testnetz erreichbar. Ob sie aus AWS Stockholm (Gesundheitsprüfung) erreichbar sind, ist **offen** → Schutz im Code (siehe Radio). | Testabruf |
+| Geoblocking | ORF-**TV** ist geogeblockt; die Radio-Streams sind aus dem Testnetz **und aus AWS Stockholm** erreichbar (Live-Prüfung 27.10.2026: 0 von 4 tot). Schutz im Code bleibt (alle tot → trotzdem spielen). | Testabruf, Live-Lauf |
 | SNS | E-Mail-Abo am bestehenden Thema `superkugel-alerts`; `sns:Publish` für die Lambda, kein SES. | Template |
 
 ## Entscheidungen

@@ -48,7 +48,7 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 ## Status (27.10.2026)
 
 Version 1.0 im Alltag in Betrieb, Version 1.1 (Tagesaktuelles A+B, Mediatheken) bereitgestellt, Gerätetests offen.
-Version 1.2 (Erinnerungen, Radio, Morgengruß, Rätsel, Wochenbericht) lokal committet, nicht deployt.
+Version 1.2 (Erinnerungen, Radio, Morgengruß, Rätsel, Wochenbericht) bereitgestellt, nicht gepusht, Gerätetests offen.
 Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`, `docs/plan-erweiterungen-v1.2.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.
