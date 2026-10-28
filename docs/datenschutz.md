@@ -19,7 +19,7 @@ Stand 25.10.2026, nach unabhängigem Datenschutz-Review; jede Zeile ist gegen de
 | **Hoster einer Folge** (z. B. Akamai für ARD) | **IP-Adresse des Echo**, Abruf der Audiodatei | beim Abspielen | wie bei jeder Podcast-App unvermeidbar; Tracking-Parameter in Feeds kann der Skill nicht entfernen |
 
 In DynamoDB (seit 1.2, alles pro Gerät pseudonym): Tagesmerker Morgengruß (TTL 2 Tage), Morgengruß an/aus,
-Tageszähler (TTL 45 Tage). Erinnerungen, Radio und Rätsel wurden in 1.3 entfernt; deren Einträge (Sender, Rätsel-IDs, Erinnerungs-Kennungen ohne Text) werden nach dem Update gelöscht bzw. laufen per TTL ab.
+Tageszähler (TTL 45 Tage). Erinnerungen, Radio und Rätsel wurden in 1.3 entfernt; deren Einträge (Sender, Rätsel-IDs, Erinnerungs-Kennungen ohne Text) wurden am 28.10.2026 gelöscht.
 Erinnerungen, die über die Superkugel angelegt wurden, sind normale Alexa-Erinnerungen und bleiben im Amazon-Konto, bis sie erledigt oder gelöscht sind.
 
 ## Technische Maßnahmen

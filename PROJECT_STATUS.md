@@ -43,6 +43,8 @@ Reviews eingearbeitet. Kostenwirkung ≈ 0 (`docs/kosten.md`), neue Datenflüsse
 | Hörbücher | AudioPlayer mit Lesezeichen pro Gerät, Kapitelwechsel, Spulen, Titel-/Genre-Suche mit KI-Rückfall auf die vorhandene Bibliothek |
 | Import | Eingangsordner + stündliche Windows-Aufgabe, eigener IAM-Benutzer mit Minimalrechten, Mail bei Import/Fehler |
 | Tagesaktuelles (1.1) | stündlicher Abruf in AWS (ORF + Wetter), Websuche mit Tageslimit, Lieblingssendungen; freie Mediensuche erst mit Podcast-Index-Schlüssel |
+| Morgengruß, Wochenbericht (1.2) | Morgengruß ohne KI (am Gerät bestätigt), Wochenbericht montags per SNS-Mail, nur Zahlen |
+| Hinweise (1.3) | Erinnerungen, Radio, Rätsel → kurzer Hinweis auf die normale Alexa, Sitzung endet |
 | Schutz | harte Tages-/Monatskostengrenze, Circuit-Breaker, Fernschalter, Prepaid bei OpenAI, Budget-Warnung im Management-Konto |
 
 Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Gesprächsantwort 3,2 s gesamt
@@ -56,7 +58,7 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
 
 ## Tests
 
-- `pytest`: **190 bestanden** (Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
+- `pytest`: **208 bestanden** (Stand 1.3; Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
   gemockter OpenAI-API und moto (DynamoDB/S3/SSM). `ruff`, `cfn-lint --regions eu-north-1`, `pip-audit`: ohne Befund.
 - Zwei unabhängige Reviews (Alexa-Konformität, Wiedergabe, Ausfallsicherheit, Sicherheit, Kosten, Bedienbarkeit,
   Import) – alle berechtigten Befunde behoben und mit Regressionstests abgesichert.

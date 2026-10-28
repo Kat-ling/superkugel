@@ -28,6 +28,11 @@ Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 - **Mediatheken**: Lieblingssendungen über offizielle RSS-Feeds (z. B. ARD-Krimihörspiele) und freie Suche über
   Podcast Index („Such ein Krimihörspiel“ → „die zweite“), mit Lesezeichen pro Folge.
 - **Ratschen ohne Nachfrage**: Nach der Antwort hört Alexa still weiter zu, statt „Noch etwas?“ zu fragen.
+- **Morgengruß**: beim ersten Öffnen am Vormittag Datum, Wetter und zwei Schlagzeilen (ohne Unglücksmeldungen),
+  ohne KI; per Sprache abschaltbar.
+- **Wochenbericht** für den Admin: montags eine Mail mit reinen Zahlen (Nutzung, Kosten, Fehler) – keine Inhalte.
+- **Was die normale Alexa besser kann, bleibt bei Alexa**: Erinnerungen, Radio und Rätsel. Fragt man die Superkugel
+  danach, sagt sie kurz, wie es mit „Alexa, …“ geht, und macht Platz.
 - **Kostenkontrolle**: harte Tages-/Monatsgrenze im Skill, Token-Zählung ohne Inhalte,
   CloudWatch-Alarme, AWS-Budget.
 - **Datenschutz**: keine Gesprächsinhalte in Logs, pseudonyme IDs, `store: false` bei OpenAI,
