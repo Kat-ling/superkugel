@@ -1,7 +1,7 @@
 # Projektstatus – Superkugel
 
-**Stand:** 28.10.2026 · **Version 1.3: lokal committet, nicht bereitgestellt, nicht gepusht.** Version 1.2 läuft
-(eu-north-1, Tag `v1.2.0` auf GitHub). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
+**Stand:** 28.10.2026 · **Version 1.3: bereitgestellt (eu-north-1, Change Set am 28.10.2026 ausgeführt) und live
+per Lambda-Aufruf getestet; lokal committet, nicht gepusht.** Letzter Stand auf GitHub: Tag `v1.2.0`. Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
 ## Version 1.3 (28.10.2026) – doppelte Funktionen entfernt
 
@@ -17,8 +17,12 @@ Radio und Rätsel kann die normale Alexa besser → aus der Superkugel entfernt.
   Metriken `ReminderApiError`/`RadioStationDown` (jetzt 8 eigene Metriken, 9 Alarme).
 - Tests: **208 bestanden** (vorher 315; entfernte Funktionen samt Tests weg, neue Tests für Hinweise und alte
   Radio-Token); `ruff`, `cfn-lint`, `pip-audit` ohne Befund. **Kein Gerätetest** für 1.3 (Prüfpunkte 49–50).
-- Offen (✋ Admin): Deploy, Interaction Model in der Developer Console neu laden, Reminders-Berechtigung dort
-  ausschalten, danach alte DynamoDB-Einträge (Sender, Rätsel, Erinnerungs-Kennungen) löschen.
+- Gemessen 28.10.2026 (Testkennung per `aws lambda invoke`, **kein Gerätetest**): stündlicher Abruf 1,5 s
+  (Kaltstart-Init 0,7 s), 3 Quellen; Start mit Morgengruß 0,33 s; Hinweise (Erinnerung, Radio, „Spiel Ö drei“,
+  Rätsel) 9–27 ms, ohne KI. Alte DynamoDB-Einträge gelöscht (6: Sender, Rätsel-Listen, Erinnerungs-Kennungen,
+  Sender-Prüfung). Alarm `ReminderApiAlarm` entfernt.
+- Offen (✋ Admin): Interaction Model in der Developer Console neu laden, Reminders-Berechtigung dort ausschalten,
+  Gerätetest 49–50, Push.
 
 ## Version 1.2 (27.10.2026) – Erinnerungen, Radio, Rätsel in 1.3 wieder entfernt
 
@@ -69,7 +73,7 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
    Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
 4. Lieblingssendungen eintragen (`podcast add`), Podcast-Index-Schlüssel hinterlegen (`set-podcastindex`),
    OpenAI-Projektlimit 14 $/Monat setzen.
-5. **Version 1.3:** Deploy, Interaction Model neu laden, Reminders-Berechtigung ausschalten, Gerätetest 49–50
+5. **Version 1.3:** Interaction Model neu laden, Reminders-Berechtigung ausschalten, Gerätetest 49–50
    (alles ✋ Admin). Morgengruß (Prüfpunkt 44) am 28.10.2026 bestätigt; Wochenbericht (48) am nächsten Montag.
 6. GitHub: „Keep my email addresses private“ und „Block command line pushes that expose my email“ sind seit
    27.10.2026 an; die Adresse im bereits öffentlichen Commit `81850c6` bleibt sichtbar (Entfernen nur per
