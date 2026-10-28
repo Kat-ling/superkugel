@@ -1,4 +1,4 @@
-"""Wochenbericht an den Admin: nur Zahlen – keine Fragen, Titel, Erinnerungen, Namen oder Orte.
+"""Wochenbericht an den Admin: nur Zahlen – keine Fragen, Titel, Namen oder Orte.
 
 Versand über das bestehende SNS-Alarmthema (E-Mail an den Admin). Ausgelöst montags früh vom Zeitplan;
 der Code sendet nur um 8 Uhr Wiener Zeit und höchstens einmal pro Woche (EventBridge-Regeln rechnen in UTC,
@@ -23,7 +23,7 @@ REPORT_TTL_S = 14 * 86400
 # Einzige Felder, die der Bericht enthalten darf (Test prüft das aktiv).
 ALLOWED_KEYS = {
     "week_from", "week_to", "days", *FIELDS, "chat_requests", "web_searches", "cost_week_usd", "cost_month_usd",
-    "daily_limit_usd", "monthly_limit_usd", "month", "context_age_h", "radio_down", "radio_checked", "new_audiobooks",
+    "daily_limit_usd", "monthly_limit_usd", "month", "context_age_h", "new_audiobooks",
 }
 
 
@@ -47,7 +47,6 @@ def build(store: Store, settings: Settings, now: dt.datetime | None = None,
     now_ts = clock if clock is not None else time.time()
     ctx = store.get_item("CONTEXT", "CURRENT") or {}
     stamps = [float(v["at"]) for k, v in ctx.items() if isinstance(v, dict) and "at" in v]
-    health = store.get_item("RADIO", "HEALTH") or {}
     cutoff = dt.datetime.combine(days[0], dt.time(), tzinfo=local.tzinfo).astimezone(dt.UTC).isoformat()
     new_books = sum(1 for b in store.list_books() if (b.imported_at or "") >= cutoff)
     report = {
@@ -56,7 +55,6 @@ def build(store: Store, settings: Settings, now: dt.datetime | None = None,
         "cost_week_usd": round(cost_micro / 1_000_000, 4), "cost_month_usd": round(month.cost_usd, 4), "month": month_key,
         "daily_limit_usd": settings.daily_cost_limit_usd, "monthly_limit_usd": settings.monthly_cost_limit_usd,
         "context_age_h": round((now_ts - max(stamps)) / 3600, 1) if stamps else None,
-        "radio_down": sorted(str(x) for x in health.get("down") or []), "radio_checked": int(health.get("checked", 0)),
         "new_audiobooks": new_books,
     }
     if not set(report) <= ALLOWED_KEYS:  # Schutz vor versehentlich neuen (inhaltlichen) Feldern
@@ -65,7 +63,7 @@ def build(store: Store, settings: Settings, now: dt.datetime | None = None,
 
 
 def render(r: dict[str, Any]) -> str:
-    """Klartext für die Mail. Nur Zahlen und Sender-Kürzel."""
+    """Klartext für die Mail. Nur Zahlen."""
     lines = [
         f"Superkugel – Wochenbericht {r['week_from']} bis {r['week_to']} (Wiener Zeit)",
         "",
@@ -76,10 +74,8 @@ def render(r: dict[str, Any]) -> str:
         f"  Mediensuchen:                    {r['media_search']}",
         f"  Hörbuch-Starts:                  {r['audiobook']}",
         f"  Sendungs-Starts:                 {r['show']}",
-        f"  Radio-Starts:                    {r['radio']}",
         f"  Morgengrüße:                     {r['morning']}",
-        f"  Rätselrunden:                    {r['quiz']}",
-        f"  Erinnerungen angelegt:           {r['reminder']}",
+        f"  Hinweise „macht Alexa selbst“:   {r['alexa_hint']}",
         "",
         "Kosten (geschätzt, KI inkl. Websuche)",
         f"  Woche: {r['cost_week_usd']:.4f} $   Monat {r['month']}: {r['cost_month_usd']:.4f} $",
@@ -87,15 +83,12 @@ def render(r: dict[str, Any]) -> str:
         "",
         "Betrieb",
         f"  Fehler (abgefangen):             {r['errors']}",
-        f"  Erinnerungs-API-Fehler:          {r['reminder_errors']}",
         f"  Langsame Antworten (> 6,5 s):    {r['slow']}",
         "  Alter der Nachrichten/Wetterdaten: "
         + (f"{r['context_age_h']} h" if r["context_age_h"] is not None else "keine Daten"),
-        "  Radiosender nicht erreichbar:    "
-        + (", ".join(r["radio_down"]) if r["radio_down"] else f"keiner (von {r['radio_checked']})"),
         f"  Neue Hörbücher:                  {r['new_audiobooks']}",
         "",
-        "Inhalte (Fragen, Titel, Erinnerungen) sind bewusst nicht enthalten.",
+        "Inhalte (Fragen, Titel) sind bewusst nicht enthalten.",
     ]
     return "\n".join(lines)
 

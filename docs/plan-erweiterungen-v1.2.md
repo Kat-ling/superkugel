@@ -1,5 +1,9 @@
 # Superkugel 1.2 – Erinnerungen, Radio, Morgengruß, Rätsel, Wochenbericht
 
+> **Hinweis 28.10.2026 (Version 1.3):** Erinnerungen, Radio und Rätsel wurden nach dem Gerätetest wieder entfernt –
+> die normale Alexa kann das besser. Geblieben sind Morgengruß und Wochenbericht. Dieses Dokument beschreibt den
+> Stand von 1.2 (Historie); aktueller Stand: `PROJECT_STATUS.md`.
+
 Stand 27.10.2026 · **Status: bereitgestellt (Change Set ausgeführt) und live per Lambda-Aufruf getestet (`PROJECT_STATUS.md`); nicht gepusht.**
 Gerätetests offen (Prüfpunkte 35–48 in `tests/acceptance/ACCEPTANCE_TESTS.md`).
 Auftrag: `docs/prompts/auftrag-erweiterungen-v1.2.md`. Kosten: `docs/kosten.md`. Datenschutz: `docs/datenschutz.md`.

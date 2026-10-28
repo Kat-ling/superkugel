@@ -27,9 +27,10 @@ Sinn, oder frag kurz nach.
 
 Ehrlichkeit:
 - Du bist eine KI, kein Mensch. Wenn sie fragt, sag das freundlich.
-- Erfinde nichts. Wenn du etwas nicht weißt, sag es. Für Timer, Wecker, Einkaufsliste oder Musik sag, \
-dass das die normale Alexa kann: erst „Alexa, stopp“ sagen, dann zum Beispiel „Alexa, stell einen Wecker“ \
-(in der eingestellten Anrede formulieren).
+- Erfinde nichts. Wenn du etwas nicht weißt, sag es. Für Erinnerungen, Radio, Rätsel, Timer, Wecker, \
+Einkaufsliste oder Musik sag, dass das die normale Alexa kann: erst „Alexa, stopp“ sagen, dann zum Beispiel \
+„Alexa, erinnere mich morgen um zehn an den Arzt“ (in der eingestellten Anrede formulieren). Behaupte nie, \
+selbst eine Erinnerung angelegt oder ein Radio eingeschaltet zu haben.
 - Du erinnerst dich nur an dieses Gespräch. Behaupte keine früheren Erlebnisse.
 - Bei Gesundheit, Medikamenten, Geld oder Recht: allgemein und vorsichtig antworten und auf Arzt, \
 Apotheke oder Vertrauensperson verweisen. Bei einem Notfall: sofort den Notruf 144 oder 112 nennen.
@@ -40,12 +41,7 @@ Hörbücher, Hörspiele, Podcasts:
 play_show mit der show_id. Ist unklar, was gemeint ist, frag kurz nach.
 - Will sie etwas hören, das in keiner Liste steht (zum Beispiel „ein Hörspiel über Schottland“), rufe \
 search_media mit wenigen Suchwörtern auf.
-- Empfehlungen nur aus den Listen; noch nicht gehörte Titel bevorzugen.
-
-Radio und Erinnerungen:
-- Will sie Radio hören, rufe play_radio mit der station_id aus der Senderliste auf. Andere Sender gibt es nicht.
-- Will sie an etwas erinnert werden, rufe set_reminder auf. Die Superkugel fragt selbst nach fehlenden Angaben \
-und lässt sich die Erinnerung bestätigen – versprich nichts selbst."""
+- Empfehlungen nur aus den Listen; noch nicht gehörte Titel bevorzugen."""
 
 CURRENT_RULES = """Aktuelles:
 - Für Nachrichten und Wetter nutze zuerst „Aktuelles“ im Datenteil und nenne beiläufig, woher es stammt \
@@ -101,7 +97,7 @@ ADDRESS = {
 def build_instructions(style: SpeechStyle, books: Iterable[Book], progress: dict[str, Progress],
                        address: str = "sie", now: dt.datetime | None = None, user_name: str = "",
                        shows_block: str = "", context_block: str = "", web_search: bool | None = None,
-                       timezone: str = "Europe/Vienna", radio_block: str = "") -> str:
+                       timezone: str = "Europe/Vienna") -> str:
     local = (now or dt.datetime.now(dt.UTC)).astimezone(ZoneInfo(timezone))
     parts = [
         BASE_PROMPT,
@@ -111,8 +107,6 @@ def build_instructions(style: SpeechStyle, books: Iterable[Book], progress: dict
            if user_name else ""),
         library_block(books, progress),
     ]
-    if radio_block:
-        parts.append(radio_block)
     if context_block:
         parts.append(CURRENT_RULES)
     if web_search is True:
@@ -145,10 +139,6 @@ def _fn(name: str, description: str, prop: str, prop_desc: str) -> dict:
 
 PLAY_TOOL = _fn("play_audiobook", "Startet oder setzt ein Hörbuch aus ihrer Bibliothek fort.", "book_id", "book_id aus der Liste")
 SHOW_TOOL = _fn("play_show", "Spielt die neueste (oder angefangene) Folge einer Lieblingssendung.", "show_id", "show_id aus der Liste")
-RADIO_TOOL = _fn("play_radio", "Startet einen Radiosender (live) aus der Senderliste.", "station_id",
-                 "station_id aus der Senderliste")
-REMINDER_TOOL = _fn("set_reminder", "Legt eine Erinnerung an, wenn sie ausdrücklich darum bittet.", "request",
-                    "ihr Wunsch in ihren eigenen Worten")
 SEARCH_MEDIA_TOOL = _fn("search_media", "Sucht Podcasts/Hörspiele in Mediatheken, wenn nichts Passendes in den Listen steht.",
                         "query", "wenige allgemeine Suchwörter, ohne persönliche Angaben")
 

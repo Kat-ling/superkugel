@@ -30,19 +30,18 @@ AWS: Lambda/DynamoDB/S3-Streaming im Always-Free-Rahmen; S3-Speicher ≈ 0,10 $;
 (≤ 10 sind frei; Metriken werden nur bei Ereignissen geschrieben); Rest Cent-Beträge.
 Podcast-Folgen streamt der Echo direkt beim Anbieter – keine AWS-Kosten.
 
-## Version 1.2 (Erinnerungen, Radio, Morgengruß, Rätsel, Wochenbericht)
+## Version 1.2/1.3 (Morgengruß, Wochenbericht; Erinnerungen, Radio, Rätsel in 1.3 entfernt)
 
 | Posten | Wirkung | Kosten |
 |---|---|---|
-| Erinnerungen, Radio, Morgengruß, Rätsel | **ohne KI-Aufruf** (deterministisch); Radio streamt der Echo direkt beim ORF | 0 $ |
-| Zwei neue KI-Werkzeuge (`play_radio`, `set_reminder`) + Senderliste im Prompt | ≈ 150 Eingabe-Tokens mehr pro Gesprächsfrage, meist aus dem Prompt-Cache | ≈ 0,000015 $/Frage ungecacht, ≈ 0,05 $/Monat bei 100 Fragen/Tag |
-| „Erklär mir das“ im Rätsel | normale Gesprächsfrage, innerhalb der bestehenden Tages-/Monatsgrenzen | ≈ 0,0002 $ |
-| DynamoDB: Tageszähler, Tagesmerker, Rätsel-Liste | ≈ 1–3 zusätzliche Schreibzugriffe pro Sitzung | Always-Free (25 WCU) |
-| Stündliche Radio-Prüfung (4 HEAD-Anfragen, ≈ 0,3 s) im bestehenden Abruf | – | Always-Free |
+| Morgengruß, Hinweise auf Alexa | **ohne KI-Aufruf** (deterministisch) | 0 $ |
+| DynamoDB: Tageszähler, Tagesmerker | ≈ 1–2 zusätzliche Schreibzugriffe pro Sitzung | Always-Free (25 WCU) |
 | Wochenbericht: 1 EventBridge-Regel (2 Auslösungen/Woche), 1 SNS-Mail | – | frei (SNS: 1.000 Mails/Monat frei) |
-| CloudWatch: 3 neue Metriken → **10 gesamt**, 2 neue Alarme → 10 Alarme | Metriken nur bei Ereignissen | frei (10 Metriken, 10 Alarme) |
+| CloudWatch: **8 eigene Metriken**, 9 Alarme | Metriken nur bei Ereignissen | frei (10 Metriken, 10 Alarme) |
 
-**Wirkung auf die Vorgabe: praktisch null** – die Grenzen (≤ 1 $/Tag, ≤ 15 $/Monat) bleiben unverändert und hart.
+Durch 1.3 entfallen die zwei KI-Werkzeuge (`play_radio`, `set_reminder`) samt Senderliste im Prompt
+(≈ 150 Eingabe-Tokens weniger pro Gesprächsfrage) und die stündliche Radio-Prüfung.
+**Die Grenzen (≤ 1 $/Tag, ≤ 15 $/Monat) bleiben unverändert und hart.**
 
 ## Grenzen (Sperren vs. Warnungen)
 

@@ -44,7 +44,6 @@ class Services:
     clock: Callable[[], float] = time.monotonic
     _audio: AudiobookService | None = field(default=None, repr=False)
     media_client_factory: Callable[[str, str], Any] | None = None  # Podcast-Index-Client (Tests: Fake)
-    reminder_transport: Any = None  # Tests: gefälschte Reminders-API (sonst urllib)
     now: Callable[[], dt.datetime] = field(default=lambda: dt.datetime.now(dt.UTC))  # Wanduhr (Tests: fest)
 
     @property
@@ -97,11 +96,6 @@ def slot(handler_input: HandlerInput, name: str) -> str:
 
 def session_attrs(handler_input: HandlerInput) -> dict[str, Any]:
     return handler_input.attributes_manager.session_attributes
-
-
-def has_session(handler_input: HandlerInput) -> bool:
-    """Außerhalb einer Sitzung („Alexa, weiter“ beim Hören) gibt es keine Sitzungsattribute."""
-    return handler_input.request_envelope.session is not None
 
 
 def audio_context(handler_input: HandlerInput) -> tuple[str | None, int | None]:

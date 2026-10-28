@@ -78,15 +78,6 @@ def on_controller(services: Services, hi: HandlerInput) -> Response:
         return hi.response_builder.response
     if services.params.mode() is Mode.MAINTENANCE:
         return hi.response_builder.response
-    from superkugel.handlers import radio
-
-    station = radio.current(services, hi)
-    if station is not None:  # Radio: Play = live neu starten, Vor/Zurück = Senderwechsel
-        if kind == "PlaybackController.NextCommandIssued":
-            station = radio.neighbour(services, station, 1)
-        elif kind == "PlaybackController.PreviousCommandIssued":
-            station = radio.neighbour(services, station, -1)
-        return hi.response_builder.add_directive(radio.directive_for(station)).response
     found = audio.position_from_context(user, token, offset)
     if not found:
         return hi.response_builder.response

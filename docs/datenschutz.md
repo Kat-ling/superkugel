@@ -15,16 +15,12 @@ Stand 25.10.2026, nach unabhängigem Datenschutz-Review; jede Zeile ist gegen de
 | **ORF (rss.orf.at)** | nichts Personenbezogenes (Abruf aus AWS) | stündlich | – |
 | **Open-Meteo** | Koordinaten des Wohnorts, 2 Nachkommastellen (≈ 1 km) | stündlich, aus AWS | keine Nutzerkennung |
 | **Podcast-Anbieter** (Lieblingsliste) | nichts (Feed-Abruf aus AWS); beim Hinzufügen per `podcast add` einmalig vom Admin-PC (Admin-IP) | stündlich | – |
-| **Amazon – Erinnerungen** (v1.2) | Erinnerungstext + Zeitpunkt + Zeitzone, über die Reminders API mit dem Token der laufenden Sitzung | nur nach ausdrücklichem „ja“ | gespeichert im **Amazon-Konto des Admins** (Kontomodell) und dort in der Alexa-App sichtbar; erledigte 3 Tage, dann von Amazon gelöscht. **Nicht** in DynamoDB, **nicht** in Logs, **nicht** an OpenAI – außer die Erinnerung entstand im KI-Gespräch (dann kennt OpenAI den Satz ohnehin als Gesprächsfrage). Während des Dialogs steht der Entwurf nur in den Sitzungsattributen der Alexa-Sitzung. |
-| **ORF-Radio-Streams** (v1.2) | **IP-Adresse des Echo**, Abruf des Live-Streams (`orf-live.ors-shoutcast.at`) | beim Radiohören | wie bei jedem Webradio; stündliche Erreichbarkeitsprüfung (HEAD) aus AWS ohne Personenbezug |
-| **Wochenbericht** (v1.2) | nur Zahlen (Anzahl Sitzungen, Fragen, Suchen, Starts, Fehler, Kosten, Datenalter, Sender-Kürzel ohne Verbindung, Anzahl neuer Hörbücher) | montags 8 Uhr per SNS-E-Mail an den Admin | keine Fragen, Titel, Erinnerungen, Namen, Orte – ein Test prüft das aktiv. Tageszähler in DynamoDB 45 Tage (TTL). |
+| **Wochenbericht** (v1.2) | nur Zahlen (Anzahl Sitzungen, Fragen, Suchen, Starts, Fehler, Kosten, Datenalter, Anzahl neuer Hörbücher) | montags 8 Uhr per SNS-E-Mail an den Admin | keine Fragen, Titel, Namen, Orte – ein Test prüft das aktiv. Tageszähler in DynamoDB 45 Tage (TTL). |
 | **Hoster einer Folge** (z. B. Akamai für ARD) | **IP-Adresse des Echo**, Abruf der Audiodatei | beim Abspielen | wie bei jeder Podcast-App unvermeidbar; Tracking-Parameter in Feeds kann der Skill nicht entfernen |
 
-Neu in DynamoDB (v1.2, alles pro Gerät pseudonym): Tagesmerker Morgengruß/Rätsel-Zähler (TTL 2 Tage),
-Morgengruß an/aus, IDs der zuletzt gestellten Rätsel mit Datum (TTL 8 Tage, keine Antworten), zuletzt gehörter
-Radiosender (TTL 30 Tage), Kennungen (alertToken) der an diesem Gerät angelegten Erinnerungen – **ohne Text**
-(TTL 400 Tage, damit Liste/Löschen nur die eigenen zeigt), Erreichbarkeit der Sender, Tageszähler (TTL 45 Tage). Rätselfragen und -antworten bleiben in der Sitzung;
-nur „Erklär mir das“ schickt Frage + Lösung des Rätsels (keine persönlichen Daten) an OpenAI.
+In DynamoDB (seit 1.2, alles pro Gerät pseudonym): Tagesmerker Morgengruß (TTL 2 Tage), Morgengruß an/aus,
+Tageszähler (TTL 45 Tage). Erinnerungen, Radio und Rätsel wurden in 1.3 entfernt; deren Einträge (Sender, Rätsel-IDs, Erinnerungs-Kennungen ohne Text) werden nach dem Update gelöscht bzw. laufen per TTL ab.
+Erinnerungen, die über die Superkugel angelegt wurden, sind normale Alexa-Erinnerungen und bleiben im Amazon-Konto, bis sie erledigt oder gelöscht sind.
 
 ## Technische Maßnahmen
 

@@ -31,13 +31,11 @@ TEXTS: dict[str, tuple[str, str]] = {
     "nothing_said": ("Ich hab noch nichts gesagt. Worüber magst du ratschen?",
                      "Ich hab noch nichts gesagt. Worüber möchten Sie ratschen?"),
     "help": ("Du kannst einfach mit mir ratschen, zum Beispiel: Sag mal, was koch ich heute? "
-             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Radio: Spiel Radio Kärnten. "
-             "Ich kann dich auch erinnern: Erinner mich morgen um zehn an den Arzt. "
-             "Oder wir machen ein Rätsel: Mach ein Rätsel mit mir. Zum Aufhören sag: Stopp.",
+             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Neuigkeiten: Was gibt's Neues? "
+             "Zum Aufhören sag: Stopp.",
              "Sie können einfach mit mir ratschen, zum Beispiel: Sag mal, was koch ich heute? "
-             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Radio: Spiel Radio Kärnten. "
-             "Ich kann Sie auch erinnern: Erinnere mich morgen um zehn an den Arzt. "
-             "Oder wir machen ein Rätsel: Mach ein Rätsel mit mir. Zum Aufhören sagen Sie: Stopp."),
+             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Neuigkeiten: Was gibt's Neues? "
+             "Zum Aufhören sagen Sie: Stopp."),
     "help_q": ("Was magst du machen?", "Was möchten Sie machen?"),
     "forgotten": ("Erledigt, ich hab unser Gespräch vergessen. Worüber magst du ratschen?",
                   "Erledigt, ich hab unser Gespräch vergessen. Worüber möchten Sie ratschen?"),
@@ -84,49 +82,18 @@ TEXTS: dict[str, tuple[str, str]] = {
                      "Das hat jetzt zu lang gedauert. Sagen Sie bitte nochmal: Such {query}."),
     "search_cancelled": ("Gut, dann nicht.",) * 2,
     "search_choose": ("Sag einfach die Nummer, zum Beispiel: die erste.", "Sagen Sie einfach die Nummer, zum Beispiel: die erste."),
-    # Erinnerungen
-    "reminder_what": ("Woran soll ich dich erinnern? Sag zum Beispiel: an den Arzt.",
-                      "Woran soll ich Sie erinnern? Sagen Sie zum Beispiel: an den Arzt."),
-    "reminder_when": ("Wann soll ich dich erinnern? Sag zum Beispiel: morgen um zehn.",
-                      "Wann soll ich Sie erinnern? Sagen Sie zum Beispiel: morgen um zehn."),
-    "reminder_confirm": ("Ich erinner dich {when} an: {what}. Passt das?",
-                         "Ich erinnere Sie {when} an: {what}. Passt das?"),
-    "reminder_confirm_q": ("Passt das? Sag einfach ja oder nein.", "Passt das? Sagen Sie einfach ja oder nein."),
-    "reminder_done": ("Erledigt. Ich erinner dich {when}.", "Erledigt. Ich erinnere Sie {when}."),
-    "reminder_cancelled": ("Gut, dann nicht.",) * 2,
-    "reminder_past": ("Die Zeit ist schon vorbei. Sag mir bitte eine Zeit, die noch kommt, zum Beispiel: morgen um zehn.",
-                      "Die Zeit ist schon vorbei. Sagen Sie mir bitte eine Zeit, die noch kommt, zum Beispiel: morgen um zehn."),
-    "reminder_repeat": ("Wiederkehrende Erinnerungen kann ich noch nicht, nur einzelne. Sag zum Beispiel: "
-                        "Erinner mich morgen um acht an die Tabletten.",
-                        "Wiederkehrende Erinnerungen kann ich noch nicht, nur einzelne. Sagen Sie zum Beispiel: "
-                        "Erinnere mich morgen um acht an die Tabletten."),
-    "reminder_permission": ("Dafür fehlt noch die Erlaubnis für Erinnerungen. Schau bitte in die Alexa-App, "
-                            "oder sag der Familie Bescheid, die richtet das ein.",
-                            "Dafür fehlt noch die Erlaubnis für Erinnerungen. Schauen Sie bitte in die Alexa-App, "
-                            "oder sagen Sie der Familie Bescheid, die richtet das ein."),
-    "reminder_failed": ("Die Erinnerung hat gerade nicht geklappt. Probier's bitte später nochmal.",
-                        "Die Erinnerung hat gerade nicht geklappt. Bitte später nochmal probieren."),
-    "reminder_limit": ("Es sind schon sehr viele Erinnerungen gespeichert. Lösch bitte zuerst eine alte.",
-                       "Es sind schon sehr viele Erinnerungen gespeichert. Bitte zuerst eine alte löschen."),
-    "reminder_unsupported": ("Erinnerungen gehen auf diesem Gerät leider nicht.",) * 2,
-    "reminder_none": ("Du hast gerade keine Erinnerungen von mir.", "Sie haben gerade keine Erinnerungen von mir."),
-    "reminder_list": ("Deine Erinnerungen: {listing}.", "Ihre Erinnerungen: {listing}."),
-    "reminder_list_more": ("Und noch {count} weitere.",) * 2,
-    "reminder_delete_which": ("Welche soll ich löschen? Sag zum Beispiel: die erste.",
-                              "Welche soll ich löschen? Sagen Sie zum Beispiel: die erste."),
-    "reminder_delete_confirm": ("Soll ich die Erinnerung {when} an {what} löschen?",) * 2,
-    "reminder_deleted": ("Erledigt, die Erinnerung ist gelöscht.",) * 2,
-    # Radio
-    "radio_start": ("Gern, {name}.",) * 2,
-    "radio_which": ("Welchen Sender magst du hören? Ich hab {listing}.",
-                    "Welchen Sender möchten Sie hören? Ich habe {listing}."),
-    "radio_unknown": ("Den Sender hab ich leider nicht. Ich hab {listing}.",
-                      "Den Sender habe ich leider nicht. Ich habe {listing}."),
-    "radio_list": ("Ich kann diese Sender spielen: {listing}.",) * 2,
-    "radio_down": ("{name} ist gerade leider nicht erreichbar. Probier's später nochmal.",
-                   "{name} ist gerade leider nicht erreichbar. Bitte später nochmal probieren."),
-    "radio_no_seek": ("Beim Radio geht das nicht, das läuft ja live.",) * 2,
-    "radio_whats": ("Das ist {name}, live.",) * 2,
+    # Erinnerungen, Radio, Rätsel macht Alexa selbst (Sitzung endet danach)
+    "hint_reminder": ("Erinnerungen macht Alexa selbst am besten. Ich mach dir Platz – sag dann einfach: "
+                      "Alexa, erinnere mich morgen um zehn an den Arzt.",
+                      "Erinnerungen macht Alexa selbst am besten. Ich mache Ihnen Platz – sagen Sie dann einfach: "
+                      "Alexa, erinnere mich morgen um zehn an den Arzt."),
+    "hint_radio": ("Radio spielt Alexa selbst am besten. Ich mach dir Platz – sag dann einfach: Alexa, spiel Ö3.",
+                   "Radio spielt Alexa selbst am besten. Ich mache Ihnen Platz – sagen Sie dann einfach: "
+                   "Alexa, spiel Ö3."),
+    "hint_quiz": ("Rätsel macht Alexa selbst am besten. Ich mach dir Platz – sag dann einfach: "
+                  "Alexa, stell mir ein Rätsel.",
+                  "Rätsel macht Alexa selbst am besten. Ich mache Ihnen Platz – sagen Sie dann einfach: "
+                  "Alexa, stell mir ein Rätsel."),
     # Morgengruß
     "morning_hello": ("Guten Morgen{n}!",) * 2,
     "morning_date": ("Heute ist {weekday}, der {day}. {month}.",) * 2,
@@ -138,20 +105,6 @@ TEXTS: dict[str, tuple[str, str]] = {
                     "Gut, ab morgen lasse ich den Morgengruß weg. Wenn Sie ihn wieder möchten, sagen Sie: "
                     "Mach den Morgengruß wieder."),
     "morning_on": ("Gern, ab morgen gibt's wieder einen Morgengruß.",) * 2,
-    # Rätsel
-    "quiz_intro": ("Gern, machen wir ein Rätsel. Wenn du genug hast, sag einfach: genug.",
-                   "Gern, machen wir ein Rätsel. Wenn Sie genug haben, sagen Sie einfach: genug."),
-    "quiz_right_1": ("Genau, richtig!",) * 2,
-    "quiz_right_2": ("Sehr gut, das stimmt!",) * 2,
-    "quiz_right_3": ("Bravo, richtig!",) * 2,
-    "quiz_again": ("Hm, nicht ganz. Ein kleiner Tipp: {hint} Probier's ruhig nochmal.",
-                   "Hm, nicht ganz. Ein kleiner Tipp: {hint} Probieren Sie es ruhig nochmal."),
-    "quiz_solution": ("Das war knifflig. Die Antwort ist: {answer}.",) * 2,
-    "quiz_next": ("Nächstes Rätsel:",) * 2,
-    "quiz_end": ("Danke fürs Mitraten! Du hast heute {count} gewusst.", "Danke fürs Mitraten! Sie haben heute {count} gewusst."),
-    "quiz_end_plain": ("Danke fürs Mitraten, das hat mir Spaß gemacht!",) * 2,
-    "quiz_empty": ("Für heute hab ich alle Rätsel schon gestellt. Morgen gibt's neue.",) * 2,
-    "quiz_say_answer": ("Sag einfach deine Antwort, oder: weiß nicht.", "Sagen Sie einfach Ihre Antwort, oder: weiß nicht."),
 }
 
 

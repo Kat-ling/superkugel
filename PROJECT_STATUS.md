@@ -1,18 +1,26 @@
 # Projektstatus – Superkugel
 
-**Stand:** 27.10.2026 · **Version 1.2: bereitgestellt (eu-north-1, Change Set am 27.10.2026 ausgeführt) und live per
-Lambda-Aufruf getestet; lokal committet, nicht gepusht.** Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb;
-Gerätetests für 1.1 (Prüfpunkte 27–34) und 1.2 (35–48) stehen aus.
+**Stand:** 28.10.2026 · **Version 1.3: lokal committet, nicht bereitgestellt, nicht gepusht.** Version 1.2 läuft
+(eu-north-1, Tag `v1.2.0` auf GitHub). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
-Gemessen v1.2 (27.10.2026, Testkennung per `aws lambda invoke`, **kein Gerätetest**): stündlicher Abruf inkl.
-Radio-Prüfung 1,8 s (Kaltstart-Init 1,0 s), 3 Quellen, **0 von 4 Sendern tot – ORF-Streams sind aus AWS Stockholm
-erreichbar**; Start 0,32 s; Radio-Start (auch „Spiel Ö eins“ über den Hörbuch-Intent) 0,02 s; Rätsel 0,02 s;
-Erinnerungs-Bestätigung 0,005 s; „ja“ mit ungültigem Token → Berechtigungskarte nach 0,12 s (echter API-Aufruf);
-Wochenbericht an SNS 0,33 s, gesendet. Keine KI-Kosten. Morgengruß live nicht prüfbar (Test nach 11 Uhr) – am
-nächsten Morgen am Gerät prüfen (Prüfpunkt 44). Die Testkennung zählt im ersten Wochenbericht mit (1 Sitzung,
-2 Radio-Starts, 1 Rätselrunde).
+## Version 1.3 (28.10.2026) – doppelte Funktionen entfernt
 
-## Version 1.2 (27.10.2026)
+Gerätetest des Admins (27./28.10.2026): Erinnerungen, Radio und Senderwechsel liefen, **Morgengruß funktioniert**;
+die Rätsel waren zu leicht und freie Antworten wurden schlecht erkannt. Entscheidung des Admins: Erinnerungen,
+Radio und Rätsel kann die normale Alexa besser → aus der Superkugel entfernt.
+
+- Sagt sie in der Superkugel „erinner mich …“, „spiel Ö3“ oder „mach ein Rätsel“, kommt ein kurzer Hinweis
+  („Sag dann einfach: Alexa, …“) und die Superkugel schließt sich – ohne KI, damit nichts versprochen wird.
+- Geblieben: Gespräch, Hörbücher, Import, Tagesaktuelles, Mediatheken, Morgengruß, Wochenbericht, Schutz.
+- Entfernt: Reminders-API und Berechtigung, ORF-Streams und stündliche Sender-Prüfung, 78 Rätsel; 7 Intents,
+  Slot-Typen `RADIO_STATION`/`QUIZ_ANSWER`, KI-Werkzeuge `play_radio`/`set_reminder`, Alarm `ReminderApiAlarm`,
+  Metriken `ReminderApiError`/`RadioStationDown` (jetzt 8 eigene Metriken, 9 Alarme).
+- Tests: **208 bestanden** (vorher 315; entfernte Funktionen samt Tests weg, neue Tests für Hinweise und alte
+  Radio-Token); `ruff`, `cfn-lint`, `pip-audit` ohne Befund. **Kein Gerätetest** für 1.3 (Prüfpunkte 49–50).
+- Offen (✋ Admin): Deploy, Interaction Model in der Developer Console neu laden, Reminders-Berechtigung dort
+  ausschalten, danach alte DynamoDB-Einträge (Sender, Rätsel, Erinnerungs-Kennungen) löschen.
+
+## Version 1.2 (27.10.2026) – Erinnerungen, Radio, Rätsel in 1.3 wieder entfernt
 
 Erinnerungen (Alexa Reminders API, immer mit Bestätigung), Radio live (ORF: Ö1, Ö3, FM4, Regionalradio),
 Morgengruß ohne KI, Rätsel & Gedächtnistraining (78 Einträge + erzeugte Rechnungen), Wochenbericht an den Admin
@@ -61,8 +69,8 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
    Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
 4. Lieblingssendungen eintragen (`podcast add`), Podcast-Index-Schlüssel hinterlegen (`set-podcastindex`),
    OpenAI-Projektlimit 14 $/Monat setzen.
-5. **Version 1.2:** Interaction Model + Reminders-Berechtigung in der Developer Console, Berechtigung in der
-   Alexa-App erteilen, Gerätetests 35–48, Push + Tag `v1.2.0` (alles ✋ Admin). Backend ist bereitgestellt.
+5. **Version 1.3:** Deploy, Interaction Model neu laden, Reminders-Berechtigung ausschalten, Gerätetest 49–50
+   (alles ✋ Admin). Morgengruß (Prüfpunkt 44) am 28.10.2026 bestätigt; Wochenbericht (48) am nächsten Montag.
 6. GitHub: „Keep my email addresses private“ und „Block command line pushes that expose my email“ sind seit
    27.10.2026 an; die Adresse im bereits öffentlichen Commit `81850c6` bleibt sichtbar (Entfernen nur per
    Force-Push). Lokale Zweige `archiv/*` gelöscht (waren nie auf GitHub).

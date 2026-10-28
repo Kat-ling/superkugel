@@ -47,18 +47,21 @@ Du musst dir nie merken, wo du warst. Das macht die Superkugel.
 - Im Gespräch kannst du auch nach Neuigkeiten fragen: „Was gibt's Neues in Kärnten?“ oder
   „Wie wird das Wetter morgen?“ – manchmal schaut sie kurz im Internet nach, dann dauert es ein paar Sekunden.
 
-## Radio, Erinnerungen, Rätsel und Morgengruß
+## Morgengruß
 
-- **„Alexa, sag Superkugel, spiel Radio Kärnten.“** – auch Ö1, Ö3 und FM4. „Alexa, Pause“ hält an,
-  „Alexa, weiter“ schaltet wieder ein, „Alexa, nächstes“ wechselt den Sender.
-- **„Alexa, sag Superkugel, erinner mich morgen um zehn an den Arzt.“** – sie wiederholt Tag und Uhrzeit und
-  fragt „Passt das?“. Erst nach deinem **„Ja“** wird die Erinnerung gespeichert. „Welche Erinnerungen hab ich?“
-  und „Lösch eine Erinnerung“ gehen auch. Wichtig: Für Medikamente bitte zusätzlich die gewohnte Erinnerung
-  behalten – die Superkugel ist eine Hilfe, keine Garantie.
-- **„Alexa, sag Superkugel, mach ein Rätsel mit mir.“** – Sprichwörter, kleine Fragen, leichte Rechnungen.
-  Kein Druck: „weiß nicht“ ist erlaubt. Aufhören mit **„genug“**.
-- **Morgengruß:** Wenn du die Superkugel am Vormittag zum ersten Mal öffnest, sagt sie Datum, Wetter und zwei
-  Nachrichten. Magst du das nicht: „Lass den Morgengruß weg.“
+- Wenn du die Superkugel am Vormittag zum ersten Mal öffnest, sagt sie Datum, Wetter und zwei Nachrichten.
+  Magst du das nicht: „Lass den Morgengruß weg.“ Wieder einschalten: „Mach den Morgengruß wieder.“
+
+## Radio, Erinnerungen und Rätsel – das macht Alexa selbst
+
+Dafür brauchst du die Superkugel nicht. Sag es direkt zu Alexa:
+
+- **„Alexa, spiel Ö3.“** (oder Radio Kärnten, Ö1, FM4)
+- **„Alexa, erinnere mich morgen um zehn an den Arzt.“**
+- **„Alexa, stell mir ein Rätsel.“**
+
+Sagst du so etwas, während die Superkugel offen ist, erklärt sie es kurz und schließt sich. Dann einfach
+gleich nochmal mit „Alexa, …“ sagen.
 
 ## Neue Hörbücher
 

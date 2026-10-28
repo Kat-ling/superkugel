@@ -15,8 +15,6 @@ from superkugel.conversation.history import History
 from superkugel.conversation.llm import LlmError, LlmReply
 from superkugel.conversation.prompt import (
     PLAY_TOOL,
-    RADIO_TOOL,
-    REMINDER_TOOL,
     SEARCH_MEDIA_TOOL,
     SHOW_TOOL,
     build_instructions,
@@ -125,17 +123,13 @@ def _call_llm(services: Services, hi: HandlerInput, user: str, history: History,
         tools.append(SHOW_TOOL)
     if services.params.podcast_index_credentials():
         tools.append(SEARCH_MEDIA_TOOL)
-    tools += [RADIO_TOOL, REMINDER_TOOL]
     if searches_left > 0:
         tools.append(web_search_tool(s.user_region, s.timezone))
-    from superkugel.radio import stations
-
     instructions = build_instructions(
         services.style, books, progress, address=s.address_form,
         user_name=s.user_name if s.share_name_with_ai else "",
         shows_block="\n".join(media.iter_shows_prompt(shows)), context_block=context,
         web_search=searches_left > 0 if s.web_search_enabled else None, timezone=s.timezone,
-        radio_block=stations.prompt_block(s),
     )
     client = services.llm_factory(key)
     messages = history.as_input(text)
@@ -235,19 +229,6 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
             if show:
                 return media_handlers.play_show(services, hi, show)
             log("tool_unknown_show")
-        elif call.name == "play_radio":
-            from superkugel.handlers import radio
-            from superkugel.radio import stations
-
-            station = stations.by_id(str(call.arguments.get("station_id", "")), s)
-            if station:
-                return radio.play(services, hi, station)
-            log("tool_unknown_station")
-        elif call.name == "set_reminder":
-            from superkugel.handlers import reminders
-
-            # Ausgewertet wird immer der Satz der Nutzerin (deterministisch), nicht eine Umformulierung des Modells
-            return reminders.start_text(services, hi, text)
         elif call.name == "search_media":
             from superkugel.handlers import media as media_handlers
 
@@ -296,22 +277,9 @@ def _offer_audiobook(services: Services, hi: HandlerInput, lead: str) -> Respons
     return keep_open(services, hi, f"{lead} {services.t('resume_q')}", services.t("resume_q"))
 
 
-def route_pending(services: Services, hi: HandlerInput, text: str, started: float) -> Response | None:
-    """Freier Satz während eines laufenden Dialogs (Erinnerung, Rätsel). None = normal weiter."""
-    from superkugel.handlers import quiz, reminders
-
-    resp = reminders.continue_text(services, hi, text)
-    if resp is None:
-        resp = quiz.answer(services, hi, text, started)
-    return resp
-
-
 def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> Response:
     intent = get_intent_name(hi)
     text = reconstruct(intent, slot(hi, "query"))
-    routed = route_pending(services, hi, text, started)
-    if routed is not None:
-        return routed
     if session_attrs(hi).get("pending") == "choose_media":
         # „die erste“ kann bei ChatDieIntent landen → zuerst als Auswahl versuchen
         from superkugel.handlers import media as media_handlers
@@ -325,16 +293,6 @@ def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> 
 
 def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response:
     attrs = session_attrs(hi)
-    if attrs.get("pending") == "quiz":  # „ja“ ist keine Rätselantwort → kein Fehlversuch
-        return keep_open(services, hi, services.t("quiz_say_answer"), services.t("quiz_say_answer"))
-    if attrs.get("pending") in ("reminder_confirm", "reminder_delete_confirm"):
-        routed = route_pending(services, hi, "ja", started)
-        if routed is not None:
-            return routed
-    reask = {"reminder_text": "reminder_what", "reminder_time": "reminder_when",
-             "reminder_delete_choose": "reminder_delete_which"}.get(str(attrs.get("pending", "")))
-    if reask:  # „ja“ beantwortet die offene Frage nicht → nochmal fragen
-        return keep_open(services, hi, services.t(reask), services.t(reask))
     pending = attrs.pop("pending", None)
     if pending == "choose_media":
         attrs["pending"] = pending  # „ja“ ist keine Auswahl → weiter auf Nummer warten
@@ -352,12 +310,6 @@ def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response
 
 def handle_no(services: Services, hi: HandlerInput, started: float) -> Response:
     attrs = session_attrs(hi)
-    if str(attrs.get("pending", "")).startswith("reminder_"):
-        from superkugel.handlers import reminders
-
-        return reminders.cancel(services, hi)  # „nein“ in jedem Erinnerungsschritt = abbrechen
-    if attrs.get("pending") == "quiz":
-        return keep_open(services, hi, services.t("quiz_say_answer"), services.t("quiz_say_answer"))
     pending = attrs.pop("pending", None)
     if pending == "choose_media":
         attrs.pop("media_hits", None)  # „nein“ bei der Auswahl = abbrechen
@@ -376,13 +328,6 @@ def handle_start_chat(services: Services, hi: HandlerInput) -> Response:
 
 def handle_fallback(services: Services, hi: HandlerInput) -> Response:
     attrs = session_attrs(hi)
-    pending = str(attrs.get("pending", ""))
-    if pending == "quiz":  # unverständliche Antwort: nicht als „nicht verstanden“ zählen, einfach nochmal
-        return keep_open(services, hi, services.t("quiz_say_answer"), services.t("quiz_say_answer"))
-    if pending in ("reminder_text", "reminder_time", "reminder_confirm"):
-        from superkugel.handlers import reminders
-
-        return reminders.retry_or_give_up(services, hi)  # einmal nachfragen, dann aufgeben (keine Schleife)
     attrs["misunderstood"] = int(attrs.get("misunderstood", 0)) + 1
     # Geduldig: erst nach mehreren Versuchen verabschieden; dazwischen Tipps statt Abbruch.
     if attrs["misunderstood"] >= services.settings.misunderstood_limit:

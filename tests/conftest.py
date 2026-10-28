@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import sys
 import uuid
@@ -163,6 +164,8 @@ def make_harness(settings: Settings | None = None, clock: Callable[[], float] | 
         llm_factory=lambda key: OpenAIClient(key, settings.openai_model, transport=openai),
         progressive=lambda hi, ssml: progressive.append(ssml),
         clock=clock or _t.monotonic,
+        # Feste Wanduhr am Nachmittag: sonst begrüßt der Morgengruß (5–11 Uhr) je nach Uhrzeit des Testlaufs anders
+        now=lambda: dt.datetime(2026, 10, 24, 15, 0, tzinfo=dt.UTC),
     )
     return Harness(services, store, openai, signer, params, progressive)
 

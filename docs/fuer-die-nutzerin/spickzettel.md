@@ -15,19 +15,15 @@
 ## 4. Ein Stück zurück
 ### „Alexa, zurück.“
 
-## 5. Radio
-### „Alexa, sag Superkugel, spiel Radio Kärnten.“
-Auch: Ö1, Ö3, FM4. Anhalten: „Alexa, Pause.“
+## 5. Morgengruß aus- oder einschalten
+### „Lass den Morgengruß weg.“ – „Mach den Morgengruß wieder.“
 
-## 6. Erinnern lassen
-### „Alexa, sag Superkugel, erinner mich morgen um zehn an den Arzt.“
-Sie fragt nach: „Passt das?“ – dann „Ja“.
+## 6. Radio, Erinnerungen, Rätsel – direkt zu Alexa
+### „Alexa, spiel Ö3.“
+### „Alexa, erinnere mich morgen um zehn an den Arzt.“
+### „Alexa, stell mir ein Rätsel.“
 
-## 7. Rätseln
-### „Alexa, sag Superkugel, mach ein Rätsel mit mir.“
-Aufhören: „Genug.“
-
-## 8. Nochmal hören – oder unterbrechen
+## 7. Nochmal hören – oder unterbrechen
 ### „Wie bitte?“ – „Alexa, stopp.“
 Redet sie zu lang? Einfach „Alexa“ sagen – sie hört sofort auf und hört zu.
 

@@ -52,22 +52,6 @@ def open_url(url: str, timeout: float, headers: dict[str, str] | None = None) ->
     return _OPENER.open(req, timeout=timeout)
 
 
-def probe(url: str, timeout: float) -> tuple[int, str]:
-    """Erreichbarkeit prüfen, ohne Inhalt zu laden (HEAD): (Status, Content-Type)."""
-    check_url(url)
-    req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": UA})  # noqa: S310 - geprüft
-    try:
-        with _OPENER.open(req, timeout=timeout) as resp:
-            return int(resp.status), str(resp.headers.get("Content-Type", ""))
-    except urllib.error.HTTPError as exc:
-        if exc.code not in (400, 405, 501):
-            raise
-    # Server ohne HEAD: kurzer GET, Inhalt wird nicht gelesen
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Range": "bytes=0-0"})  # noqa: S310 - geprüft
-    with _OPENER.open(req, timeout=timeout) as resp:
-        return int(resp.status), str(resp.headers.get("Content-Type", ""))
-
-
 def get_bytes(url: str, timeout: float, max_bytes: int, headers: dict[str, str] | None = None) -> bytes:
     with open_url(url, timeout, headers) as resp:
         data: bytes = resp.read(max_bytes + 1)

@@ -40,28 +40,22 @@ flowchart LR
 | `audiobooks/` | Datenmodell, Titelsuche, Wiedergabelogik (rein), Service, S3-Signierung, Importer, Eingangsordner |
 | `speech/` | SSML (Escaping, Stimme, Tempo, Pausen, Längenlimit), Regionalstile |
 | `services/` | Speicher (DynamoDB/In-Memory), Betriebsmodus & Secrets, Kosten & Limits, Logs/Metriken, Tageszähler (`stats.py`), Wochenbericht (`report.py`) |
-| `reminders/`, `handlers/reminders.py` (v1.2) | Deutscher Zeitparser (Wiener Zeit), Reminders-API-Client (stdlib, 3 s), Dialog mit Bestätigung, Auflisten/Löschen |
-| `radio/`, `handlers/radio.py` (v1.2) | ORF-Senderliste, Synonyme, stündliche HEAD-Prüfung, AudioPlayer mit Token `radio-…` |
 | `features/morning.py`, `handlers/morning.py` (v1.2) | Morgengruß aus dem CONTEXT-Eintrag, Wortfilter, Tagesmerker, Ein/Aus |
-| `quiz/`, `handlers/quiz.py` (v1.2) | Rätselsammlung, tolerante Prüfung, Auswahl ohne Wiederholung binnen 7 Tagen |
-| `language.py` (v1.2) | Zahlwörter und Normalisierung (gemeinsam für Erinnerungen und Rätsel) |
+| `handlers/alexa_hints.py` (v1.3) | Erinnerungen, Radio, Rätsel: kurzer Hinweis auf die normale Alexa, Sitzung endet (ohne KI) |
+| `language.py` | Normalisierung, Wochentags- und Monatsnamen |
 
-## v1.2 – Datenflüsse und Dialoge
+## Morgengruß, Wochenbericht, Hinweise auf Alexa
 
 ```mermaid
 flowchart LR
-    E[Echo] -- „Erinner mich …“ --> L[Lambda]
-    L -- Bestätigung „Passt das?“ --> E
-    L -- nach „ja“: POST /v1/alerts/reminders, 3 s --> R[(Amazon Reminders<br/>Konto des Admins)]
-    L -- Play radio-ktn --> E -- HTTPS-Stream --> O[(ORF Shoutcast)]
-    EB[EventBridge stündlich] --> L -- HEAD je Sender --> O
+    E[Echo] -- erstes Öffnen 5–11 Uhr --> L[Lambda] -- Morgengruß aus CONTEXT, ohne KI --> E
+    E -- „Erinner mich …“ / „Spiel Ö3“ / „Rätsel“ --> L -- Hinweis „Alexa, …“, Sitzung endet --> E
     EB2[EventBridge Mo 6+7 UTC] --> L -- nur 8 Uhr Wien, 1×/Woche --> SNS[SNS-Mail an Admin]
 ```
 
-Dialogzustände liegen nur in den Sitzungsattributen (`pending` = `reminder_text` | `reminder_time` |
-`reminder_confirm` | `reminder_delete_choose` | `reminder_delete_confirm` | `quiz`). Freie Sätze, „ja“/„nein“,
-Zahlen (`ChooseResultIntent`) und `QuizAnswerIntent` gehen zuerst an den laufenden Dialog
-(`conversation.route_pending`), sonst wie bisher ins Gespräch.
+Erinnerungen, Radio und Rätsel (1.2) wurden in 1.3 entfernt, weil die normale Alexa sie besser kann. Ihre Intents
+bleiben im Interaction Model, damit solche Sätze nicht bei der KI landen (die sonst eine Erinnerung versprechen
+könnte). „Spiel …“ mit einem Sendernamen bekommt den Radio-Hinweis erst, wenn kein Hörbuch und keine Sendung passt.
 
 ## Zustände Gespräch ↔ Hörbuch
 

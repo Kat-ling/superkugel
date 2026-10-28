@@ -409,21 +409,6 @@ Resources:
       TreatMissingData: notBreaching
       AlarmActions: [!Ref AlertTopic]
 
-  ReminderApiAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: superkugel-erinnerungen-fehler
-      AlarmDescription: Die Alexa-Erinnerungs-API ist wiederholt fehlgeschlagen (nicht wegen fehlender Berechtigung)
-      Namespace: Superkugel
-      MetricName: ReminderApiError
-      Statistic: Sum
-      Period: 86400
-      EvaluationPeriods: 1
-      Threshold: 3
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      TreatMissingData: notBreaching
-      AlarmActions: [!Ref AlertTopic]
-
   WeeklyReportAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:

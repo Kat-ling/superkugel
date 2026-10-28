@@ -22,26 +22,20 @@
 Alarm-Mails: Tageskosten > 0,60 $, ≥ 3 langsame Antworten (> 6,5 s) pro Stunde, Vorname in einer Websuche,
 wiederholte Abruffehler (Nachrichten/Wetter/Feeds).
 
-## Version 1.2: Erinnerungen, Radio, Morgengruß, Wochenbericht
+## Morgengruß und Wochenbericht (seit 1.2)
 
-**Erinnerungs-Berechtigung erteilen (einmalig, ✋ Admin):**
-1. Developer Console → Skill „Superkugel“ → Build → **Permissions** → „Reminders“ einschalten (steht auch in
-   `skill-package/skill.json` unter `permissions`) → Interaction Model neu bauen.
-2. Alexa-App (Konto des Admins) → Mehr → Skills & Spiele → Ihre Skills → Entwicklung → **Superkugel** →
-   Einstellungen → **Berechtigungen verwalten** → „Erinnerungen“ erlauben.
-3. Fehlt die Berechtigung, sagt die Superkugel „Dafür fehlt noch die Erlaubnis …“ und schickt eine Karte in die
-   Alexa-App. Die Erinnerungen erscheinen in der Alexa-App des Admins (Kontomodell).
+Erinnerungen, Radio und Rätsel wurden in **1.3 entfernt** – die normale Alexa kann das besser. Die Superkugel
+antwortet auf solche Sätze nur mit einem kurzen Hinweis („Sag dann einfach: Alexa, …“) und schließt sich.
+Die Erinnerungs-Berechtigung wird nicht mehr gebraucht (Developer Console → Build → Permissions → „Reminders“ aus).
 
 | Aufgabe | Befehl / Ort |
 |---|---|
-| Radiosender pflegen | `src/superkugel/radio/stations.py` (`NATIONAL`, `REGIONAL`), dann Interaction Model neu erzeugen, Tests, Deploy. Nur offizielle HTTPS-Streams. |
-| Tote Sender | Wochenbericht („Radiosender nicht erreichbar“), Log `radio_health`; Adresse im Browser prüfen |
 | Morgengruß global aus | `MorningBriefing=false` in `infra/samconfig.toml`, Deploy. Pro Gerät per Sprache: „Lass den Morgengruß weg“ / „Mach den Morgengruß wieder“ |
 | Wochenbericht aus | `WeeklyReport=DISABLED` in `infra/samconfig.toml`, Deploy |
 | Wochenbericht jetzt ansehen | `superkugel_admin.py report` (liest nur, sendet nichts) |
 | Wochenbericht jetzt senden | `aws lambda invoke --function-name superkugel-skill --payload '{"superkugel":"weekly_report","force":true}' --cli-binary-format raw-in-base64-out out.json --profile superkugel-admin` |
 
-Neue Alarm-Mails: Erinnerungs-API ≥ 3 Fehler/Tag (nicht wegen fehlender Berechtigung), Wochenbericht fehlgeschlagen.
+Alarm-Mail bei fehlgeschlagenem Wochenbericht.
 
 ## Betriebsmodus (Fernschalter)
 

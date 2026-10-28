@@ -12,8 +12,7 @@ import re
 from typing import Any
 
 from superkugel.config import Settings
-from superkugel.language import plain
-from superkugel.reminders.parse import MONTH_NAMES, WEEKDAY_NAMES
+from superkugel.language import MONTH_NAMES, WEEKDAY_NAMES, plain
 from superkugel.services.logs import log
 from superkugel.services.storage import Store
 
