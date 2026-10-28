@@ -1,7 +1,7 @@
 # Projektstatus – Superkugel
 
 **Stand:** 28.10.2026 · **Version 1.3: bereitgestellt (eu-north-1, Change Set am 28.10.2026 ausgeführt) und live
-per Lambda-Aufruf getestet; lokal committet, nicht gepusht.** Letzter Stand auf GitHub: Tag `v1.2.0`. Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
+per Lambda-Aufruf getestet, Interaction Model neu geladen, auf GitHub (Tag `v1.3.0`).** Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
 ## Version 1.3 (28.10.2026) – doppelte Funktionen entfernt
 
@@ -21,8 +21,8 @@ Radio und Rätsel kann die normale Alexa besser → aus der Superkugel entfernt.
   (Kaltstart-Init 0,7 s), 3 Quellen; Start mit Morgengruß 0,33 s; Hinweise (Erinnerung, Radio, „Spiel Ö drei“,
   Rätsel) 9–27 ms, ohne KI. Alte DynamoDB-Einträge gelöscht (6: Sender, Rätsel-Listen, Erinnerungs-Kennungen,
   Sender-Prüfung). Alarm `ReminderApiAlarm` entfernt.
-- Offen (✋ Admin): Interaction Model in der Developer Console neu laden, Reminders-Berechtigung dort ausschalten,
-  Gerätetest 49–50, Push.
+- Developer Console (Admin, 28.10.2026): Interaction Model neu geladen, Reminders-Berechtigung ausgeschaltet.
+- Offen: Gerätetest 49–50.
 
 ## Version 1.2 (27.10.2026) – Erinnerungen, Radio, Rätsel in 1.3 wieder entfernt
 
@@ -73,8 +73,7 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
    Wohnort und Einverständnis der Nutzerin liegen vor (nur lokal in `infra/samconfig.toml`).
 4. Lieblingssendungen eintragen (`podcast add`), Podcast-Index-Schlüssel hinterlegen (`set-podcastindex`),
    OpenAI-Projektlimit 14 $/Monat setzen.
-5. **Version 1.3:** Interaction Model neu laden, Reminders-Berechtigung ausschalten, Gerätetest 49–50
-   (alles ✋ Admin). Morgengruß (Prüfpunkt 44) am 28.10.2026 bestätigt; Wochenbericht (48) am nächsten Montag.
+5. **Version 1.3:** Gerätetest 49–50 (✋ Admin); Console-Schritte erledigt. Morgengruß (Prüfpunkt 44) am 28.10.2026 bestätigt; Wochenbericht (48) am nächsten Montag.
 6. GitHub: „Keep my email addresses private“ und „Block command line pushes that expose my email“ sind seit
    27.10.2026 an; die Adresse im bereits öffentlichen Commit `81850c6` bleibt sichtbar (Entfernen nur per
    Force-Push). Lokale Zweige `archiv/*` gelöscht (waren nie auf GitHub).
