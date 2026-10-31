@@ -50,6 +50,12 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 46–47 | Rätsel (1.2) | – | – | – | **in 1.3 entfernt** – macht Alexa selbst; ersetzt durch Prüfpunkt 49 |
 | 48 | Wochenbericht | ✅ | ⏳ | `test_report_contains_only_numbers`, `test_report_due_once_per_week_and_only_at_eight`, `test_run_weekly_report_error_path` | Montag 8 Uhr Mail im Postfach des Admins, nur Zahlen |
 | 49 | Hinweis „macht Alexa selbst“ (1.3) | ✅ | ⏳ | `test_reminder_radio_quiz_get_alexa_hint_without_ai_and_end_session`, `test_spiel_station_name_gives_radio_hint_but_books_and_shows_win` | In der Superkugel: „erinner mich morgen um zehn an den Arzt“, „spiel Ö3“, „mach ein Rätsel“ → jeweils kurzer Hinweis, Superkugel schließt sich; danach direkt „Alexa, …“ sagen → Alexa erledigt es |
+| 51 | Nächster Bus / nächster Zug (1.4) | ✅ | ⏳ | `test_bare_intents_and_package_loaded_once`, `test_departures_last_and_flex` | „…wann fährt der nächste Bus?“, „…nächster Zug“ → Zeiten stimmen mit dem Aushang/der ÖBB-App überein |
+| 52 | Verbindung mit Umstieg (1.4) | ✅ | ⏳ | `test_free_sentence_via_carrier_without_ai`, `test_journey_with_change_and_latest_departure` | „…wie komm ich nach Klagenfurt?“ und ein Ziel in Tirol → mit der ÖBB-App vergleichen (Abfahrt, Umstiege, Ankunft) |
+| 53 | Uhrzeit, Tag, letzte Verbindung (1.4) | ✅ | ⏳ | `test_parse_times`, `test_calendar_exceptions_sunday_and_overnight` | „…morgen um halb neun nach …“, „…wann geht der letzte Bus heim?“ |
+| 54 | „Und danach?“ (1.4) | ✅ | ⏳ | `test_follow_up_gives_next_connection` | direkt nach einer Auskunft „und danach?“ → nächste Möglichkeit |
+| 55 | Indirekte Frage über die KI (1.4) | ✅ | ⏳ | `test_ai_tool_fahrplan_answers_from_timetable` | „Sag mal, ich will morgen nach … fahren, wann soll ich los?“ → Auskunft aus dem Fahrplan, keine erfundenen Zeiten |
+| 56 | Erkennung mit ihrer Stimme (1.4) | – | ⏳ | – | Ortsnamen im Dialekt; nicht erkannte Namen notieren (ggf. Alias in `TransitAliases`) |
 | 50 | Laufendes Hörbuch nach dem Update | ✅ | ⏳ | `test_old_radio_token_on_device_does_not_break_book_commands` | „…spiel meinen Krimi weiter“, Pause, Weiter → gleiche Stelle wie vorher |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,

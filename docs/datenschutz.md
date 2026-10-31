@@ -22,6 +22,12 @@ In DynamoDB (seit 1.2, alles pro Gerät pseudonym): Tagesmerker Morgengruß (TTL
 Tageszähler (TTL 45 Tage). Erinnerungen, Radio und Rätsel wurden in 1.3 entfernt; deren Einträge (Sender, Rätsel-IDs, Erinnerungs-Kennungen ohne Text) wurden am 28.10.2026 gelöscht.
 Erinnerungen, die über die Superkugel angelegt wurden, sind normale Alexa-Erinnerungen und bleiben im Amazon-Konto, bis sie erledigt oder gelöscht sind.
 
+**Fahrplan (1.4):** Die Auskunft läuft vollständig in AWS aus einem vorab importierten Paket (S3) – zur Laufzeit
+gehen keine Anfragen an Verkehrsunternehmen. Heimat-Haltestelle, Heimatbahnhof und Ziel-Aliase (Wohnortbezug,
+Wohnort von Angehörigen) stehen nur in den lokal ignorierten Dateien `infra/samconfig.toml`/`.env` und als
+Umgebungsvariable der Lambda – nie im Repository, in Tests oder in Logs. Gefragte Orte bleiben nur in der
+Sitzung („und danach?“); ins Log kommen Art und Dauer der Auskunft, in den Wochenbericht nur die Anzahl.
+
 ## Technische Maßnahmen
 
 - **Logs**: nur Ereignisnamen, Zahlen und das Pseudonym – nie Fragen, Antworten, Titel, Suchbegriffe, Ort, Name.

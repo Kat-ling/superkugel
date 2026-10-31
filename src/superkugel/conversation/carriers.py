@@ -31,6 +31,8 @@ CARRIERS: tuple[str, ...] = (
     "bei uns", "im garten", "meine tochter", "mein sohn", "mein enkel", "meine enkelin",
     # v1.2: Antworten auf „Woran soll ich dich erinnern?“ / „Wann?“
     "an", "ans", "daran", "dass", "übermorgen",
+    # v1.4: Fahrplanfragen ohne Fragewort („fährt heute noch ein Zug …“, „nächster Bus nach …“)
+    "fährt", "geht", "kommt", "nächster", "nächste", "letzter", "letzte", "zug", "bus", "fahrplan", "verbindung",
 )
 
 

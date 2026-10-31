@@ -1,7 +1,34 @@
 # Projektstatus – Superkugel
 
-**Stand:** 28.10.2026 · **Version 1.3: bereitgestellt (eu-north-1, Change Set am 28.10.2026 ausgeführt) und live
-per Lambda-Aufruf getestet, Interaction Model neu geladen, auf GitHub (Tag `v1.3.0`).** Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
+**Stand:** 31.10.2026 · **Version 1.4 (Fahrplanauskunft): bereitgestellt (Change Set am 31.10.2026 ausgeführt),
+Fahrplan importiert (gültig bis 12.12.2026), live per Lambda-Aufruf getestet, auf GitHub (Tag `v1.4.0`).** Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
+
+## Version 1.4 (31.10.2026) – Fahrplanauskunft Bus und Zug
+
+Züge in ganz Österreich (ÖBB, WESTbahn u. a.), Kärntner Linien inkl. Rufbus-Zonen und Verkehrsverbund Tirol –
+aus den GTFS-Sollfahrplänen der Mobilitätsverbünde Österreich. Ohne KI, ohne Echtzeit (keine Verspätungen).
+
+- **Fragen:** „Wann fährt der nächste Bus?“, „… der nächste Zug nach Klagenfurt?“, „Wie komm ich morgen um halb
+  neun nach …?“, „Wann geht der letzte Bus von … heim?“, „und danach?“. Freie Sätze laufen über die Trägerwörter
+  und werden vor der KI erkannt; kurze Befehle („nächster Bus“, „letzter Zug“) haben eigene Intents; indirekte
+  Fragen erkennt die KI und ruft das Werkzeug `fahrplan` auf – die Zeiten rechnet immer der Code.
+- **Technik:** `superkugel_admin.py fahrplan import <ZIPs>` baut am PC ein Paket (15 MB, 3,1 Mio. Teilstrecken,
+  12 069 Haltestellenbereiche, 59 Rufbus-Zonen) und lädt es nach S3; die Lambda lädt es einmal pro Container und
+  sucht per Connection-Scan (vorwärts: früheste Ankunft, rückwärts: späteste Abfahrt). Umsteigezeit 5 Minuten,
+  Fußwege bis 400 m großzügig gerechnet. Lambda-Speicher 1769 MB (= 1 vCPU).
+- **Gemessen am Admin-PC (31.10.2026, echte Daten, kein Gerätetest):** Paket laden 0,3–0,9 s; Abfahrten 0,15 s;
+  kurze Verbindungen 0,2–0,4 s; Heimat-Haltestelle → Ziel in Tirol (4 Fahrten, 3 Umstiege) 1,4–1,9 s.
+- **Grenzen:** Daten gelten bis **12.12.2026** (Fahrplanwechsel) – danach neu herunterladen und importieren
+  (Wochenbericht warnt 3 Wochen vorher). Rufbus-Gebiete als Fläche (GeoJSON, z. B. GO-Mobil) werden nicht
+  ausgewertet; ein Rufbus in den Daten verkehrt laut Kalender nur an einem Tag (Datenlage, nicht korrigiert).
+- **Datenschutz:** Heimat-Haltestelle, Heimatbahnhof und Ziel-Aliase nur in `infra/samconfig.toml`/`.env`
+  (ignoriert); ins Log kommen nur Art und Dauer einer Auskunft, keine Orte.
+- Tests: **231 bestanden** (neu: erfundener Testfahrplan in `tests/transit_fixture.py`); `ruff`, `cfn-lint`,
+  `pip-audit` ohne Befund. **Kein Gerätetest** (Prüfpunkte 51–56).
+- **Gemessen in AWS (31.10.2026, Testkennung per `aws lambda invoke`, kein Gerätetest):** Kaltstart + Paket laden +
+  „nächster Bus“ 1,6 s (Init 0,7 s); Zug nach Klagenfurt 0,41 s; Verbindung nach Tirol (5 Fahrten) 0,85 s;
+  „und danach?“ 0,79 s; letzte Verbindung heim 0,22 s; letzter Zug 0,06 s; unbekannter Ort 0,04 s. Keine KI-Kosten.
+- Offen (✋ Admin): Interaction Model in der Developer Console neu laden (falls noch nicht geschehen), Gerätetest 51–56.
 
 ## Version 1.3 (28.10.2026) – doppelte Funktionen entfernt
 
@@ -45,6 +72,7 @@ Reviews eingearbeitet. Kostenwirkung ≈ 0 (`docs/kosten.md`), neue Datenflüsse
 | Tagesaktuelles (1.1) | stündlicher Abruf in AWS (ORF + Wetter), Websuche mit Tageslimit, Lieblingssendungen; freie Mediensuche erst mit Podcast-Index-Schlüssel |
 | Morgengruß, Wochenbericht (1.2) | Morgengruß ohne KI (am Gerät bestätigt), Wochenbericht montags per SNS-Mail, nur Zahlen |
 | Hinweise (1.3) | Erinnerungen, Radio, Rätsel → kurzer Hinweis auf die normale Alexa, Sitzung endet |
+| Fahrplan (1.4) | Züge Österreich, Kärntner Linien inkl. Rufbus, VVT Tirol – Abfahrten, Verbindungen, letzte Verbindung (nicht bereitgestellt) |
 | Schutz | harte Tages-/Monatskostengrenze, Circuit-Breaker, Fernschalter, Prepaid bei OpenAI, Budget-Warnung im Management-Konto |
 
 Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Gesprächsantwort 3,2 s gesamt
@@ -58,7 +86,7 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
 
 ## Tests
 
-- `pytest`: **208 bestanden** (Stand 1.3; Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
+- `pytest`: **231 bestanden** (Stand 1.4; Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
   gemockter OpenAI-API und moto (DynamoDB/S3/SSM). `ruff`, `cfn-lint --regions eu-north-1`, `pip-audit`: ohne Befund.
 - Zwei unabhängige Reviews (Alexa-Konformität, Wiedergabe, Ausfallsicherheit, Sicherheit, Kosten, Bedienbarkeit,
   Import) – alle berechtigten Befunde behoben und mit Regressionstests abgesichert.

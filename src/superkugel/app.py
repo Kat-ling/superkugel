@@ -19,7 +19,7 @@ from ask_sdk_model.services.directive import Header, SendDirectiveRequest, Speak
 from superkugel.audiobooks.hosting import S3UrlSigner
 from superkugel.config import Settings
 from superkugel.conversation.llm import OpenAIClient
-from superkugel.handlers import alexa_hints, audio, conversation, morning, playback
+from superkugel.handlers import alexa_hints, audio, conversation, morning, playback, transit
 from superkugel.handlers import media as media_handlers
 from superkugel.handlers.common import Services, end_with
 from superkugel.services.logs import hash_user, log, metric
@@ -131,6 +131,8 @@ def build_skill(services: Services) -> Any:
         (_intent("RemindMeIntent", "ReminderIntent"), alexa_hints.reminder),
         (_intent("PlayRadioIntent"), alexa_hints.radio),
         (_intent("StartQuizIntent"), alexa_hints.quiz),
+        # Fahrplan (Sätze mit Ort kommen über die Trägerwörter ins Gespräch und werden dort erkannt)
+        (_intent(*transit.BARE), transit.bare_intent),
         # Morgengruß
         (_intent("MorningOffIntent"), morning.turn_off),
         (_intent("MorningOnIntent"), morning.turn_on),

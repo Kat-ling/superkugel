@@ -43,6 +43,16 @@ Durch 1.3 entfallen die zwei KI-Werkzeuge (`play_radio`, `set_reminder`) samt Se
 (≈ 150 Eingabe-Tokens weniger pro Gesprächsfrage) und die stündliche Radio-Prüfung.
 **Die Grenzen (≤ 1 $/Tag, ≤ 15 $/Monat) bleiben unverändert und hart.**
 
+## Version 1.4 (Fahrplan)
+
+| Posten | Wirkung | Kosten |
+|---|---|---|
+| Auskunft | **ohne KI-Aufruf**; indirekte Fragen kosten nur die übliche Gesprächsfrage (+ ≈ 150 Tokens Werkzeugbeschreibung, meist aus dem Prompt-Cache) | ≈ 0 $ |
+| Lambda-Speicher 512 → 1769 MB (1 vCPU für die Verbindungssuche) | ≈ 3.000–6.000 GB-s/Monat (stündlicher Abruf + Fragen) | im Always-Free-Rahmen (400.000 GB-s/Monat) |
+| S3: Fahrplanpaket 15 MB, Abruf aus derselben Region | – | < 0,01 $/Monat |
+
+**Die Grenzen (≤ 1 $/Tag, ≤ 15 $/Monat) bleiben unverändert und hart.**
+
 ## Grenzen (Sperren vs. Warnungen)
 
 | Mechanismus | Wert | Art | Wirkung |

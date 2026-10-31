@@ -23,7 +23,8 @@ REPORT_TTL_S = 14 * 86400
 # Einzige Felder, die der Bericht enthalten darf (Test prüft das aktiv).
 ALLOWED_KEYS = {
     "week_from", "week_to", "days", *FIELDS, "chat_requests", "web_searches", "cost_week_usd", "cost_month_usd",
-    "daily_limit_usd", "monthly_limit_usd", "month", "context_age_h", "new_audiobooks",
+    "daily_limit_usd", "monthly_limit_usd", "month", "context_age_h", "new_audiobooks", "timetable_end",
+    "timetable_days_left",
 }
 
 
@@ -56,10 +57,19 @@ def build(store: Store, settings: Settings, now: dt.datetime | None = None,
         "daily_limit_usd": settings.daily_cost_limit_usd, "monthly_limit_usd": settings.monthly_cost_limit_usd,
         "context_age_h": round((now_ts - max(stamps)) / 3600, 1) if stamps else None,
         "new_audiobooks": new_books,
+        **_timetable(store, local.date()),
     }
     if not set(report) <= ALLOWED_KEYS:  # Schutz vor versehentlich neuen (inhaltlichen) Feldern
         raise ValueError("unerlaubtes Berichtsfeld")
     return report
+
+
+def _timetable(store: Store, today: dt.date) -> dict[str, Any]:
+    """Bis wann der importierte Fahrplan gilt (Fahrplanwechsel jedes Jahr im Dezember)."""
+    end = str((store.get_item("TRANSIT", "CURRENT") or {}).get("end", ""))
+    if not end:
+        return {"timetable_end": None, "timetable_days_left": None}
+    return {"timetable_end": end, "timetable_days_left": (dt.date.fromisoformat(end) - today).days}
 
 
 def render(r: dict[str, Any]) -> str:
@@ -76,6 +86,7 @@ def render(r: dict[str, Any]) -> str:
         f"  Sendungs-Starts:                 {r['show']}",
         f"  Morgengrüße:                     {r['morning']}",
         f"  Hinweise „macht Alexa selbst“:   {r['alexa_hint']}",
+        f"  Fahrplanauskünfte:               {r['transit']}",
         "",
         "Kosten (geschätzt, KI inkl. Websuche)",
         f"  Woche: {r['cost_week_usd']:.4f} $   Monat {r['month']}: {r['cost_month_usd']:.4f} $",
@@ -87,6 +98,9 @@ def render(r: dict[str, Any]) -> str:
         "  Alter der Nachrichten/Wetterdaten: "
         + (f"{r['context_age_h']} h" if r["context_age_h"] is not None else "keine Daten"),
         f"  Neue Hörbücher:                  {r['new_audiobooks']}",
+        "  Fahrplan gültig bis:             " + (r["timetable_end"] or "kein Fahrplan importiert")
+        + (f"  ⚠ in {r['timetable_days_left']} Tagen neue Daten importieren (superkugel_admin.py fahrplan import)"
+           if r["timetable_days_left"] is not None and r["timetable_days_left"] <= 21 else ""),
         "",
         "Inhalte (Fragen, Titel) sind bewusst nicht enthalten.",
     ]

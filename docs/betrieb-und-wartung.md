@@ -37,6 +37,22 @@ Die Erinnerungs-Berechtigung wird nicht mehr gebraucht (Developer Console → Bu
 
 Alarm-Mail bei fehlgeschlagenem Wochenbericht.
 
+## Fahrplan (seit 1.4)
+
+Quelle: GTFS-Downloads der Mobilitätsverbünde Österreich (Registrierung nötig). Gebraucht werden die Pakete
+**evu** (Züge Österreich), **flex_kaerntnerlinien** (enthält den normalen Kärntner Fahrplan plus Rufbus) und
+**vvt** (Tirol); das normale Kärntner Paket schadet nicht (doppelte Fahrten werden erkannt).
+
+| Aufgabe | Befehl / Ort |
+|---|---|
+| Neuen Fahrplan einspielen (jährlich vor dem Fahrplanwechsel Mitte Dezember) | ZIPs herunterladen, dann `superkugel_admin.py fahrplan import <ZIP> <ZIP> …` (1–2 Minuten; lädt nach S3, setzt `TRANSIT/CURRENT`; die Lambda lädt binnen 10 Minuten das neue Paket) |
+| Stand ansehen | `superkugel_admin.py fahrplan status` (gültig von/bis) |
+| Frage am PC ausprobieren | `superkugel_admin.py fahrplan import … --dry-run` (baut nur lokal), dann `superkugel_admin.py fahrplan frage "wann fährt der nächste Zug nach Graz" --datei <Paket>` |
+| Heimat-Haltestelle/-bahnhof, Ziel-Aliase | `HomeStop`, `HomeStation`, `TransitAliases` in `infra/samconfig.toml` (Haltestellen-ID ohne Steig, z. B. `at:42:1234`; Alias `name=at:…;name2=at:…`), Deploy |
+| Ort wird falsch erkannt | Alias in `TransitAliases` ergänzen (z. B. Wohnort von Angehörigen), Deploy |
+
+Der Wochenbericht nennt „Fahrplan gültig bis“ und warnt 3 Wochen vor Ablauf.
+
 ## Betriebsmodus (Fernschalter)
 
 ```bash

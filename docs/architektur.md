@@ -41,6 +41,7 @@ flowchart LR
 | `speech/` | SSML (Escaping, Stimme, Tempo, Pausen, Längenlimit), Regionalstile |
 | `services/` | Speicher (DynamoDB/In-Memory), Betriebsmodus & Secrets, Kosten & Limits, Logs/Metriken, Tageszähler (`stats.py`), Wochenbericht (`report.py`) |
 | `features/morning.py`, `handlers/morning.py` (v1.2) | Morgengruß aus dem CONTEXT-Eintrag, Wortfilter, Tagesmerker, Ein/Aus |
+| `transit/`, `handlers/transit.py` (v1.4) | Fahrplan: GTFS → Paket (`build.py`, am PC), Verbindungssuche (`timetable.py`), Haltestellen (`places.py`), Satzverständnis (`ask.py`), Ansagen (`service.py`) |
 | `handlers/alexa_hints.py` (v1.3) | Erinnerungen, Radio, Rätsel: kurzer Hinweis auf die normale Alexa, Sitzung endet (ohne KI) |
 | `language.py` | Normalisierung, Wochentags- und Monatsnamen |
 
@@ -56,6 +57,22 @@ flowchart LR
 Erinnerungen, Radio und Rätsel (1.2) wurden in 1.3 entfernt, weil die normale Alexa sie besser kann. Ihre Intents
 bleiben im Interaction Model, damit solche Sätze nicht bei der KI landen (die sonst eine Erinnerung versprechen
 könnte). „Spiel …“ mit einem Sendernamen bekommt den Radio-Hinweis erst, wenn kein Hörbuch und keine Sendung passt.
+
+## Fahrplan (v1.4)
+
+```mermaid
+flowchart LR
+    PC[Admin-PC: GTFS-ZIPs] -- fahrplan import --> S3[(S3 transit/…zip)] & D[(DynamoDB TRANSIT/CURRENT)]
+    E[Echo] -- „Wann fährt …“ --> L[Lambda] -- 1×/Container --> S3
+    L -- Ansage aus dem Fahrplan --> E
+    L -. nur indirekte Fragen .-> O[(OpenAI: Werkzeug fahrplan)]
+```
+
+Knoten sind Haltestellenbereiche (österreichische ID ohne Steig) – dieselbe ID in allen Verbünden, deshalb passen
+Bus, Zug und Tirol ohne Zuordnungstabelle zusammen. Suche: Connection-Scan vorwärts (früheste Ankunft) und
+rückwärts (späteste Abfahrt für diese Ankunft), Fußwege bis 400 m, 5 Minuten Umsteigezeit, Suchellipse um Start und
+Ziel. Erkennung: Sätze mit Ort kommen über die Trägerwörter (`wann`, `wie`, `nächster`, `zug` …) und werden vor
+der KI erkannt; kurze Befehle haben eigene Intents.
 
 ## Zustände Gespräch ↔ Hörbuch
 

@@ -99,7 +99,7 @@ def test_report_contains_only_numbers() -> None:
     assert r["web_searches"] == 1 and r["new_audiobooks"] == 1 and r["context_age_h"] == 2.0
     assert set(r) <= report.ALLOWED_KEYS
     for k, v in r.items():
-        assert isinstance(v, int | float | type(None)) or k in ("week_from", "week_to", "month"), k
+        assert isinstance(v, int | float | type(None)) or k in ("week_from", "week_to", "month", "timetable_end"), k
     text = report.render(r)
     for word in FORBIDDEN:
         assert word not in text and word not in json.dumps(r, ensure_ascii=False), word

@@ -132,6 +132,21 @@ EXTRA_INTENTS = [
         "lass uns rätseln", "stell mir ein rätsel", "gib mir ein rätsel", "ich will rätseln", "rätseln",
         "noch ein rätsel",
     ]},
+    # v1.4 Fahrplan: nur kurze Befehle ohne Ort – Sätze mit Ort laufen über die Trägerwörter („wann“, „nächster“ …)
+    {"name": "TransitNextBusIntent", "slots": [], "samples": [
+        "nächster bus", "der nächste bus", "wann fährt der nächste bus", "wann kommt der nächste bus",
+        "wann fährt mein bus", "wann kommt der bus", "wann fährt der bus", "busfahrplan", "wann geht der nächste bus",
+    ]},
+    {"name": "TransitNextTrainIntent", "slots": [], "samples": [
+        "nächster zug", "der nächste zug", "wann fährt der nächste zug", "wann fährt ein zug", "wann geht der nächste zug",
+        "zugfahrplan", "wann fährt der zug",
+    ]},
+    {"name": "TransitLastBusIntent", "slots": [], "samples": [
+        "letzter bus", "der letzte bus", "wann fährt der letzte bus", "wann geht der letzte bus",
+    ]},
+    {"name": "TransitLastTrainIntent", "slots": [], "samples": [
+        "letzter zug", "der letzte zug", "wann fährt der letzte zug", "wann geht der letzte zug",
+    ]},
     {"name": "MorningOffIntent", "slots": [], "samples": [
         "lass den morgengruß weg", "kein morgengruß mehr", "morgengruß aus", "ich will keinen morgengruß",
         "schalt den morgengruß aus", "keinen morgengruß",

@@ -10,6 +10,9 @@ Beispiele:
   python scripts/superkugel_admin.py usage
   python scripts/superkugel_admin.py report                # Wochenbericht (nur Zahlen) lokal anzeigen
   python scripts/superkugel_admin.py reset-progress <book_id>
+  python scripts/superkugel_admin.py fahrplan import D:/gtfs/*.zip      # GTFS der Mobilitätsverbünde → AWS
+  python scripts/superkugel_admin.py fahrplan status
+  python scripts/superkugel_admin.py fahrplan frage "wann fährt der nächste Zug nach Klagenfurt" [--datei paket.zip]
 
 Konfiguration über Umgebungsvariablen bzw. .env: AWS_PROFILE, AWS_REGION, TABLE_NAME,
 AUDIO_BUCKET, MODE_PARAM, ALERT_TOPIC_ARN (optional, für E-Mail-Benachrichtigungen).
@@ -254,6 +257,63 @@ def cmd_reset_progress(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fahrplan(args: argparse.Namespace) -> int:
+    """Fahrplanpaket bauen und hochladen, Stand anzeigen oder eine Frage lokal beantworten."""
+    import tempfile
+
+    from superkugel.transit.build import build
+    from superkugel.transit.service import POINTER
+
+    if args.action == "import":
+        zips = [Path(p) for p in args.values]
+        if not zips or not all(p.suffix.lower() == ".zip" and p.is_file() for p in zips):
+            sys.exit("Bitte die GTFS-ZIP-Dateien angeben.")
+        out = Path(tempfile.gettempdir()) / f"superkugel-fahrplan-{int(time.time())}.zip"
+        print("Baue Fahrplanpaket (dauert 1–2 Minuten) …")
+        rep = build(zips, out)
+        print(json.dumps({k: v for k, v in rep.__dict__.items()}, ensure_ascii=False, indent=2))
+        if args.dry_run:
+            print(f"Nur lokal gebaut: {out}")
+            return 0
+        bucket = os.environ.get("AUDIO_BUCKET")
+        if not bucket:
+            sys.exit("AUDIO_BUCKET ist nicht gesetzt (siehe .env.example).")
+        session = _session()
+        key = f"transit/fahrplan-{dt.datetime.now(dt.UTC):%Y%m%dT%H%M%S}.zip"
+        session.client("s3").upload_file(str(out), bucket, key)
+        store = _store(session)
+        old = (store.get_item(*POINTER) or {}).get("key")
+        store.put_item(*POINTER, {"key": key, "start": rep.start, "end": rep.end, "size": rep.size_bytes,
+                                  "built": dt.datetime.now(dt.UTC).isoformat(timespec="seconds")})
+        if old and old != key:
+            with contextlib.suppress(Exception):  # altes Paket aufräumen (Lambda lädt binnen 10 Minuten das neue)
+                session.client("s3").delete_object(Bucket=bucket, Key=old)
+        out.unlink(missing_ok=True)
+        print(f"Hochgeladen: {key} – gültig {rep.start} bis {rep.end}")
+        return 0
+    if args.action == "status":
+        print(json.dumps(_store(_session()).get_item(*POINTER) or {"key": None}, ensure_ascii=False, indent=2))
+        return 0
+    # frage: lokal mit einem Paket beantworten (zum Ausprobieren, ohne Alexa)
+    from superkugel.config import Settings
+    from superkugel.services.usage import local_now
+    from superkugel.speech.texts import text as speak
+    from superkugel.transit.places import PlaceIndex
+    from superkugel.transit.service import answer
+    from superkugel.transit.timetable import Timetable
+
+    if not args.datei:
+        sys.exit("Für „frage“ bitte --datei <paket.zip> angeben (z. B. mit „import --dry-run“ gebaut).")
+    s = Settings.from_env()
+    tt = Timetable(Path(args.datei).read_bytes())
+    places = PlaceIndex(tt, s.transit_aliases, s.home_stop or s.home_station)
+    now = local_now(s, dt.datetime.now(dt.UTC))
+    for q in args.values:
+        print("»", q)
+        print(" ", answer(lambda k, **kw: speak(s.address_form, k, **kw), tt, places, s, q, now).text)
+    return 0
+
+
 def main() -> int:
     # --profile vor allem anderen auswerten, damit es Vorrang vor AWS_PROFILE aus .env hat
     if "--profile" in sys.argv:
@@ -308,6 +368,13 @@ def main() -> int:
     rp.add_argument("book_id")
     rp.add_argument("--user-hash", dest="user_hash")
     rp.set_defaults(fn=cmd_reset_progress)
+
+    fp = sub.add_parser("fahrplan", help="Fahrplan: import <GTFS-ZIPs> | status | frage \"<Satz>\" --datei <paket>")
+    fp.add_argument("action", choices=["import", "status", "frage"])
+    fp.add_argument("values", nargs="*")
+    fp.add_argument("--dry-run", action="store_true", help="nur lokal bauen, nichts hochladen")
+    fp.add_argument("--datei", help="lokales Fahrplanpaket für „frage“")
+    fp.set_defaults(fn=cmd_fahrplan)
 
     args = p.parse_args()
     return int(args.fn(args))

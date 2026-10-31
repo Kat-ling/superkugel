@@ -11,7 +11,8 @@ from superkugel.services.usage import local_now
 
 STATS_TTL_S = 45 * 86400  # Wochen- und Monatsvergleich möglich, danach löscht DynamoDB automatisch
 # alexa_hint = Hinweis „Das macht Alexa selbst“ (Erinnerung, Radio, Rätsel)
-FIELDS = ("sessions", "chat", "audiobook", "show", "morning", "media_search", "alexa_hint", "errors", "slow")
+FIELDS = ("sessions", "chat", "audiobook", "show", "morning", "media_search", "alexa_hint", "transit", "errors",
+          "slow")
 
 
 def count(store: Store, settings: Settings, field: str, n: int = 1, now: dt.datetime | None = None) -> None:

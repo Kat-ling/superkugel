@@ -31,11 +31,11 @@ TEXTS: dict[str, tuple[str, str]] = {
     "nothing_said": ("Ich hab noch nichts gesagt. Worüber magst du ratschen?",
                      "Ich hab noch nichts gesagt. Worüber möchten Sie ratschen?"),
     "help": ("Du kannst einfach mit mir ratschen, zum Beispiel: Sag mal, was koch ich heute? "
-             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Neuigkeiten: Was gibt's Neues? "
-             "Zum Aufhören sag: Stopp.",
+             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder nach dem Fahrplan fragen: "
+             "Wann fährt der nächste Zug nach Klagenfurt? Zum Aufhören sag: Stopp.",
              "Sie können einfach mit mir ratschen, zum Beispiel: Sag mal, was koch ich heute? "
-             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder Neuigkeiten: Was gibt's Neues? "
-             "Zum Aufhören sagen Sie: Stopp."),
+             "Oder Hörbücher hören: Spiel mein Hörbuch weiter. Oder nach dem Fahrplan fragen: "
+             "Wann fährt der nächste Zug nach Klagenfurt? Zum Aufhören sagen Sie: Stopp."),
     "help_q": ("Was magst du machen?", "Was möchten Sie machen?"),
     "forgotten": ("Erledigt, ich hab unser Gespräch vergessen. Worüber magst du ratschen?",
                   "Erledigt, ich hab unser Gespräch vergessen. Worüber möchten Sie ratschen?"),
@@ -94,6 +94,33 @@ TEXTS: dict[str, tuple[str, str]] = {
                   "Alexa, stell mir ein Rätsel.",
                   "Rätsel macht Alexa selbst am besten. Ich mache Ihnen Platz – sagen Sie dann einfach: "
                   "Alexa, stell mir ein Rätsel."),
+    # Fahrplan (v1.4) – Zeiten und Orte setzt der Code ein, nie die KI
+    "transit_departure_first": ("Laut Fahrplan fährt ab {stop} {when}um {time} {line} Richtung {head}.",) * 2,
+    "transit_departure_more": ("Danach um {time} {line} Richtung {head}.",) * 2,
+    "transit_departure_last": ("Laut Fahrplan fährt ab {stop} {when}als Letztes um {time} {line} Richtung {head}.",) * 2,
+    "transit_no_departures": ("Laut Fahrplan fährt ab {stop} {when} in den nächsten Stunden nichts mehr.",) * 2,
+    "transit_leg_first": ("Laut Fahrplan: {day}um {time} ab {stop} mit {vehicle} Richtung {head}, "
+                          "an {to} um {arr}.",) * 2,
+    "transit_leg_last": ("Die letzte Verbindung laut Fahrplan: {day}um {time} ab {stop} mit {vehicle} "
+                         "Richtung {head}, an {to} um {arr}.",) * 2,
+    "transit_leg_next": ("Dann um {time} mit {vehicle} Richtung {head}, an {to} um {arr}.",) * 2,
+    "transit_walk": ("Dann etwa {minutes} Minuten zu Fuß zur Haltestelle {stop}.",) * 2,
+    "transit_summary": ("Insgesamt {duration}, {changes}.",) * 2,
+    "transit_flex": ("Außerdem fährt hier der Rufbus {name}, von {start} bis {end}. Den musst du mindestens {notice} "
+                     "Minuten vorher anrufen: {phone}.",
+                     "Außerdem fährt hier der Rufbus {name}, von {start} bis {end}. Den müssen Sie mindestens {notice} "
+                     "Minuten vorher anrufen: {phone}."),
+    "transit_no_connection": ("Laut Fahrplan finde ich {when} keine Verbindung nach {dest}.",) * 2,
+    "transit_unknown_place": ("Die Haltestelle {name} kenne ich leider nicht. Sag bitte den Ort, zum Beispiel: "
+                              "nach Salzburg.",
+                              "Die Haltestelle {name} kenne ich leider nicht. Sagen Sie bitte den Ort, zum Beispiel: "
+                              "nach Salzburg."),
+    "transit_same_place": ("Da bist du ja schon, in {name}.", "Da sind Sie ja schon, in {name}."),
+    "transit_no_home": ("Sag mir bitte, von wo du fährst, zum Beispiel: von Salzburg nach Linz.",
+                        "Sagen Sie mir bitte, von wo Sie fahren, zum Beispiel: von Salzburg nach Linz."),
+    "transit_no_data_day": ("Für {day} hab ich noch keinen Fahrplan.", "Für {day} habe ich noch keinen Fahrplan."),
+    "transit_unavailable": ("Den Fahrplan hab ich gerade nicht zur Hand. Probier's bitte später nochmal.",
+                            "Den Fahrplan habe ich gerade nicht zur Hand. Bitte später nochmal probieren."),
     # Morgengruß
     "morning_hello": ("Guten Morgen{n}!",) * 2,
     "morning_date": ("Heute ist {weekday}, der {day}. {month}.",) * 2,

@@ -14,6 +14,7 @@ from superkugel.conversation.carriers import is_chat_intent, reconstruct
 from superkugel.conversation.history import History
 from superkugel.conversation.llm import LlmError, LlmReply
 from superkugel.conversation.prompt import (
+    FAHRPLAN_TOOL,
     PLAY_TOOL,
     SEARCH_MEDIA_TOOL,
     SHOW_TOOL,
@@ -123,6 +124,7 @@ def _call_llm(services: Services, hi: HandlerInput, user: str, history: History,
         tools.append(SHOW_TOOL)
     if services.params.podcast_index_credentials():
         tools.append(SEARCH_MEDIA_TOOL)
+    tools.append(FAHRPLAN_TOOL)
     if searches_left > 0:
         tools.append(web_search_tool(s.user_region, s.timezone))
     instructions = build_instructions(
@@ -170,6 +172,11 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
     if mode is Mode.MAINTENANCE:
         return end_with(services, hi, services.t("maintenance"))
     attrs = session_attrs(hi)
+    from superkugel.handlers import transit
+    from superkugel.transit.ask import looks_like_transit
+
+    if text.strip() and (looks_like_transit(text) or transit.is_follow_up(hi, text)):
+        return transit.answer_text(services, hi, text)  # Fahrplan: ohne KI, auch im Hörbuch-Modus
     if mode is Mode.AUDIOBOOKS_ONLY:
         return _offer_audiobook(services, hi, services.t("ai_off_short"))
     if not text.strip():
@@ -229,6 +236,10 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
             if show:
                 return media_handlers.play_show(services, hi, show)
             log("tool_unknown_show")
+        elif call.name == "fahrplan":
+            from superkugel.handlers import transit
+
+            return transit.from_tool(services, hi, call.arguments)  # Zeiten rechnet der Code, nie die KI
         elif call.name == "search_media":
             from superkugel.handlers import media as media_handlers
 

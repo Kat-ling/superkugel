@@ -52,6 +52,15 @@ Du musst dir nie merken, wo du warst. Das macht die Superkugel.
 - Wenn du die Superkugel am Vormittag zum ersten Mal öffnest, sagt sie Datum, Wetter und zwei Nachrichten.
   Magst du das nicht: „Lass den Morgengruß weg.“ Wieder einschalten: „Mach den Morgengruß wieder.“
 
+## Bus und Zug
+
+- **„Alexa, frag Superkugel, wann fährt der nächste Bus?“** – sie sagt die nächsten Abfahrten an deiner Haltestelle.
+- **„Alexa, frag Superkugel, wann fährt der nächste Zug nach Klagenfurt?“** – mit Abfahrt, Umsteigen und Ankunft.
+- **„… wie komm ich morgen um halb neun nach …?“** oder **„… wann geht der letzte Bus heim?“**
+- Gleich danach kannst du fragen: **„Und danach?“** – dann kommt die nächste Möglichkeit.
+- Sie sagt immer „laut Fahrplan“: Verspätungen kennt sie nicht. Für eine wichtige Fahrt lieber zusätzlich am
+  Bahnhof oder bei der Familie nachfragen.
+
 ## Radio, Erinnerungen und Rätsel – das macht Alexa selbst
 
 Dafür brauchst du die Superkugel nicht. Sag es direkt zu Alexa:

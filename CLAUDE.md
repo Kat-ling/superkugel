@@ -34,6 +34,10 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 - v1.3: Erinnerungen, Radio, Rätsel **bewusst entfernt** (macht die normale Alexa besser – Entscheidung des Admins).
   Solche Sätze bekommen nur einen Hinweis und die Sitzung endet (`handlers/alexa_hints.py`); nicht wieder einbauen,
   ohne den Admin zu fragen. Höchstens 10 eigene CloudWatch-Metriken (aktuell 8).
+- v1.4 Fahrplan (`transit/`): GTFS → Paket am PC (`superkugel_admin.py fahrplan import`), S3 `transit/…`, Zeiger
+  `TRANSIT/CURRENT` in DynamoDB. Antworten nur deterministisch (`transit/service.py`), die KI ruft höchstens das
+  Werkzeug `fahrplan` auf. Heimat-Haltestellen-IDs nur in samconfig/.env; in Tests nur der erfundene Fahrplan
+  (`tests/transit_fixture.py`). Daten gelten bis zum Fahrplanwechsel im Dezember.
 
 ## Regeln
 
@@ -44,11 +48,12 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 - Simulator-/Unit-Tests nie als Gerätetest ausgeben (`tests/acceptance/ACCEPTANCE_TESTS.md`).
 - Neue Intents: in `scripts/build_interaction_model.py` + Route in `app.py` + Test.
 
-## Status (28.10.2026)
+## Status (31.10.2026)
 
 Version 1.0 im Alltag in Betrieb, Version 1.1 (Tagesaktuelles A+B, Mediatheken) bereitgestellt, Gerätetests offen.
 Version 1.2 bereitgestellt und gepusht (Tag `v1.2.0`); Morgengruß am Gerät bestätigt.
 Version 1.3 (Erinnerungen, Radio, Rätsel entfernt) bereitgestellt und gepusht (Tag `v1.3.0`), Gerätetest offen.
+Version 1.4 (Fahrplanauskunft) bereitgestellt und gepusht (Tag `v1.4.0`), Fahrplan importiert (bis 12.12.2026), Gerätetest offen.
 Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.

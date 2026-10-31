@@ -479,6 +479,54 @@
           ]
         },
         {
+          "name": "TransitNextBusIntent",
+          "slots": [],
+          "samples": [
+            "nächster bus",
+            "der nächste bus",
+            "wann fährt der nächste bus",
+            "wann kommt der nächste bus",
+            "wann fährt mein bus",
+            "wann kommt der bus",
+            "wann fährt der bus",
+            "busfahrplan",
+            "wann geht der nächste bus"
+          ]
+        },
+        {
+          "name": "TransitNextTrainIntent",
+          "slots": [],
+          "samples": [
+            "nächster zug",
+            "der nächste zug",
+            "wann fährt der nächste zug",
+            "wann fährt ein zug",
+            "wann geht der nächste zug",
+            "zugfahrplan",
+            "wann fährt der zug"
+          ]
+        },
+        {
+          "name": "TransitLastBusIntent",
+          "slots": [],
+          "samples": [
+            "letzter bus",
+            "der letzte bus",
+            "wann fährt der letzte bus",
+            "wann geht der letzte bus"
+          ]
+        },
+        {
+          "name": "TransitLastTrainIntent",
+          "slots": [],
+          "samples": [
+            "letzter zug",
+            "der letzte zug",
+            "wann fährt der letzte zug",
+            "wann geht der letzte zug"
+          ]
+        },
+        {
           "name": "MorningOffIntent",
           "slots": [],
           "samples": [
@@ -1651,6 +1699,138 @@
           ],
           "samples": [
             "übermorgen {query}"
+          ]
+        },
+        {
+          "name": "ChatFaehrtIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "fährt {query}"
+          ]
+        },
+        {
+          "name": "ChatGehtIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "geht {query}"
+          ]
+        },
+        {
+          "name": "ChatKommtIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "kommt {query}"
+          ]
+        },
+        {
+          "name": "ChatNaechsterIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "nächster {query}"
+          ]
+        },
+        {
+          "name": "ChatNaechsteIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "nächste {query}"
+          ]
+        },
+        {
+          "name": "ChatLetzterIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "letzter {query}"
+          ]
+        },
+        {
+          "name": "ChatLetzteIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "letzte {query}"
+          ]
+        },
+        {
+          "name": "ChatZugIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "zug {query}"
+          ]
+        },
+        {
+          "name": "ChatBusIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "bus {query}"
+          ]
+        },
+        {
+          "name": "ChatFahrplanIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "fahrplan {query}"
+          ]
+        },
+        {
+          "name": "ChatVerbindungIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "verbindung {query}"
           ]
         }
       ],

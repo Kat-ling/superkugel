@@ -18,12 +18,17 @@
 ## 5. Morgengruß aus- oder einschalten
 ### „Lass den Morgengruß weg.“ – „Mach den Morgengruß wieder.“
 
-## 6. Radio, Erinnerungen, Rätsel – direkt zu Alexa
+## 6. Bus und Zug
+### „Alexa, frag Superkugel, wann fährt der nächste Bus?“
+### „Alexa, frag Superkugel, wann fährt der nächste Zug nach Klagenfurt?“
+Danach: „Und danach?“
+
+## 7. Radio, Erinnerungen, Rätsel – direkt zu Alexa
 ### „Alexa, spiel Ö3.“
 ### „Alexa, erinnere mich morgen um zehn an den Arzt.“
 ### „Alexa, stell mir ein Rätsel.“
 
-## 7. Nochmal hören – oder unterbrechen
+## 8. Nochmal hören – oder unterbrechen
 ### „Wie bitte?“ – „Alexa, stopp.“
 Redet sie zu lang? Einfach „Alexa“ sagen – sie hört sofort auf und hört zu.
 

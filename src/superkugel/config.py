@@ -44,6 +44,22 @@ def _region(raw: str) -> str:
     return _REGIONS.get(clean.lower(), clean)
 
 
+def _stop_id(raw: str) -> str:
+    """Österreichische Haltestellen-ID ohne Steig: „at:42:4711“ (Steig-Teile werden abgeschnitten)."""
+    parts = re.sub(r"[^\w:]", "", raw).split(":")
+    return ":".join(parts[:3]) if len(parts) >= 3 else ""
+
+
+def _aliases(raw: str) -> dict[str, str]:
+    """„bergdorf=at:47:9999;tante=at:47:9999“ → {"bergdorf": "at:47:9999", …}"""
+    out = {}
+    for pair in raw.split(";"):
+        name, _, sid = pair.partition("=")
+        if name.strip() and _stop_id(sid):
+            out[name.strip().lower()] = _stop_id(sid)
+    return out
+
+
 SPEECH_STYLES = ("kaernten", "bayern", "standard")
 # Laut Alexa-SSML-Referenz für de-DE erlaubte <voice>-Namen (Stand Okt. 2026).
 # "alexa" = Standardstimme ohne <voice>-Tag.
@@ -123,6 +139,11 @@ class Settings:
     morning_briefing: bool = True
     alert_topic_arn: str = ""  # SNS-Thema für den Wochenbericht (dasselbe wie für Alarme)
 
+    # v1.4: Fahrplanauskunft. Haltestellen-IDs (z. B. at:42:1234) nur in der lokalen samconfig.toml – Wohnortbezug!
+    home_stop: str = ""  # nächste Bushaltestelle
+    home_station: str = ""  # Heimatbahnhof
+    transit_aliases: dict[str, str] = field(default_factory=dict)  # „bergdorf“ → Haltestellen-ID (eindeutig machen)
+
     # Hörbuch
     audio_url_expiry_s: int = 6 * 3600
     rewind_s: int = 30
@@ -182,6 +203,9 @@ class Settings:
             share_name_with_ai=_env("SHARE_NAME_WITH_AI", "true").lower() in ("1", "true", "ja", "yes"),
             morning_briefing=_env("MORNING_BRIEFING", "true").lower() in ("1", "true", "ja", "yes"),
             alert_topic_arn=_env("ALERT_TOPIC_ARN", ""),
+            home_stop=_stop_id(_env("HOME_STOP", "")),
+            home_station=_stop_id(_env("HOME_STATION", "")),
+            transit_aliases=_aliases(_env("TRANSIT_ALIASES", "")),
             audio_url_expiry_s=_int("AUDIO_URL_EXPIRY_S", 6 * 3600),
             rewind_s=_int("REWIND_S", 30),
             forward_s=_int("FORWARD_S", 30),

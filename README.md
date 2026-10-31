@@ -28,6 +28,8 @@ Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 - **Mediatheken**: Lieblingssendungen über offizielle RSS-Feeds (z. B. ARD-Krimihörspiele) und freie Suche über
   Podcast Index („Such ein Krimihörspiel“ → „die zweite“), mit Lesezeichen pro Folge.
 - **Ratschen ohne Nachfrage**: Nach der Antwort hört Alexa still weiter zu, statt „Noch etwas?“ zu fragen.
+- **Fahrplan**: „Wann fährt der nächste Bus?“, „Wie komm ich morgen nach …?“ – Züge in ganz Österreich, Kärntner
+  Linien (inkl. Rufbus) und Verkehrsverbund Tirol aus den Sollfahrplänen, mit Umstiegen; ohne KI, ohne Echtzeit.
 - **Morgengruß**: beim ersten Öffnen am Vormittag Datum, Wetter und zwei Schlagzeilen (ohne Unglücksmeldungen),
   ohne KI; per Sprache abschaltbar.
 - **Wochenbericht** für den Admin: montags eine Mail mit reinen Zahlen (Nutzung, Kosten, Fehler) – keine Inhalte.
@@ -89,3 +91,5 @@ Mehr in [docs/plattformgrenzen-und-fallback.md](docs/plattformgrenzen-und-fallba
 MIT. Keine Hörbuchdateien, Schlüssel oder personenbezogenen Daten im Repository.
 Nachrichten: ORF.at (RSS, nicht-kommerziell). Wetterdaten: [Open-Meteo.com](https://open-meteo.com/) (CC BY 4.0).
 Podcast-Suche: [Podcast Index](https://podcastindex.org/).
+Fahrplandaten: Datenquelle Mobilitätsverbünde Österreich OG (GTFS, eigener Lizenzvertrag in Anlehnung an CC BY 4.0;
+die Daten selbst liegen nicht im Repository).

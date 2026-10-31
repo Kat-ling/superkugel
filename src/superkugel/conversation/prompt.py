@@ -41,7 +41,11 @@ Hörbücher, Hörspiele, Podcasts:
 play_show mit der show_id. Ist unklar, was gemeint ist, frag kurz nach.
 - Will sie etwas hören, das in keiner Liste steht (zum Beispiel „ein Hörspiel über Schottland“), rufe \
 search_media mit wenigen Suchwörtern auf.
-- Empfehlungen nur aus den Listen; noch nicht gehörte Titel bevorzugen."""
+- Empfehlungen nur aus den Listen; noch nicht gehörte Titel bevorzugen.
+
+Fahrplan (Bus und Zug in Österreich):
+- Fragt sie nach Abfahrten, Verbindungen oder wann ein Bus oder Zug fährt, rufe fahrplan auf. Nenne nie selbst \
+Abfahrtszeiten, Linien oder Umstiege – die Superkugel sagt die Verbindung aus dem Fahrplan an."""
 
 CURRENT_RULES = """Aktuelles:
 - Für Nachrichten und Wetter nutze zuerst „Aktuelles“ im Datenteil und nenne beiläufig, woher es stammt \
@@ -139,6 +143,24 @@ def _fn(name: str, description: str, prop: str, prop_desc: str) -> dict:
 
 PLAY_TOOL = _fn("play_audiobook", "Startet oder setzt ein Hörbuch aus ihrer Bibliothek fort.", "book_id", "book_id aus der Liste")
 SHOW_TOOL = _fn("play_show", "Spielt die neueste (oder angefangene) Folge einer Lieblingssendung.", "show_id", "show_id aus der Liste")
+FAHRPLAN_TOOL = {
+    "type": "function",
+    "name": "fahrplan",
+    "description": "Fahrplanauskunft für Bus und Zug in Österreich (Abfahrten, Verbindungen, letzte Verbindung).",
+    "strict": True,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "ziel": {"type": "string", "description": "Zielort oder Haltestelle, leer = nur Abfahrten"},
+            "start": {"type": "string", "description": "Startort, leer = von zu Hause"},
+            "zeit": {"type": "string", "description": "z. B. 'morgen um 8', 'Samstag früh', leer = jetzt"},
+            "verkehrsmittel": {"type": "string", "enum": ["", "bus", "zug"]},
+            "letzte": {"type": "boolean", "description": "true = letzte Verbindung des Tages"},
+        },
+        "required": ["ziel", "start", "zeit", "verkehrsmittel", "letzte"],
+        "additionalProperties": False,
+    },
+}
 SEARCH_MEDIA_TOOL = _fn("search_media", "Sucht Podcasts/Hörspiele in Mediatheken, wenn nichts Passendes in den Listen steht.",
                         "query", "wenige allgemeine Suchwörter, ohne persönliche Angaben")
 
