@@ -527,6 +527,23 @@
           ]
         },
         {
+          "name": "TransitDetailIntent",
+          "slots": [],
+          "samples": [
+            "genauer",
+            "bitte genauer",
+            "genauer bitte",
+            "sag es genauer",
+            "sag's genauer",
+            "ganz genau",
+            "einzelheiten",
+            "die umstiege",
+            "wo muss ich umsteigen",
+            "wo steige ich um",
+            "wo muss ich da umsteigen"
+          ]
+        },
+        {
           "name": "MorningOffIntent",
           "slots": [],
           "samples": [

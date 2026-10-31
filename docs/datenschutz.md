@@ -27,6 +27,9 @@ gehen keine Anfragen an Verkehrsunternehmen. Heimat-Haltestelle, Heimatbahnhof u
 Wohnort von Angehörigen) stehen nur in den lokal ignorierten Dateien `infra/samconfig.toml`/`.env` und als
 Umgebungsvariable der Lambda – nie im Repository, in Tests oder in Logs. Gefragte Orte bleiben nur in der
 Sitzung („und danach?“); ins Log kommen Art und Dauer der Auskunft, in den Wochenbericht nur die Anzahl.
+Ab 1.5 versteht die KI auch „in die Stadt“ oder „ins Krankenhaus“: Sie gibt dafür nur allgemeine Wörter
+(„Stadtzentrum“, „Krankenhaus“) an das Werkzeug – Haltestellennamen des Wohnorts gehen nicht an OpenAI, die
+Zuordnung macht der Code in AWS.
 
 ## Technische Maßnahmen
 

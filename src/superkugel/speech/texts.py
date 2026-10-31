@@ -105,6 +105,23 @@ TEXTS: dict[str, tuple[str, str]] = {
                          "Richtung {head}, an {to} um {arr}.",) * 2,
     "transit_leg_next": ("Dann um {time} mit {vehicle} Richtung {head}, an {to} um {arr}.",) * 2,
     "transit_walk": ("Dann etwa {minutes} Minuten zu Fuß zur Haltestelle {stop}.",) * 2,
+    "transit_walk_first": ("Erst etwa {minutes} Minuten zu Fuß zur Haltestelle {stop}.",) * 2,
+    # Kurzfassung bei Umstiegen (v1.5): Einzelheiten auf „genauer“
+    "transit_brief": ("Laut Fahrplan: {day}um {time} ab {stop} mit {vehicle}, {changes}, an {to} um {arr}. "
+                      "Insgesamt {duration}. Die Umstiege genau: sag einfach „genauer“.",
+                      "Laut Fahrplan: {day}um {time} ab {stop} mit {vehicle}, {changes}, an {to} um {arr}. "
+                      "Insgesamt {duration}. Die Umstiege genau: sagen Sie einfach „genauer“."),
+    "transit_brief_last": ("Die letzte Verbindung laut Fahrplan: {day}um {time} ab {stop} mit {vehicle}, {changes}, "
+                           "an {to} um {arr}. Die Umstiege genau: sag einfach „genauer“.",
+                           "Die letzte Verbindung laut Fahrplan: {day}um {time} ab {stop} mit {vehicle}, {changes}, "
+                           "an {to} um {arr}. Die Umstiege genau: sagen Sie einfach „genauer“."),
+    # Gleichnamige Orte (v1.5): erst nachfragen
+    "transit_confirm": ("Meinst du {name}?", "Meinen Sie {name}?"),
+    "transit_confirm_other": ("Oder meinst du {name}?", "Oder meinen Sie {name}?"),
+    "transit_confirm_none": ("Dann sag mir bitte den Ort genauer, zum Beispiel mit dem Bundesland: "
+                             "Sankt Johann in Tirol.",
+                             "Dann sagen Sie mir bitte den Ort genauer, zum Beispiel mit dem Bundesland: "
+                             "Sankt Johann in Tirol."),
     "transit_summary": ("Insgesamt {duration}, {changes}.",) * 2,
     "transit_flex": ("Außerdem fährt hier der Rufbus {name}, von {start} bis {end}. Den musst du mindestens {notice} "
                      "Minuten vorher anrufen: {phone}.",

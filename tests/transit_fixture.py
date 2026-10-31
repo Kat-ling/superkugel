@@ -17,6 +17,10 @@ STOPS = [
     ("at:99:5:0:1,Teststadt Marktplatz Nord,47.0118,13.0000,,"),  # ≈ 200 m → Fußweg
     ("at:99:3:0:1,Bergdorf Bahnhof,47.3000,13.2000,,"),
     ("at:99:4:0:1,Seeort Kirche,47.3200,13.2500,,"),
+    # v1.5: gleichnamige Orte weit auseinander (Rückfrage), Einrichtung mit Kürzel
+    ("at:99:6:0:1,Lindenau Bahnhof,47.3018,13.2000,,"),  # ≈ 200 m von Bergdorf → Fußweg
+    ("at:99:7:0:1,Lindenau Kirche,48.4000,15.6000,,"),
+    ("at:99:8:0:1,Teststadt LKH Eingang,47.0050,13.0000,,"),
 ]
 ROUTES = ["route_id,agency_id,route_short_name,route_long_name,route_type",
           "R1,A,REX1,,2", "B7,A,7,,3", "B8,A,8,,3"]

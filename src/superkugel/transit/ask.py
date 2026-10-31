@@ -17,6 +17,13 @@ _BUS = re.compile(r"\b(bus|busse|busses|postbus|rufbus|autobus|stadtbus)\b")
 _TRANSIT = re.compile(r"\b(zug|züge|bahn|s-bahn|railjet|bus|busse|postbus|rufbus|autobus|verbindung|verbindungen|"
                       r"fahrplan|busfahrplan|zugfahrplan|abfahrt|abfahrten|umsteigen|öffis?)\b")
 _TRAVEL = re.compile(r"\b(komm|komme|kommt|fahr|fahre|fährt|fahren|reisen?)\b.*\b(nach|zum|zur|heim|nach hause)\b")
+# „ich möchte morgen nach Bergdorf fahren“, „ich muss zu meiner Schwester nach Bergdorf“: Reiseabsicht ohne „Bus“/„Zug“
+_INTENT = re.compile(r"\b(möchte|möcht|möchten|will|wollen|muss|müssen|würde|fahre|fahr|reise|komme|besuche|"
+                     r"geh|gehe|hin|komm|kommen|zu (meiner|meinem|meinen|unserer|unserem|unseren))\b")
+_INTENT_DEST = re.compile(r"\bnach\s+(?!(?:dem|der|den|des|einem|einer|hause|haus)\b)")
+# Zentrum des Heimatorts: „in die Stadt“, „ins Zentrum“ (die Haltestelle sucht der Code aus den Daten)
+_TO_CENTER = re.compile(r"\b(in die stadt|ins zentrum|ins stadtzentrum|in die innenstadt|in die city|"
+                        r"auf den hauptplatz|zum hauptplatz)\b")
 _LAST = re.compile(r"\b(letzte|letzter|letzten|zuletzt)\b")
 _HOME = re.compile(r"\b(heim|nach hause|nachhause|zu hause|zuhause|daheim)\b")
 _WEEKDAYS = ("montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag", "sonntag")
@@ -47,6 +54,25 @@ class TransitQuery:
 def looks_like_transit(text: str) -> bool:
     t = fold(text)
     return bool(_TRANSIT.search(t)) or bool(_TRAVEL.search(t) and re.search(r"\b(wie|wann)\b", t))
+
+
+def travel_dest(text: str) -> str:
+    """Ziel aus einem Reisesatz ohne Verkehrsmittel („ich möchte morgen nach Bergdorf fahren“) – ob es ein Ort ist,
+    prüft der Aufrufer (nur bekannte Haltestellen, sonst geht der Satz an die KI)."""
+    t = fold(text)
+    if not _INTENT.search(t):
+        return ""
+    dest = _place_after(t, "nach") if _INTENT_DEST.search(t) else ""
+    first = dest.split()[0] if dest else ""
+    if first and word_to_int(first) is None and first not in ("halb", "viertel", "dreiviertel"):
+        return dest
+    return "stadtzentrum" if _TO_CENTER.search(t) else ""
+
+
+def parse_dest(text: str) -> str:
+    """Nennt der Satz selbst ein Ziel („… nach Bergdorf“)? Für die Gegenprobe zum KI-Werkzeug."""
+    q = parse(text, dt.datetime(2000, 1, 3, 12))
+    return q.dest
 
 
 def _place_after(t: str, words: str) -> str:
@@ -118,7 +144,9 @@ def parse(text: str, now: dt.datetime) -> TransitQuery:
         else:
             q.dest_home = True
     q.origin = _place_after(t, r"von|vom|ab") if not q.origin_home else ""
-    q.dest = "" if q.dest_home else _place_after(t, r"nach|zum|zur|bis|richtung")
+    q.dest = "" if q.dest_home else _place_after(t, r"nach|zum|zur|ins|bis|richtung")
+    if not q.dest and not q.dest_home and _TO_CENTER.search(t):
+        q.dest = "stadtzentrum"
     for attr in ("origin", "dest"):  # „ab acht“, „nach halb neun“ sind Zeiten, keine Orte
         val = getattr(q, attr)
         if val and (word_to_int(val.split()[0]) is not None or val.split()[0] in ("halb", "viertel", "dreiviertel")):

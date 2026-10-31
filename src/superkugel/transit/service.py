@@ -17,7 +17,7 @@ from superkugel.services.logs import log
 from superkugel.services.storage import Store
 from superkugel.transit.ask import TransitQuery, parse
 from superkugel.transit.build import KIND_BUS, KIND_CALL, KIND_OTHER, KIND_SUBWAY, KIND_TRAIN, KIND_TRAM
-from superkugel.transit.places import Place, PlaceIndex, line_short, spoken_name, vehicle
+from superkugel.transit.places import CENTER_WORDS, Place, PlaceIndex, line_short, spoken_name, vehicle
 from superkugel.transit.timetable import DAY, Leg, Timetable
 
 POINTER = ("TRANSIT", "CURRENT")  # DynamoDB-Eintrag: welches Paket in S3 aktuell ist
@@ -107,20 +107,23 @@ def phone_words(phone: str) -> str:
 @dataclass
 class Answer:
     text: str
-    follow_up: dict[str, Any] | None = None  # für „und danach?“
+    follow_up: dict[str, Any] | None = None  # für „und danach?“ / „genauer“
     kind: str = ""
+    confirm: dict[str, Any] | None = None  # Rückfrage „Meinst du …?“: Frage, Rolle, Auswahl (Bereichs-IDs)
 
 
 def answer(t: Callable[..., str], tt: Timetable, places: PlaceIndex, settings: Settings, text: str,
-           now_local: dt.datetime, after: dict[str, Any] | None = None) -> Answer:
-    """Frage → Antwort. ``after``: letzte Auskunft, wenn sie „und danach?“ fragt."""
+           now_local: dt.datetime, after: dict[str, Any] | None = None, detail: bool = False,
+           chosen: dict[str, str] | None = None) -> Answer:
+    """Frage → Antwort. ``after``: letzte Auskunft, wenn sie „und danach?“ (oder mit ``detail`` „genauer“) fragt.
+    ``chosen``: nach „Meinst du …?“ bestätigter Ort je Rolle (``origin``/``dest`` → Bereichs-ID)."""
     q = _query_from_follow_up(after, now_local) if after else parse(text, now_local)
     today = now_local.date()
     day = q.day or today
     t_now = now_local.hour * 3600 + now_local.minute * 60
     t0 = q.time_s if q.time_s is not None else (t_now if day == today else 5 * 3600)
     if after:
-        t0 = int(after.get("next_t", t0))
+        t0 = int(after.get("short_t") if detail and after.get("short_t") is not None else after.get("next_t") or t0)
     if not tt.covers(day):
         return Answer(t("transit_no_data_day", day=day_words(day, today)), kind="no_data")
 
@@ -128,32 +131,47 @@ def answer(t: Callable[..., str], tt: Timetable, places: PlaceIndex, settings: S
     home_station = places.by_gid(settings.home_station) if settings.home_station else None
     rail = q.mode == "train"
 
-    def resolve(said: str) -> Place | str | None:
+    def resolve(said: str, role: str) -> Place | str | None:
         """Gesagter Name → Ort; ohne Namen „zu Hause“ (beim Zug der Heimatbahnhof). str = unbekannter Name."""
+        if chosen and chosen.get(role) and (p := places.by_gid(chosen[role])):
+            return p
         if said and home_station and plain(said) in ("bahnhof", "hauptbahnhof", "zug", "bahn"):
             return home_station  # „zum Bahnhof“ = der eigene
+        if said and plain(said) in CENTER_WORDS:  # „in die Stadt“: Zentrum des Heimatorts, aus den Daten
+            return places.center() or said
         if said:
             return places.find(said, rail=rail) or said
         return (home_station or home_stop) if rail else (home_stop or home_station)
 
-    origin = resolve(q.origin)
+    def ask_first(place: Place, role: str) -> Answer:
+        """Gleichnamige Orte weit auseinander: erst nachfragen („Meinst du Sankt Johann in Tirol?“)."""
+        gid = tt.areas[min(place.areas)].gid
+        return Answer(t("transit_confirm", name=place.name), kind="confirm",
+                      confirm={"text": text if not after else after.get("text", ""), "role": role,
+                               "choices": [gid, *place.others], "chosen": dict(chosen or {})})
+
+    origin = resolve(q.origin, "origin")
     if isinstance(origin, str):
         return Answer(t("transit_unknown_place", name=origin), kind="unknown")
     if origin is None:
         return Answer(t("transit_no_home"), kind="no_home")
+    if origin.others:
+        return ask_first(origin, "origin")
     dest: Place | str | None = None
     if q.dest or q.dest_home:
-        dest = resolve(q.dest)
+        dest = resolve(q.dest, "dest")
         if isinstance(dest, str):
             return Answer(t("transit_unknown_place", name=dest), kind="unknown")
         if dest is None:
             return Answer(t("transit_no_home"), kind="no_home")
+        if dest.others:
+            return ask_first(dest, "dest")
 
     if dest is None:
         return _departures(t, tt, q, origin, day, today, t0)
     if origin.areas & dest.areas:
         return Answer(t("transit_same_place", name=dest.name), kind="same")
-    return _journey(t, tt, q, origin, dest, day, today, t0)
+    return _journey(t, tt, q, origin, dest, day, today, t0, short=not detail)
 
 
 def _query_from_follow_up(after: dict[str, Any], now_local: dt.datetime) -> TransitQuery:
@@ -198,8 +216,8 @@ def _departures(t: Callable[..., str], tt: Timetable, q: TransitQuery, origin: P
             parts.append(t("transit_flex", name=f["name"], start=clock_words(f["from"]), end=clock_words(f["to"]),
                            notice=f["notice_min"] or 30, phone=phone_words(f["phone"]) or "laut Aushang"))
     nxt = (deps[-1].dep + 60) if deps else None
-    return Answer(" ".join(parts), {"text": q_text(q, origin, None), "day": day.isoformat(), "next_t": nxt} if nxt
-                  else None, kind="departures")
+    return Answer(" ".join(parts), {"text": q_text(q, origin, None), "day": day.isoformat(), "next_t": nxt,
+                                    "places": _places_of(tt, origin, None)} if nxt else None, kind="departures")
 
 
 def _flex(tt: Timetable, origin: Place, day: dt.date) -> list[dict]:
@@ -218,8 +236,16 @@ def q_text(q: TransitQuery, origin: Place, dest: Place | None) -> str:
     return " ".join(x for x in (mode, f"von {origin.name}", f"nach {dest.name}" if dest else "") if x)
 
 
+def _places_of(tt: Timetable, origin: Place, dest: Place | None) -> dict[str, str]:
+    """Bereichs-IDs zur Kurzform – „danach“ findet so genau dieselben Orte wieder (ohne neue Rückfrage)."""
+    out = {"origin": tt.areas[min(origin.areas)].gid}
+    if dest:
+        out["dest"] = tt.areas[min(dest.areas)].gid
+    return out
+
+
 def _journey(t: Callable[..., str], tt: Timetable, q: TransitQuery, origin: Place, dest: Place, day: dt.date,
-             today: dt.date, t0: int) -> Answer:
+             today: dt.date, t0: int, short: bool = True) -> Answer:
     src, dst = set(origin.areas), set(dest.areas)
     kinds = TRAINS if q.mode == "train" else None
     legs = None
@@ -231,10 +257,37 @@ def _journey(t: Callable[..., str], tt: Timetable, q: TransitQuery, origin: Plac
     if not legs:
         return Answer(t("transit_no_connection", when=when, dest=dest.name), kind="none")
     rides = [x for x in legs if x.trip >= 0]
-    text = _describe(t, tt, legs, origin, dest, "" if day == today else f"{when} ", q.last)
-    nxt = legs[0].dep + 60 if not q.last else None
-    return Answer(text, {"text": q_text(q, origin, dest), "day": day.isoformat(), "next_t": nxt} if nxt else None,
+    day_prefix = "" if day == today else f"{when} "
+    brief = short and len(rides) > 1  # mit Umstiegen erst die Kurzfassung, Einzelheiten auf „genauer“
+    text = (_brief(t, tt, legs, dest, day_prefix, q.last) if brief
+            else _describe(t, tt, legs, origin, dest, day_prefix, q.last))
+    follow = {"text": q_text(q, origin, dest), "day": day.isoformat(), "next_t": legs[0].dep + 60 if not q.last
+              else None, "short_t": legs[0].dep if brief else None, "places": _places_of(tt, origin, dest)}
+    return Answer(text, follow if follow["next_t"] or follow["short_t"] is not None else None,
                   kind=f"journey{len(rides)}")
+
+
+def _changes(rides: int) -> str:
+    return "ohne Umsteigen" if rides <= 1 else ("einmal umsteigen" if rides == 2 else f"{rides - 1} Mal umsteigen")
+
+
+def _brief(t: Callable[..., str], tt: Timetable, legs: list[Leg], dest: Place, day_prefix: str, last: bool) -> str:
+    """Kurzfassung: Abfahrt, wo umsteigen, Ankunft, Dauer – „genauer“ sagt alle Abschnitte."""
+    rides = [x for x in legs if x.trip >= 0]
+    first = rides[0]
+    via = [spoken_name(tt.areas[x.to].name) for x in rides[:-1]]
+    where = via[0] if len(via) == 1 else (" und ".join(via) if len(via) == 2 else via[0])
+    changes = (f"einmal umsteigen in {where}" if len(via) == 1 else
+               f"zweimal umsteigen, in {where}" if len(via) == 2 else f"{len(via)} Mal umsteigen, zuerst in {where}")
+    parts = []
+    if legs[0].trip < 0:
+        parts.append(t("transit_walk_first", minutes=max(1, round((legs[0].arr - legs[0].dep) / 60)),
+                       stop=spoken_name(tt.areas[legs[0].to].name)))
+    parts.append(t("transit_brief_last" if last else "transit_brief", day=day_prefix, time=clock_words(first.dep),
+                   stop=spoken_name(tt.areas[first.frm].name), vehicle=vehicle(tt, first.trip), changes=changes,
+                   to=spoken_name(tt.areas[legs[-1].to].name), arr=clock_words(legs[-1].arr),
+                   duration=duration_words(legs[-1].arr - legs[0].dep)))
+    return " ".join(parts)
 
 
 def _describe(t: Callable[..., str], tt: Timetable, legs: list[Leg], origin: Place, dest: Place, day_prefix: str,
@@ -258,27 +311,56 @@ def _describe(t: Callable[..., str], tt: Timetable, legs: list[Leg], origin: Pla
             break
     rides = sum(1 for x in legs if x.trip >= 0)
     total = legs[-1].arr - legs[0].dep
-    changes = "ohne Umsteigen" if rides <= 1 else ("einmal umsteigen" if rides == 2 else f"{rides - 1} Mal umsteigen")
-    parts.append(t("transit_summary", duration=duration_words(total), changes=changes))
+    parts.append(t("transit_summary", duration=duration_words(total), changes=_changes(rides)))
     return " ".join(parts)
 
 
-def handle_text(services: Any, text: str, after: dict[str, Any] | None = None) -> Answer:
+def _loaded(services: Any) -> tuple[Timetable, PlaceIndex] | None:
+    try:
+        return load(services.store, services.settings, services.transit_reader)
+    except Exception as exc:  # noqa: BLE001
+        log("transit_load_failed", error=type(exc).__name__)
+        return None
+
+
+def knows_place(services: Any, said: str) -> bool:
+    """Ist das eine bekannte Haltestelle (nur ganze Wörter)? Für Reisesätze ohne „Bus“/„Zug“ – sonst KI."""
+    loaded = _loaded(services)
+    if loaded is None:
+        return False
+    if plain(said) in CENTER_WORDS:
+        return loaded[1].center() is not None
+    return loaded[1].find(said, strict=True) is not None
+
+
+def find_gid(services: Any, said: str) -> str:
+    """Bereichs-ID eines gesagten Orts, nur wenn eindeutig (keine weitere Rückfrage nötig)."""
+    loaded = _loaded(services)
+    p = loaded[1].find(said) if loaded else None
+    return loaded[0].areas[min(p.areas)].gid if loaded and p and not p.others else ""
+
+
+def place_name(services: Any, gid: str) -> str:
+    loaded = _loaded(services)
+    p = loaded[1].by_gid(gid) if loaded else None
+    return p.name if p else ""
+
+
+def handle_text(services: Any, text: str, after: dict[str, Any] | None = None, detail: bool = False,
+                chosen: dict[str, str] | None = None) -> Answer:
     """Einstieg für Handler und KI-Werkzeug. Fehler → ehrlicher Satz, nie ein Absturz."""
     from superkugel.services.usage import local_now
 
     started = time.monotonic()
-    try:
-        loaded = load(services.store, services.settings, services.transit_reader)
-    except Exception as exc:  # noqa: BLE001
-        log("transit_load_failed", error=type(exc).__name__)
-        loaded = None
+    loaded = _loaded(services)
     if loaded is None:
         return Answer(services.t("transit_unavailable"), kind="unavailable")
     tt, places = loaded
+    if after and not chosen:
+        chosen = after.get("places")
     try:
         ans = answer(services.t, tt, places, services.settings, text, local_now(services.settings, services.now()),
-                     after)
+                     after, detail=detail, chosen=chosen)
     except Exception as exc:  # noqa: BLE001
         log("transit_failed", error=type(exc).__name__)
         return Answer(services.t("transit_unavailable"), kind="error")

@@ -147,6 +147,10 @@ EXTRA_INTENTS = [
     {"name": "TransitLastTrainIntent", "slots": [], "samples": [
         "letzter zug", "der letzte zug", "wann fährt der letzte zug", "wann geht der letzte zug",
     ]},
+    {"name": "TransitDetailIntent", "slots": [], "samples": [
+        "genauer", "bitte genauer", "genauer bitte", "sag es genauer", "sag's genauer", "ganz genau", "einzelheiten",
+        "die umstiege", "wo muss ich umsteigen", "wo steige ich um", "wo muss ich da umsteigen",
+    ]},
     {"name": "MorningOffIntent", "slots": [], "samples": [
         "lass den morgengruß weg", "kein morgengruß mehr", "morgengruß aus", "ich will keinen morgengruß",
         "schalt den morgengruß aus", "keinen morgengruß",

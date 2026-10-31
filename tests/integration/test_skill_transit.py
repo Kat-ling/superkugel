@@ -88,7 +88,7 @@ def test_works_in_audiobooks_only_mode_but_not_in_maintenance(paket) -> None:
 
 def test_ai_tool_fahrplan_answers_from_timetable(paket) -> None:
     h = harness(paket)
-    args = {"ziel": "Bergdorf", "start": "", "zeit": "", "verkehrsmittel": "zug", "letzte": False}
+    args = {"ziel": "Bergdorf", "naehe": "", "start": "", "zeit": "", "verkehrsmittel": "zug", "letzte": False}
     h.openai.replies.append((200, {"status": "completed", "output": [
         {"type": "function_call", "name": "fahrplan", "arguments": json.dumps(args), "call_id": "c1"}],
         "usage": {"input_tokens": 1, "output_tokens": 1}}))
@@ -118,3 +118,71 @@ def test_ordinary_chat_still_goes_to_ai(paket) -> None:
     h.openai.text("Ein guter Apfelstrudel braucht Zeit.")
     r = h.send(chat("ChatWieIntent", "geht ein Apfelstrudel"))
     assert "Apfelstrudel" in speech(r) and h.openai.requests
+
+
+# ------------------------------------------------------------------ v1.5
+def _tool_reply(h, **args) -> None:
+    full = {"ziel": "", "naehe": "", "start": "", "zeit": "", "verkehrsmittel": "", "letzte": False, **args}
+    h.openai.replies.append((200, {"status": "completed", "output": [
+        {"type": "function_call", "name": "fahrplan", "arguments": json.dumps(full), "call_id": "c1"}],
+        "usage": {"input_tokens": 1, "output_tokens": 1}}))
+
+
+def test_travel_sentence_without_bus_or_train_skips_ai(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatIchIntent", "möchte nach Bergdorf fahren"))
+    assert "Laut Fahrplan" in speech(r) and h.openai.requests == []
+    h.openai.text("Italien ist im Herbst wunderschön.")
+    r = h.send(chat("ChatIchIntent", "fahre nächste Woche nach Italien"))  # kein Ort im Fahrplan → KI
+    assert "Italien" in speech(r) and len(h.openai.requests) == 1
+
+
+def test_same_name_asks_then_yes_no_or_hint(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatWannIntent", "fährt ein Zug nach Lindenau"))
+    assert "Meinst du Lindenau Bahnhof?" in speech(r) and attrs(r)["pending"] == "transit_confirm"
+    assert ends_session(r) is False
+    yes = h.send(intent("AMAZON.YesIntent", session=attrs(r)))
+    assert "Lindenau Bahnhof" in speech(yes) and "Laut Fahrplan" in speech(yes) and "pending" not in attrs(yes)
+    no = h.send(intent("AMAZON.NoIntent", session=attrs(r)))
+    assert "Oder meinst du Lindenau Kirche?" in speech(no)
+    no2 = h.send(intent("AMAZON.NoIntent", session=attrs(no)))
+    assert "genauer" in speech(no2) and "Sankt Johann in Tirol" in speech(no2)
+    hint = h.send(chat("ChatDasIntent", "bei Bergdorf", attrs(r)))  # gleich die Auswahlhilfe sagen
+    assert "Laut Fahrplan" in speech(hint) and "Lindenau Bahnhof" in speech(hint)
+    assert h.openai.requests == []
+
+
+def test_ai_tool_with_hint_center_and_original_sentence(paket) -> None:
+    h = harness(paket)
+    _tool_reply(h, ziel="Lindenau", naehe="Bergdorf", verkehrsmittel="zug")
+    r = h.send(chat("ChatIchIntent", "will meine Schwester besuchen, die wohnt in Lindenau bei Bergdorf"))
+    assert "Laut Fahrplan" in speech(r) and "Lindenau Bahnhof" in speech(r)
+    _tool_reply(h, ziel="bei meiner Schwester")  # KI liefert Unsinn → der Originalsatz zählt
+    r = h.send(chat("ChatIchIntent", "hab so Sehnsucht nach Lindenau bei Bergdorf"))
+    assert "Lindenau Bahnhof" in speech(r)
+    _tool_reply(h, ziel="Stadtzentrum")
+    r = h.send(chat("ChatIchIntent", "brauch neue Schuhe, wie komm ich am besten hin"))
+    assert "Teststadt Marktplatz" in speech(r)
+    body = h.openai.requests[0]["body"]
+    assert "Stadtzentrum" in body["instructions"] and "naehe" in json.dumps(body["tools"])
+
+
+def test_brief_answer_then_genauer(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatWieIntent", "komm ich nach Seeort"))
+    assert "zweimal umsteigen" in speech(r) and "Bus 8" not in speech(r)
+    r2 = h.send(intent("TransitDetailIntent", session=attrs(r)))
+    assert "mit dem Bus 8" in speech(r2) and "2 Mal umsteigen" in speech(r2)
+    r3 = h.send(chat("ChatUndIntent", "danach", attrs(r2)))
+    assert "Laut Fahrplan" in speech(r3) and h.openai.requests == []
+    h.openai.text("Gern: Der Strudel braucht Geduld.")
+    r4 = h.send(intent("TransitDetailIntent"))  # ohne Fahrplanauskunft davor: Gespräch
+    assert "Strudel" in speech(r4)
+
+
+def test_shorter_answers_in_prompt(paket) -> None:
+    h = harness(paket)
+    h.openai.text("Gut.")
+    h.send(chat("ChatWieIntent", "geht es dir"))
+    assert "ein bis zwei kurze Sätze" in h.openai.requests[0]["body"]["instructions"]

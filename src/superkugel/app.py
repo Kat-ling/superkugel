@@ -133,6 +133,7 @@ def build_skill(services: Services) -> Any:
         (_intent("StartQuizIntent"), alexa_hints.quiz),
         # Fahrplan (Sätze mit Ort kommen über die Trägerwörter ins Gespräch und werden dort erkannt)
         (_intent(*transit.BARE), transit.bare_intent),
+        (_intent("TransitDetailIntent"), timed(transit.detail_intent)),
         # Morgengruß
         (_intent("MorningOffIntent"), morning.turn_off),
         (_intent("MorningOnIntent"), morning.turn_on),

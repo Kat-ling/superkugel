@@ -57,6 +57,11 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 55 | Indirekte Frage über die KI (1.4) | ✅ | ⏳ | `test_ai_tool_fahrplan_answers_from_timetable` | „Sag mal, ich will morgen nach … fahren, wann soll ich los?“ → Auskunft aus dem Fahrplan, keine erfundenen Zeiten |
 | 56 | Erkennung mit ihrer Stimme (1.4) | – | ⏳ | – | Ortsnamen im Dialekt; nicht erkannte Namen notieren (ggf. Alias in `TransitAliases`) |
 | 50 | Laufendes Hörbuch nach dem Update | ✅ | ⏳ | `test_old_radio_token_on_device_does_not_break_book_commands` | „…spiel meinen Krimi weiter“, Pause, Weiter → gleiche Stelle wie vorher |
+| 57 | Reisesatz ohne Bus/Zug (1.5) | ✅ | ⏳ | `test_travel_sentence_without_bus_or_train_skips_ai`, `test_travel_dest` | Im Gespräch: „Ich möchte morgen nach … fahren“ (Ort der Angehörigen, auch mit „bei …“) → Auskunft |
+| 58 | „In die Stadt“ (1.5) | ✅ | ⏳ | `test_ai_tool_with_hint_center_and_original_sentence`, `test_places_hints_short_names_synonyms_center` | „Ich möchte in die Stadt fahren“, „Ich brauch was aus der Innenstadt, wie komm ich hin?“ → Verbindung ins Zentrum des Heimatorts |
+| 59 | Rückfrage bei gleichnamigen Orten (1.5) | ✅ | ⏳ | `test_same_name_asks_then_yes_no_or_hint` | „…wann fährt ein Zug nach Sankt Johann?“ → „Meinen Sie …?“ → „Nein“ / „in Salzburg“ / „Ja“ |
+| 60 | Kurzfassung und „genauer“ (1.5) | ✅ | ⏳ | `test_brief_answer_then_genauer`, `test_brief_then_detail_and_confirm` | Verbindung mit Umstieg → kurz; „genauer“ → alle Umstiege; „und danach?“ → nächste |
+| 61 | Kürzere KI-Antworten, Unterbrechen mit „Alexa“ (1.5) | ✅ (Prompt) | ⏳ | `test_shorter_answers_in_prompt` | Fünf Alltagsfragen: meist ein bis zwei Sätze; mitten in einer Antwort „Alexa“ → sie verstummt, nächste Frage geht an die Superkugel |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine

@@ -9,7 +9,7 @@ import pytest
 
 from superkugel.config import Settings, _aliases, _stop_id
 from superkugel.speech.texts import text as T
-from superkugel.transit.ask import looks_like_transit, parse
+from superkugel.transit.ask import looks_like_transit, parse, travel_dest
 from superkugel.transit.build import build
 from superkugel.transit.places import PlaceIndex, spoken_name
 from superkugel.transit.service import answer, clock_words, phone_words
@@ -38,7 +38,7 @@ def test_build_dedupes_skips_maps_and_keeps_flex(tmp_path) -> None:
     assert rep.duplicate_trips == 1  # t_bus_1000 steht in beiden Feeds
     assert rep.flex_zones == 1 and rep.flex_polygons_skipped == 1
     assert (rep.start, rep.end) == ("2026-11-01", "2026-12-12")
-    assert rep.areas == 5 and rep.footpaths >= 2  # Bahnsteige zu einem Bereich zusammengefasst, Nord ohne Abfahrt bleibt
+    assert rep.areas == 8 and rep.footpaths >= 2  # Bahnsteige zu einem Bereich zusammengefasst, Nord ohne Abfahrt bleibt
 
 
 def test_journey_with_change_and_latest_departure(tt: Timetable) -> None:
@@ -133,7 +133,9 @@ def test_answers_spoken(tt: Timetable) -> None:
     assert s.startswith("Laut Fahrplan: um 9 Uhr 10 ab Teststadt Hauptbahnhof mit dem Regionalexpress")
     assert "an Bergdorf Bahnhof um 9 Uhr 50" in s and "ohne Umsteigen" in s
     s = _ans(tt, "wie komm ich nach Seeort", now)
-    assert "zu Fuß" in s and "mit dem Bus 8" in s and "2 Mal umsteigen" in s
+    assert s.startswith("Erst etwa 8 Minuten zu Fuß zur Haltestelle Teststadt Marktplatz. Laut Fahrplan: um 8 Uhr 50")
+    assert "zweimal umsteigen, in Teststadt Hauptbahnhof und Bergdorf Bahnhof" in s and "„genauer“" in s
+    assert "Bus 8" not in s  # Kurzfassung: Einzelheiten erst auf „genauer“
     s = _ans(tt, "nächster Bus", now)
     assert "Linie 7" in s and "Rufbus Testrufbus" in s and "60 Minuten" in s and "01 23 45 67 8" in s
     assert "Den müssen Sie" in _ans(tt, "nächster Bus", now, form="sie")
@@ -147,3 +149,52 @@ def test_helpers() -> None:
     assert phone_words("+43 4242 12345") == "04 24 21 23 45"
     assert _stop_id("at:42:4711:0:3") == "at:42:4711" and _stop_id("x") == ""
     assert _aliases("Bergdorf=at:47:9999:0:1;kaputt=;=at:1:2") == {"bergdorf": "at:47:9999"}
+
+
+# ------------------------------------------------------------------ v1.5: Orte tolerant, Reisesätze, Kurzfassung
+def test_places_hints_short_names_synonyms_center(tt: Timetable) -> None:
+    pl = PlaceIndex(tt, {}, home_gid="at:99:5")
+    first = pl.find("Lindenau")  # zweimal vorhanden, keiner in der Nähe → mit Rückfrage
+    assert first.name == "Lindenau Bahnhof" and first.others == ("at:99:7",)
+    near = pl.find("Lindenau bei Bergdorf")  # Zusatz wählt aus, keine Rückfrage
+    assert near.name == "Lindenau Bahnhof" and near.others == ()
+    assert pl.find("Lindenau in Niederösterreich").name == "Lindenau Kirche"
+    assert pl.find("Lindenau bei Mondstadt").others  # unbekannter Zusatz → wie ohne Zusatz
+    assert pl.find("Bergdorf zu meiner Schwester").name == "Bergdorf Bahnhof"  # Kurzname mitten im Satz
+    assert pl.find("Krankenhaus").name == "Teststadt LKH Eingang"
+    assert pl.center().name == "Teststadt Marktplatz"  # meiste Abfahrten im Heimatort, aus den Daten
+    assert pl.find("Bergdor", strict=True) is None and pl.find("Bergdorff", strict=True) is None
+    assert pl.find("Bergdorf", strict=True).name == "Bergdorf Bahnhof"
+
+
+@pytest.mark.parametrize(("said", "dest"), [
+    ("ich möchte morgen nach Bergdorf fahren", "bergdorf"),
+    ("zu meiner Tochter nach Lindenau bei Bergdorf", "lindenau bei bergdorf"),
+    ("ich möchte in die Stadt fahren", "stadtzentrum"),
+    ("ich möchte morgen in die Stadt nach Bergdorf", "bergdorf"),
+    ("ich muss nach dem Essen schlafen", ""),
+    ("ich will nach Hause", ""),
+    ("ich möchte nach acht schlafen", ""),
+    ("was koch ich heute", ""),
+])
+def test_travel_dest(said: str, dest: str) -> None:
+    assert travel_dest(said) == dest
+
+
+def test_brief_then_detail_and_confirm(tt: Timetable) -> None:
+    now = dt.datetime(2026, 11, 3, 8, 10, tzinfo=VIE)
+    s = Settings(home_stop="at:99:5", home_station="at:99:1", address_form="du")
+    pl = PlaceIndex(tt, {}, s.home_stop)
+
+    def ask(text: str, **kw):
+        return answer(lambda k, **x: T("du", k, **x), tt, pl, s, text, now, **kw)
+
+    brief = ask("wie komm ich nach Seeort")
+    full = ask("", after=brief.follow_up, detail=True)
+    assert "mit dem Bus 8" in full.text and "2 Mal umsteigen" in full.text and "8 Uhr 50" in full.text
+    q = ask("wann fährt ein Zug nach Lindenau")
+    assert q.kind == "confirm" and q.text == "Meinst du Lindenau Bahnhof?"
+    assert q.confirm["choices"] == ["at:99:6", "at:99:7"] and q.confirm["role"] == "dest"
+    ok = ask(q.confirm["text"], chosen={"dest": "at:99:6"})
+    assert "Lindenau Bahnhof" in ok.text and ok.kind.startswith("journey")
+    assert "Teststadt Marktplatz" in ask("ich möchte in die Stadt fahren").text  # Zentrum aus den Daten

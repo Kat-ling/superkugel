@@ -30,6 +30,8 @@ Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 - **Ratschen ohne Nachfrage**: Nach der Antwort hört Alexa still weiter zu, statt „Noch etwas?“ zu fragen.
 - **Fahrplan**: „Wann fährt der nächste Bus?“, „Wie komm ich morgen nach …?“ – Züge in ganz Österreich, Kärntner
   Linien (inkl. Rufbus) und Verkehrsverbund Tirol aus den Sollfahrplänen, mit Umstiegen; ohne KI, ohne Echtzeit.
+  Versteht auch „Ich möchte morgen in die Stadt fahren“, fragt bei gleichnamigen Orten nach und sagt Umstiege
+  erst auf „genauer“ im Detail.
 - **Morgengruß**: beim ersten Öffnen am Vormittag Datum, Wetter und zwei Schlagzeilen (ohne Unglücksmeldungen),
   ohne KI; per Sprache abschaltbar.
 - **Wochenbericht** für den Admin: montags eine Mail mit reinen Zahlen (Nutzung, Kosten, Fehler) – keine Inhalte.

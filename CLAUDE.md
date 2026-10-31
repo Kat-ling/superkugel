@@ -54,6 +54,8 @@ Version 1.0 im Alltag in Betrieb, Version 1.1 (Tagesaktuelles A+B, Mediatheken) 
 Version 1.2 bereitgestellt und gepusht (Tag `v1.2.0`); Morgengruß am Gerät bestätigt.
 Version 1.3 (Erinnerungen, Radio, Rätsel entfernt) bereitgestellt und gepusht (Tag `v1.3.0`), Gerätetest offen.
 Version 1.4 (Fahrplanauskunft) bereitgestellt und gepusht (Tag `v1.4.0`), Fahrplan importiert (bis 12.12.2026), Gerätetest offen.
+Version 1.5 (Orte toleranter, Rückfrage, „in die Stadt“ aus den Daten, Kurzfassung + „genauer“, kürzere
+KI-Antworten) bereitgestellt (Lambda), Gerätetest offen. „Stadtzentrum“ nie als feste Haltestelle eintragen.
 Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.

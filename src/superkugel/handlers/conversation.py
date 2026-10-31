@@ -173,10 +173,14 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
         return end_with(services, hi, services.t("maintenance"))
     attrs = session_attrs(hi)
     from superkugel.handlers import transit
-    from superkugel.transit.ask import looks_like_transit
+    from superkugel.transit import service as transit_service
+    from superkugel.transit.ask import looks_like_transit, travel_dest
 
     if text.strip() and (looks_like_transit(text) or transit.is_follow_up(hi, text)):
         return transit.answer_text(services, hi, text)  # Fahrplan: ohne KI, auch im Hörbuch-Modus
+    # „ich möchte morgen nach Bergdorf fahren“: nur wenn das Ziel eine bekannte Haltestelle ist, sonst KI
+    if text.strip() and (dest := travel_dest(text)) and transit_service.knows_place(services, dest):
+        return transit.answer_text(services, hi, text)
     if mode is Mode.AUDIOBOOKS_ONLY:
         return _offer_audiobook(services, hi, services.t("ai_off_short"))
     if not text.strip():
@@ -239,7 +243,7 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
         elif call.name == "fahrplan":
             from superkugel.handlers import transit
 
-            return transit.from_tool(services, hi, call.arguments)  # Zeiten rechnet der Code, nie die KI
+            return transit.from_tool(services, hi, call.arguments, text)  # Zeiten rechnet der Code, nie die KI
         elif call.name == "search_media":
             from superkugel.handlers import media as media_handlers
 
@@ -298,6 +302,13 @@ def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> 
         chosen = media_handlers.choose_hit(services, hi, text)
         if chosen is not None:
             return chosen
+    if session_attrs(hi).get("pending") == "transit_confirm":
+        # Antwort auf „Meinst du …?“: „ja genau“, „nein“ oder gleich der richtige Ort („in Tirol“)
+        from superkugel.handlers import transit
+
+        answered = transit.confirm_text(services, hi, text)
+        if answered is not None:
+            return answered
     session_attrs(hi).pop("pending", None)
     return handle_chat_text(services, hi, text, started)
 
@@ -316,6 +327,10 @@ def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response
         from superkugel.handlers.audio import list_books
 
         return list_books(services, hi)
+    if pending == "transit_confirm":
+        from superkugel.handlers import transit
+
+        return transit.confirm_yes(services, hi)
     return handle_chat_text(services, hi, "ja", started)
 
 
@@ -328,6 +343,10 @@ def handle_no(services: Services, hi: HandlerInput, started: float) -> Response:
     if pending in ("resume_book", "list_books"):
         q = services.t("no_book_then")
         return keep_open(services, hi, q, q)
+    if pending == "transit_confirm":
+        from superkugel.handlers import transit
+
+        return transit.confirm_no(services, hi)
     return handle_chat_text(services, hi, "nein", started)
 
 

@@ -74,6 +74,12 @@ rückwärts (späteste Abfahrt für diese Ankunft), Fußwege bis 400 m, 5 Minute
 Ziel. Erkennung: Sätze mit Ort kommen über die Trägerwörter (`wann`, `wie`, `nächster`, `zug` …) und werden vor
 der KI erkannt; kurze Befehle haben eigene Intents.
 
+Ab v1.5: Reisesätze ohne „Bus“/„Zug“ („ich möchte morgen nach … fahren“) gelten nur dann als Fahrplanfrage, wenn
+das Ziel eine bekannte Haltestelle ist. Zusätze („bei …“, „in Tirol“) wählen unter gleichnamigen Orten aus; bleiben
+mehrere weit auseinander, fragt die Superkugel nach (Sitzungsattribut `transit_confirm`, Antwort per Ja/Nein oder
+Zusatz). „Stadtzentrum“ ist die Bushaltestelle mit den meisten Abfahrten im Heimatort (aus den Daten). Verbindungen
+mit Umstiegen kommen zuerst als Kurzfassung, `TransitDetailIntent` („genauer“) liefert alle Abschnitte.
+
 ## Zustände Gespräch ↔ Hörbuch
 
 ```mermaid

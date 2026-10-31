@@ -2,6 +2,10 @@
 
 Dein Lautsprecher kann jetzt mit dir ratschen und dir Hörbücher vorspielen.
 
+> **Das Wichtigste zuerst: Redet die Superkugel zu lang, sag einfach „Alexa“.**
+> Sie hört sofort auf und hört dir zu – du bleibst in der Superkugel und kannst gleich weiterreden,
+> zum Beispiel „Alexa … und wie wird das Wetter morgen?“. Nur **„Alexa, stopp“** beendet die Superkugel ganz.
+
 ## Ratschen
 
 1. Sag: **„Alexa, öffne Superkugel.“**
@@ -16,8 +20,8 @@ Tipp: Am besten fängst du deine Frage mit „Sag mal …“, „Was …“, „
 
 Nicht verstanden? Sag **„Wie bitte?“** – dann sagt sie es noch einmal, langsamer.
 
-Redet sie zu lang? Sag einfach **„Alexa“** – sie hört sofort auf und hört dir zu.
-Mit **„Alexa, stopp“** ist das Gespräch zu Ende.
+Redet sie zu lang? Sag einfach **„Alexa“** – sie hört sofort auf und hört dir zu. Das geht auch mit der
+Taste mit dem Punkt oben auf dem Lautsprecher. Mit **„Alexa, stopp“** ist das Gespräch zu Ende.
 
 Wenn du länger nachdenkst, wird es irgendwann still. Das ist normal. Sag einfach wieder
 „Alexa, öffne Superkugel“ – sie weiß noch, worüber ihr gerade gesprochen habt.
@@ -57,7 +61,13 @@ Du musst dir nie merken, wo du warst. Das macht die Superkugel.
 - **„Alexa, frag Superkugel, wann fährt der nächste Bus?“** – sie sagt die nächsten Abfahrten an deiner Haltestelle.
 - **„Alexa, frag Superkugel, wann fährt der nächste Zug nach Klagenfurt?“** – mit Abfahrt, Umsteigen und Ankunft.
 - **„… wie komm ich morgen um halb neun nach …?“** oder **„… wann geht der letzte Bus heim?“**
+- Auch ganz normal im Gespräch: **„Ich möchte morgen in die Stadt fahren.“** oder
+  **„Ich will am Samstag zu meiner Tochter nach … fahren.“**
+- Mit Umsteigen sagt sie zuerst nur das Wichtigste: wann es losgeht, wo du umsteigst, wann du ankommst.
+  Willst du alle Umstiege genau hören, sag **„Genauer“**.
 - Gleich danach kannst du fragen: **„Und danach?“** – dann kommt die nächste Möglichkeit.
+- Gibt es einen Ort mehrmals (zum Beispiel Sankt Johann), fragt sie: „Meinen Sie Sankt Johann in Tirol?“
+  Dann sag **„Ja“**, **„Nein“** oder gleich genauer, zum Beispiel **„in Salzburg“**.
 - Sie sagt immer „laut Fahrplan“: Verspätungen kennt sie nicht. Für eine wichtige Fahrt lieber zusätzlich am
   Bahnhof oder bei der Familie nachfragen.
 

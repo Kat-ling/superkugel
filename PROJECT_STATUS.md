@@ -1,7 +1,39 @@
 # Projektstatus – Superkugel
 
-**Stand:** 31.10.2026 · **Version 1.4 (Fahrplanauskunft): bereitgestellt (Change Set am 31.10.2026 ausgeführt),
-Fahrplan importiert (gültig bis 12.12.2026), live per Lambda-Aufruf getestet, auf GitHub (Tag `v1.4.0`).** Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
+**Stand:** 31.10.2026 · **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
+31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
+`v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
+
+## Version 1.5 (31.10.2026) – Orte besser verstehen, kürzere Antworten
+
+Anlass: „Ich möchte morgen nach … fahren“ mit Zusatz („… bei <Stadt>“) wurden nicht erkannt; lange Ansagen.
+
+- **Tolerantere Ortssuche** (`transit/places.py`): Zusätze wie „bei X“ oder „in Tirol“ wählen nur unter
+  gleichnamigen Orten aus (nächster Treffer zu X bzw. zur Mitte des Bundeslands); folgen dem Namen weitere Wörter,
+  zählt der längste bekannte Anfang; Stoppwörter („in“, „bei“) stören den Namensvergleich nicht mehr; Einrichtungen
+  wie „Krankenhaus“ finden auch „LKH …“ (nächstgelegene).
+- **Reisesätze ohne KI** (`transit/ask.py: travel_dest`): „ich möchte/will/muss … nach X (fahren)“, „zu meiner
+  Tochter nach X“ – nur wenn X eine bekannte Haltestelle ist (ganze Wörter, keine Annäherung), sonst KI.
+- **„In die Stadt“**: Zentrum des Heimatorts = Bushaltestelle mit den meisten Abfahrten im Heimatort, aus den
+  Fahrplandaten berechnet (keine feste Haltestelle). Die KI ordnet freie Formulierungen selbst zu („zum Einkaufen
+  in die Innenstadt“ → `Stadtzentrum`, „ins Krankenhaus“ → `Krankenhaus`). Datenschutz: Es gehen weiterhin keine
+  Orts- oder Haltestellennamen des Wohnorts an OpenAI – die Zuordnung zur echten Haltestelle macht der Code.
+- **KI-Werkzeug abgesichert:** `ziel` nur der Ortsname, Zusatz im neuen Feld `naehe`; kennt der Fahrplan das Ziel
+  der KI nicht, zählt der Originalsatz.
+- **Rückfrage bei gleichnamigen Orten** (weiter als 40 km auseinander, keiner in der Nähe, kein Alias): „Meinen Sie
+  Sankt Johann in Tirol?“ → „Ja“, „Nein“ (nächster Kandidat, dann Bitte um genauere Angabe) oder gleich „in Salzburg“.
+- **Kürzere Antworten:** KI meist ein bis zwei Sätze (höchstens etwa 80 Wörter). Verbindungen mit Umstiegen zuerst als
+  Kurzfassung (Abfahrt, Umstiegsorte, Ankunft, Dauer); „genauer“ (neuer `TransitDetailIntent`, auch „wo muss ich
+  umsteigen“, „und dann“) sagt alle Abschnitte, „und danach?“ die nächste Verbindung.
+- **Anleitungen:** Tipp „Einfach ‚Alexa‘ sagen – sie hört sofort auf und hört zu“ steht jetzt ganz oben auf
+  Spickzettel und Kurzanleitung. („Stopp“ beendet die Superkugel weiterhin – bewusst so gelassen.)
+- Tests: **246 bestanden**, `ruff` ohne Befund. Mit echten Daten am Admin-PC geprüft (kein Gerätetest): Ort mit
+  Zusatz „bei …“, „in die Stadt“, „Krankenhaus“, gleichnamige Orte mit Rückfrage. **Kein Gerätetest** (Prüfpunkte 57–61).
+- **Gemessen in AWS (31.10.2026, Testkennung per `aws lambda invoke`, kein Gerätetest):** Kaltstart + Reisesatz mit
+  Zusatz „bei …“ 2,8 s (Init 0,9 s, Paket laden); „in die Stadt“ 0,08 s; Verbindung mit zwei Umstiegen (Kurzfassung)
+  0,35 s; „genauer“ 0,29 s; Rückfrage gleichnamiger Ort 0,03 s, „Nein“ → nächster Kandidat, Antwort mit Bundesland
+  und „Ja“ je 0,4–0,5 s; „Innenstadt“ über die KI → Werkzeug `Stadtzentrum` 3,2 s.
+- Nach dem Bereitstellen: Interaction Model in der Developer Console neu laden (neuer Intent).
 
 ## Version 1.4 (31.10.2026) – Fahrplanauskunft Bus und Zug
 
