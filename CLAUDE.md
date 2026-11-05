@@ -57,7 +57,7 @@ Version 1.4 (Fahrplanauskunft) bereitgestellt und gepusht (Tag `v1.4.0`), Fahrpl
 Version 1.5 (Orte toleranter, Rückfrage, „in die Stadt“ aus den Daten, Kurzfassung + „genauer“, kürzere
 KI-Antworten) bereitgestellt (Lambda), Gerätetest offen. „Stadtzentrum“ nie als feste Haltestelle eintragen.
 Version 1.5.1 (Fahrplan-Dialog: Folgefragen nur als ganzer Satz, neues Ziel, Datum/relative Zeit, „und zurück?“,
-wartender Fahrplan `TRANSIT/NEXT`) lokal fertig, noch nicht bereitgestellt.
+wartender Fahrplan `TRANSIT/NEXT`) bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.
 Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.
