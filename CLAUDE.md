@@ -19,7 +19,7 @@ sam deploy --template-file .aws-sam/build/template.yaml --config-file <absoluter
 - Ein Skill, Locale de-DE, eigener AWS-Stack (SAM, eu-north-1): Lambda Python 3.14 arm64, 1 DynamoDB-Tabelle (pk/sk), privater S3-Bucket, SSM für API-Schlüssel und Modus.
 - OpenAI Responses API per stdlib (`conversation/llm.py`), Modell `gpt-6-luna`, `reasoning.effort=none`, `store=false`.
 - Freie Rede: ein Intent pro Trägerwort (`conversation/carriers.py`) → Satz wird rekonstruiert. Interaction Model **nie von Hand** editieren, sondern generieren.
-- Bibliothek steht im Systemprompt; einziges Tool `play_audiobook(book_id)`. Offsets/Kapitel nur deterministisch (`audiobooks/player.py`).
+- Bibliothek steht im Systemprompt; Werkzeuge: `play_audiobook(book_id)`, Mediatheken, `fahrplan`. Offsets/Kapitel nur deterministisch (`audiobooks/player.py`).
 - Stimmen nur `alexa|Vicki|Marlene|Hans` (Alexa-Doku). Keine externe TTS (Regel gegen kundenspezifisches `<audio>`, OpenAI-TTS-Abschaltung 6.1.2027).
 - Thalia: keine API → Eingangsordner (`audiobooks/inbox.py`). Kein Login-Scraping.
 - Jeder Fehler: Fallback-Satz + `shouldEndSession=true`. Auf AudioPlayer-/System-Events nie Sprache.
@@ -56,6 +56,8 @@ Version 1.3 (Erinnerungen, Radio, Rätsel entfernt) bereitgestellt und gepusht (
 Version 1.4 (Fahrplanauskunft) bereitgestellt und gepusht (Tag `v1.4.0`), Fahrplan importiert (bis 12.12.2026), Gerätetest offen.
 Version 1.5 (Orte toleranter, Rückfrage, „in die Stadt“ aus den Daten, Kurzfassung + „genauer“, kürzere
 KI-Antworten) bereitgestellt (Lambda), Gerätetest offen. „Stadtzentrum“ nie als feste Haltestelle eintragen.
+Version 1.5.1 (Fahrplan-Dialog: Folgefragen nur als ganzer Satz, neues Ziel, Datum/relative Zeit, „und zurück?“,
+wartender Fahrplan `TRANSIT/NEXT`) lokal fertig, noch nicht bereitgestellt.
 Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.

@@ -68,6 +68,8 @@ Du musst dir nie merken, wo du warst. Das macht die Superkugel.
 - Gleich danach kannst du fragen: **„Und danach?“** – dann kommt die nächste Möglichkeit.
 - Gibt es einen Ort mehrmals (zum Beispiel Sankt Johann), fragt sie: „Meinen Sie Sankt Johann in Tirol?“
   Dann sag **„Ja“**, **„Nein“** oder gleich genauer, zum Beispiel **„in Salzburg“**.
+- Nach einer Verbindung kannst du gleich fragen: **„Und zurück?“** oder **„Am Nachmittag zurück?“**
+- Du kannst auch einen Tag sagen: **„am 20. November“** – oder **„in zwei Stunden“**.
 - Sie sagt immer „laut Fahrplan“: Verspätungen kennt sie nicht. Für eine wichtige Fahrt lieber zusätzlich am
   Bahnhof oder bei der Familie nachfragen.
 

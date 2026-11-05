@@ -28,6 +28,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -262,7 +263,7 @@ def cmd_fahrplan(args: argparse.Namespace) -> int:
     import tempfile
 
     from superkugel.transit.build import build
-    from superkugel.transit.service import POINTER
+    from superkugel.transit.service import NEXT_POINTER, POINTER, plan_import
 
     if args.action == "import":
         zips = [Path(p) for p in args.values]
@@ -280,19 +281,34 @@ def cmd_fahrplan(args: argparse.Namespace) -> int:
             sys.exit("AUDIO_BUCKET ist nicht gesetzt (siehe .env.example).")
         session = _session()
         key = f"transit/fahrplan-{dt.datetime.now(dt.UTC):%Y%m%dT%H%M%S}.zip"
-        session.client("s3").upload_file(str(out), bucket, key)
         store = _store(session)
-        old = (store.get_item(*POINTER) or {}).get("key")
-        store.put_item(*POINTER, {"key": key, "start": rep.start, "end": rep.end, "size": rep.size_bytes,
-                                  "built": dt.datetime.now(dt.UTC).isoformat(timespec="seconds")})
-        if old and old != key:
+        new = {"key": key, "start": rep.start, "end": rep.end, "size": rep.size_bytes,
+               "built": dt.datetime.now(dt.UTC).isoformat(timespec="seconds")}
+        plan = plan_import(store.get_item(*POINTER) or {}, store.get_item(*NEXT_POINTER) or {}, new,
+                           dt.datetime.now(ZoneInfo("Europe/Vienna")).date())
+        if plan.error:
+            sys.exit(plan.error)
+        session.client("s3").upload_file(str(out), bucket, key)
+        if plan.current:
+            store.put_item(*POINTER, plan.current)
+        if plan.next:
+            store.put_item(*NEXT_POINTER, plan.next)
+        elif plan.clear_next:
+            store.delete_item(*NEXT_POINTER)
+        for old in plan.delete:
             with contextlib.suppress(Exception):  # altes Paket aufräumen (Lambda lädt binnen 10 Minuten das neue)
                 session.client("s3").delete_object(Bucket=bucket, Key=old)
         out.unlink(missing_ok=True)
         print(f"Hochgeladen: {key} – gültig {rep.start} bis {rep.end}")
+        if plan.next:
+            print(f"Gilt noch nicht: Der laufende Fahrplan bleibt, ab {rep.start} wird automatisch gewechselt.")
+        if plan.note:
+            print(plan.note)
         return 0
     if args.action == "status":
-        print(json.dumps(_store(_session()).get_item(*POINTER) or {"key": None}, ensure_ascii=False, indent=2))
+        store = _store(_session())
+        print(json.dumps({"aktuell": store.get_item(*POINTER), "wartet": store.get_item(*NEXT_POINTER)},
+                         ensure_ascii=False, indent=2))
         return 0
     # frage: lokal mit einem Paket beantworten (zum Ausprobieren, ohne Alexa)
     from superkugel.config import Settings

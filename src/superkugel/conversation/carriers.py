@@ -33,6 +33,8 @@ CARRIERS: tuple[str, ...] = (
     "an", "ans", "daran", "dass", "übermorgen",
     # v1.4: Fahrplanfragen ohne Fragewort („fährt heute noch ein Zug …“, „nächster Bus nach …“)
     "fährt", "geht", "kommt", "nächster", "nächste", "letzter", "letzte", "zug", "bus", "fahrplan", "verbindung",
+    # v1.5.1: Fahrplanangaben am Satzanfang („am Donnerstag“, „um acht nach …“, „in zwei Stunden …“)
+    "am", "um", "in",
 )
 
 

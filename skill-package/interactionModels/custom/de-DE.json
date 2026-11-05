@@ -544,6 +544,20 @@
           ]
         },
         {
+          "name": "TransitBackIntent",
+          "slots": [],
+          "samples": [
+            "zurück",
+            "retour",
+            "rückfahrt",
+            "die rückfahrt",
+            "rückweg",
+            "der rückweg",
+            "wieder zurück",
+            "wieder heim"
+          ]
+        },
+        {
           "name": "MorningOffIntent",
           "slots": [],
           "samples": [
@@ -1848,6 +1862,42 @@
           ],
           "samples": [
             "verbindung {query}"
+          ]
+        },
+        {
+          "name": "ChatAmIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "am {query}"
+          ]
+        },
+        {
+          "name": "ChatUmIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "um {query}"
+          ]
+        },
+        {
+          "name": "ChatInIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "in {query}"
           ]
         }
       ],

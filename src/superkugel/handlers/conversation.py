@@ -176,7 +176,8 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
     from superkugel.transit import service as transit_service
     from superkugel.transit.ask import looks_like_transit, travel_dest
 
-    if text.strip() and (looks_like_transit(text) or transit.is_follow_up(hi, text)):
+    if text.strip() and (transit.is_follow_up(hi, text) or looks_like_transit(text)
+                         or transit.is_new_target(services, hi, text)):
         return transit.answer_text(services, hi, text)  # Fahrplan: ohne KI, auch im Hörbuch-Modus
     # „ich möchte morgen nach Bergdorf fahren“: nur wenn das Ziel eine bekannte Haltestelle ist, sonst KI
     if text.strip() and (dest := travel_dest(text)) and transit_service.knows_place(services, dest):
@@ -213,6 +214,7 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
 
     attrs["ai_failed"] = False
     attrs["misunderstood"] = 0
+    attrs.pop("transit_last", None)  # Thema gewechselt: „danach“ gehört jetzt zum Gespräch
     circuit.record_success()
     services.usage.record(reply.usage, reply.latency_ms)
     _measure_total(services, started)

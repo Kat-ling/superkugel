@@ -80,6 +80,10 @@ mehrere weit auseinander, fragt die Superkugel nach (Sitzungsattribut `transit_c
 Zusatz). „Stadtzentrum“ ist die Bushaltestelle mit den meisten Abfahrten im Heimatort (aus den Daten). Verbindungen
 mit Umstiegen kommen zuerst als Kurzfassung, `TransitDetailIntent` („genauer“) liefert alle Abschnitte.
 
+Ab v1.5.1: Folgefragen gelten nur als ganzer kurzer Satz (`handlers/transit.py`), `transit_last` endet mit der ersten
+KI-Antwort. „Und zurück?“ tauscht die Orte der letzten Auskunft und startet 10 Minuten nach der Ankunft. Ein Paket, das
+noch nicht gilt, liegt unter `TRANSIT/NEXT`; `active_pointer` nimmt es ab seinem Startdatum, ohne etwas zu schreiben.
+
 ## Zustände Gespräch ↔ Hörbuch
 
 ```mermaid

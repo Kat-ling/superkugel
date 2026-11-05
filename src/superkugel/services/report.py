@@ -66,7 +66,9 @@ def build(store: Store, settings: Settings, now: dt.datetime | None = None,
 
 def _timetable(store: Store, today: dt.date) -> dict[str, Any]:
     """Bis wann der importierte Fahrplan gilt (Fahrplanwechsel jedes Jahr im Dezember)."""
-    end = str((store.get_item("TRANSIT", "CURRENT") or {}).get("end", ""))
+    # Wartet schon der nächste Fahrplan, ist dessen Ende die Frist
+    pointers = (store.get_item("TRANSIT", "CURRENT") or {}, store.get_item("TRANSIT", "NEXT") or {})
+    end = max((str(x.get("end", "")) for x in pointers), default="")
     if not end:
         return {"timetable_end": None, "timetable_days_left": None}
     return {"timetable_end": end, "timetable_days_left": (dt.date.fromisoformat(end) - today).days}

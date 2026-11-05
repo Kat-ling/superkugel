@@ -4,6 +4,22 @@
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
+## Version 1.5.1 (5.11.2026) – Fahrplan-Dialog korrigiert: lokal fertig, noch nicht bereitgestellt
+
+Anlass: Prüfbericht nach den Arbeitsmethoden von `obra/superpowers`. Die Fehler wurden zuerst als fehlschlagende
+Tests nachgestellt, dann behoben.
+
+- Folgefragen („danach“, „genauer“) gelten nur noch als ganzer kurzer Satz; nach einer KI-Antwort ist das
+  Fahrplan-Thema beendet. „Dann mach ich mir einen Kaffee“ geht an die KI.
+- Ein neues Ziel gewinnt („und der nächste Bus nach …“, „und dann nach …“); anderes Verkehrsmittel = neue Frage.
+- Datum und relative Zeit: „am 20. November“, „am 20.“, „in zwei Stunden“, „in drei Tagen“, „nächsten Dienstag“,
+  „am Abend“. Unklare Tage („nächste Woche“, „zu Weihnachten“) → Rückfrage „Welchen Tag?“, die Antwort ergänzt die Frage.
+- Reisesätze ohne KI nur für die Sprecherin selbst: keine Verneinung, kein „zu Fuß“, kein Umzug, nichts Vergangenes.
+- „Und zurück?“: Rückfahrt ohne KI, Orte aus der letzten Auskunft, Start 10 Minuten nach der Ankunft, gleicher Tag.
+  Neu: `TransitBackIntent` und die Trägerwörter „am“, „um“, „in“ → **Interaction Model neu laden**.
+- Fahrplan-Import: Ein Paket, das noch nicht gilt, wartet unter `TRANSIT/NEXT`; die Lambda wechselt ab dem Startdatum
+  von selbst. Abgelaufene Pakete werden abgelehnt, Lücken gemeldet.
+
 ## Version 1.5 (31.10.2026) – Orte besser verstehen, kürzere Antworten
 
 Anlass: „Ich möchte morgen nach … fahren“ mit Zusatz („… bei <Stadt>“) wurden nicht erkannt; lange Ansagen.
@@ -104,7 +120,7 @@ Reviews eingearbeitet. Kostenwirkung ≈ 0 (`docs/kosten.md`), neue Datenflüsse
 | Tagesaktuelles (1.1) | stündlicher Abruf in AWS (ORF + Wetter), Websuche mit Tageslimit, Lieblingssendungen; freie Mediensuche erst mit Podcast-Index-Schlüssel |
 | Morgengruß, Wochenbericht (1.2) | Morgengruß ohne KI (am Gerät bestätigt), Wochenbericht montags per SNS-Mail, nur Zahlen |
 | Hinweise (1.3) | Erinnerungen, Radio, Rätsel → kurzer Hinweis auf die normale Alexa, Sitzung endet |
-| Fahrplan (1.4) | Züge Österreich, Kärntner Linien inkl. Rufbus, VVT Tirol – Abfahrten, Verbindungen, letzte Verbindung (nicht bereitgestellt) |
+| Fahrplan (1.4) | Züge Österreich, Kärntner Linien inkl. Rufbus, VVT Tirol – Abfahrten, Verbindungen, letzte Verbindung |
 | Schutz | harte Tages-/Monatskostengrenze, Circuit-Breaker, Fernschalter, Prepaid bei OpenAI, Budget-Warnung im Management-Konto |
 
 Gemessen (25.10.2026, per `aws lambda invoke`): Kaltstart 0,8 s Init + 1,5 s; Gesprächsantwort 3,2 s gesamt
@@ -118,7 +134,7 @@ brach sofort ab; Nachrichtenfrage löste unnötige Websuche aus; Wetter wurde de
 
 ## Tests
 
-- `pytest`: **231 bestanden** (Stand 1.4; Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
+- `pytest`: **312 bestanden** (Stand 1.5.1; Python 3.14, Windows). Unit- und Integrationstests mit echten Alexa-Request-JSONs,
   gemockter OpenAI-API und moto (DynamoDB/S3/SSM). `ruff`, `cfn-lint --regions eu-north-1`, `pip-audit`: ohne Befund.
 - Zwei unabhängige Reviews (Alexa-Konformität, Wiedergabe, Ausfallsicherheit, Sicherheit, Kosten, Bedienbarkeit,
   Import) – alle berechtigten Befunde behoben und mit Regressionstests abgesichert.

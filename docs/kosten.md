@@ -26,7 +26,7 @@ Preise Stand 25.10.2026, USD, Region eu-north-1 (Stockholm). 1 USD ≈ 0,9 EUR.
 | 30 min | 0,54 $ | 3,30–9,00 $ | ≈ 0,30 $ | **≈ 4,10–9,80 $** |
 | 60 min | 1,08 $ | 9,00 $ (Deckel 25/Tag) | ≈ 0,30 $ | **≈ 10,40 $** |
 
-AWS: Lambda/DynamoDB/S3-Streaming im Always-Free-Rahmen; S3-Speicher ≈ 0,10 $; 7 eigene CloudWatch-Metriken
+AWS: Lambda/DynamoDB/S3-Streaming im Always-Free-Rahmen; S3-Speicher ≈ 0,10 $; 8 eigene CloudWatch-Metriken
 (≤ 10 sind frei; Metriken werden nur bei Ereignissen geschrieben); Rest Cent-Beträge.
 Podcast-Folgen streamt der Echo direkt beim Anbieter – keine AWS-Kosten.
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 import datetime as dt
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from superkugel.config import Settings
@@ -21,7 +21,9 @@ from superkugel.transit.places import CENTER_WORDS, Place, PlaceIndex, line_shor
 from superkugel.transit.timetable import DAY, Leg, Timetable
 
 POINTER = ("TRANSIT", "CURRENT")  # DynamoDB-Eintrag: welches Paket in S3 aktuell ist
+NEXT_POINTER = ("TRANSIT", "NEXT")  # Paket, das erst ab seinem Startdatum gilt (Fahrplanwechsel im Dezember)
 RECHECK_S = 600
+RETURN_GAP_S = 600  # Rückfahrt frühestens 10 Minuten nach der Ankunft
 TRAINS = frozenset({KIND_TRAIN})
 BUSES = frozenset({KIND_BUS, KIND_CALL, KIND_TRAM, KIND_SUBWAY, KIND_OTHER})
 
@@ -46,13 +48,54 @@ def s3_reader(bucket: str, region: str) -> Callable[[str], bytes]:
     return lambda key: client.get_object(Bucket=bucket, Key=key)["Body"].read()
 
 
+def active_pointer(store: Store, today: dt.date) -> dict[str, Any]:
+    """Das heute gültige Paket: das wartende, sobald sein Startdatum erreicht ist, sonst das aktuelle."""
+    waiting = store.get_item(*NEXT_POINTER) or {}
+    if waiting.get("key") and str(waiting.get("start", "")) <= today.isoformat():
+        return waiting
+    return store.get_item(*POINTER) or {}
+
+
+@dataclass
+class ImportPlan:
+    """Was ein Fahrplan-Import tun soll (rein rechnerisch, damit es ohne AWS prüfbar ist)."""
+    current: dict[str, Any] | None = None  # neuer Inhalt von POINTER, None = bleibt
+    next: dict[str, Any] | None = None  # neuer Inhalt von NEXT_POINTER, None = bleibt
+    clear_next: bool = False
+    delete: list[str] = field(default_factory=list)  # alte Pakete in S3
+    error: str = ""
+    note: str = ""
+
+
+def plan_import(current: dict[str, Any], waiting: dict[str, Any], new: dict[str, Any], today: dt.date) -> ImportPlan:
+    """Ein Paket, das heute noch nicht gilt, wartet neben dem laufenden – sonst fehlten die Tage bis zum Wechsel."""
+    if str(new["end"]) < today.isoformat():
+        return ImportPlan(error=f"Dieser Fahrplan ist schon abgelaufen (gültig bis {new['end']}). Nichts geändert.")
+    plan = ImportPlan()
+    if waiting.get("key") and str(waiting.get("start", "")) <= today.isoformat():  # Wechsel ist schon passiert
+        plan.current, plan.clear_next = dict(waiting), True
+        plan.delete += [str(current["key"])] if current.get("key") else []
+        current, waiting = dict(waiting), {}
+    if str(new["start"]) <= today.isoformat():
+        plan.current, plan.next, plan.clear_next = new, None, True
+        plan.delete += [str(x["key"]) for x in (current, waiting) if x.get("key")]
+        return plan
+    plan.next, plan.clear_next = new, False
+    plan.delete += [str(waiting["key"])] if waiting.get("key") else []
+    end = str(current.get("end", ""))
+    if end and (dt.date.fromisoformat(end) + dt.timedelta(days=1)).isoformat() < str(new["start"]):
+        plan.note = f"Achtung: Lücke – der laufende Fahrplan endet {end}, der neue beginnt {new['start']}."
+    return plan
+
+
 def load(store: Store, settings: Settings, reader: Callable[[str], bytes] | None = None,
-         clock: Callable[[], float] = time.monotonic) -> tuple[Timetable, PlaceIndex] | None:
-    """Aktuelles Paket (zwischengespeichert). None, wenn noch keines importiert wurde."""
+         clock: Callable[[], float] = time.monotonic, today: dt.date | None = None
+         ) -> tuple[Timetable, PlaceIndex] | None:
+    """Heute gültiges Paket (zwischengespeichert). None, wenn noch keines importiert wurde."""
     now = clock()
     if _CACHE.tt is not None and now - _CACHE.checked < RECHECK_S:
         return _CACHE.tt, _CACHE.places  # type: ignore[return-value]
-    pointer = store.get_item(*POINTER) or {}
+    pointer = active_pointer(store, today or dt.date.today())
     key = str(pointer.get("key", ""))
     if not key:
         return None
@@ -77,6 +120,10 @@ def clock_words(secs: int) -> str:
     secs %= DAY
     h, m = secs // 3600, secs % 3600 // 60
     return f"{h} Uhr {m}" if m else f"{h} Uhr"
+
+
+def _capitalized(text: str) -> str:
+    return text[:1].upper() + text[1:]
 
 
 def day_words(day: dt.date, today: dt.date) -> str:
@@ -114,18 +161,29 @@ class Answer:
 
 def answer(t: Callable[..., str], tt: Timetable, places: PlaceIndex, settings: Settings, text: str,
            now_local: dt.datetime, after: dict[str, Any] | None = None, detail: bool = False,
-           chosen: dict[str, str] | None = None) -> Answer:
+           chosen: dict[str, str] | None = None, back: bool = False) -> Answer:
     """Frage → Antwort. ``after``: letzte Auskunft, wenn sie „und danach?“ (oder mit ``detail`` „genauer“) fragt.
+    ``back``: Rückfahrt zur letzten Auskunft (Sie selbst nennt höchstens Tag oder Zeit).
     ``chosen``: nach „Meinst du …?“ bestätigter Ort je Rolle (``origin``/``dest`` → Bereichs-ID)."""
-    q = _query_from_follow_up(after, now_local) if after else parse(text, now_local)
+    if back and after:
+        q = _back_query(text, after, now_local)
+    else:
+        q = _query_from_follow_up(after, now_local) if after else parse(text, now_local)
+    if q.vague and not after:  # „nächste Woche“: nachfragen statt für heute zu antworten
+        return Answer(t("transit_ask_day"), {"text": text, "ask_day": True}, kind="ask_day")
     today = now_local.date()
     day = q.day or today
     t_now = now_local.hour * 3600 + now_local.minute * 60
     t0 = q.time_s if q.time_s is not None else (t_now if day == today else 5 * 3600)
-    if after:
+    if back and after:
+        if q.time_s is None and not q.day_said and after.get("arr_t") is not None:
+            t0 = int(after["arr_t"]) + RETURN_GAP_S  # Hinfahrt bekannt: Rückfahrt nach der Ankunft
+            if t0 >= DAY:
+                day, t0 = day + dt.timedelta(days=1), t0 - DAY
+    elif after:
         t0 = int(after.get("short_t") if detail and after.get("short_t") is not None else after.get("next_t") or t0)
     if not tt.covers(day):
-        return Answer(t("transit_no_data_day", day=day_words(day, today)), kind="no_data")
+        return Answer(t("transit_no_data_day", day=_capitalized(day_words(day, today))), kind="no_data")
 
     home_stop = places.by_gid(settings.home_stop) if settings.home_stop else None
     home_station = places.by_gid(settings.home_station) if settings.home_station else None
@@ -178,6 +236,17 @@ def _query_from_follow_up(after: dict[str, Any], now_local: dt.datetime) -> Tran
     q = parse(after.get("text", ""), now_local)
     q.day = dt.date.fromisoformat(after["day"]) if after.get("day") else q.day
     q.last = False
+    return q
+
+
+def _back_query(text: str, after: dict[str, Any], now_local: dt.datetime) -> TransitQuery:
+    """„Und zurück?“: gesagte Zeit gilt, Orte kommen vertauscht aus der letzten Auskunft (``chosen``)."""
+    q = parse(text, now_local)
+    q.origin, q.dest, q.origin_home, q.dest_home = "", "", False, True
+    if q.mode == "any":  # wie die Hinfahrt
+        q.mode = {"zug": "train", "bus": "bus"}.get(str(after.get("text", "")).split(" ")[0], "any")
+    if not q.day_said and after.get("day"):
+        q.day = dt.date.fromisoformat(after["day"])
     return q
 
 
@@ -262,9 +331,9 @@ def _journey(t: Callable[..., str], tt: Timetable, q: TransitQuery, origin: Plac
     text = (_brief(t, tt, legs, dest, day_prefix, q.last) if brief
             else _describe(t, tt, legs, origin, dest, day_prefix, q.last))
     follow = {"text": q_text(q, origin, dest), "day": day.isoformat(), "next_t": legs[0].dep + 60 if not q.last
-              else None, "short_t": legs[0].dep if brief else None, "places": _places_of(tt, origin, dest)}
-    return Answer(text, follow if follow["next_t"] or follow["short_t"] is not None else None,
-                  kind=f"journey{len(rides)}")
+              else None, "short_t": legs[0].dep if brief else None, "arr_t": legs[-1].arr,
+              "places": _places_of(tt, origin, dest)}
+    return Answer(text, follow, kind=f"journey{len(rides)}")
 
 
 def _changes(rides: int) -> str:
@@ -316,8 +385,11 @@ def _describe(t: Callable[..., str], tt: Timetable, legs: list[Leg], origin: Pla
 
 
 def _loaded(services: Any) -> tuple[Timetable, PlaceIndex] | None:
+    from superkugel.services.usage import local_now
+
     try:
-        return load(services.store, services.settings, services.transit_reader)
+        return load(services.store, services.settings, services.transit_reader,
+                    today=local_now(services.settings, services.now()).date())
     except Exception as exc:  # noqa: BLE001
         log("transit_load_failed", error=type(exc).__name__)
         return None
@@ -347,7 +419,7 @@ def place_name(services: Any, gid: str) -> str:
 
 
 def handle_text(services: Any, text: str, after: dict[str, Any] | None = None, detail: bool = False,
-                chosen: dict[str, str] | None = None) -> Answer:
+                chosen: dict[str, str] | None = None, back: bool = False) -> Answer:
     """Einstieg für Handler und KI-Werkzeug. Fehler → ehrlicher Satz, nie ein Absturz."""
     from superkugel.services.usage import local_now
 
@@ -357,10 +429,12 @@ def handle_text(services: Any, text: str, after: dict[str, Any] | None = None, d
         return Answer(services.t("transit_unavailable"), kind="unavailable")
     tt, places = loaded
     if after and not chosen:
-        chosen = after.get("places")
+        chosen = after.get("places") or {}
+        if back:
+            chosen = {"origin": chosen.get("dest", ""), "dest": chosen.get("origin", "")}
     try:
         ans = answer(services.t, tt, places, services.settings, text, local_now(services.settings, services.now()),
-                     after, detail=detail, chosen=chosen)
+                     after, detail=detail, chosen=chosen, back=back)
     except Exception as exc:  # noqa: BLE001
         log("transit_failed", error=type(exc).__name__)
         return Answer(services.t("transit_unavailable"), kind="error")

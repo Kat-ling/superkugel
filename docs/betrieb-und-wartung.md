@@ -46,6 +46,7 @@ Quelle: GTFS-Downloads der Mobilitätsverbünde Österreich (Registrierung nöti
 | Aufgabe | Befehl / Ort |
 |---|---|
 | Neuen Fahrplan einspielen (jährlich vor dem Fahrplanwechsel Mitte Dezember) | ZIPs herunterladen, dann `superkugel_admin.py fahrplan import <ZIP> <ZIP> …` (1–2 Minuten; lädt nach S3, setzt `TRANSIT/CURRENT`; die Lambda lädt binnen 10 Minuten das neue Paket) |
+| Neuer Fahrplan gilt erst später | Einfach importieren: Er wartet neben dem laufenden und wird ab seinem Startdatum von selbst genutzt (`fahrplan status` zeigt beide). Abgelaufene Pakete lehnt der Import ab. |
 | Stand ansehen | `superkugel_admin.py fahrplan status` (gültig von/bis) |
 | Frage am PC ausprobieren | `superkugel_admin.py fahrplan import … --dry-run` (baut nur lokal), dann `superkugel_admin.py fahrplan frage "wann fährt der nächste Zug nach Graz" --datei <Paket>` |
 | Heimat-Haltestelle/-bahnhof, Ziel-Aliase | `HomeStop`, `HomeStation`, `TransitAliases` in `infra/samconfig.toml` (Haltestellen-ID ohne Steig, z. B. `at:42:1234`; Alias `name=at:…;name2=at:…`), Deploy |

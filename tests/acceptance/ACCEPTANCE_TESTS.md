@@ -62,6 +62,12 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 59 | Rückfrage bei gleichnamigen Orten (1.5) | ✅ | ⏳ | `test_same_name_asks_then_yes_no_or_hint` | „…wann fährt ein Zug nach Sankt Johann?“ → „Meinen Sie …?“ → „Nein“ / „in Salzburg“ / „Ja“ |
 | 60 | Kurzfassung und „genauer“ (1.5) | ✅ | ⏳ | `test_brief_answer_then_genauer`, `test_brief_then_detail_and_confirm` | Verbindung mit Umstieg → kurz; „genauer“ → alle Umstiege; „und danach?“ → nächste |
 | 61 | Kürzere KI-Antworten, Unterbrechen mit „Alexa“ (1.5) | ✅ (Prompt) | ⏳ | `test_shorter_answers_in_prompt` | Fünf Alltagsfragen: meist ein bis zwei Sätze; mitten in einer Antwort „Alexa“ → sie verstummt, nächste Frage geht an die Superkugel |
+| 62 | Gespräch nach Fahrplanauskunft (1.5.1) | ✅ | ⏳ | `test_ordinary_talk_after_a_timetable_answer_goes_to_ai`, `test_ai_answer_ends_the_timetable_topic` | Nach einer Auskunft: „Dann mach ich mir einen Kaffee“ → normales Gespräch |
+| 63 | Neues Ziel als Folgefrage (1.5.1) | ✅ | ⏳ | `test_new_destination_wins_over_the_old_one` | „Und der nächste Bus nach …“ → Auskunft zum neuen Ziel |
+| 64 | Datum und relative Zeit (1.5.1) | ✅ | ⏳ | `test_date_and_relative_time_are_answered`, `test_dates_and_relative_times` | „Fährt am 20. November ein Zug nach …?“, „… in zwei Stunden?“ |
+| 65 | Rückfrage nach dem Tag (1.5.1) | ✅ | ⏳ | `test_vague_day_is_asked_for_and_the_answer_completes_the_question` | „Fährt nächste Woche ein Zug nach …?“ → „Welchen Tag …?“ → „Am Donnerstag“ |
+| 66 | Kein Reisewunsch (1.5.1) | ✅ | ⏳ | `test_travel_sentences_that_are_no_trip_go_to_ai`, `test_travel_dest` | „Ich will heute nicht in die Stadt fahren“ → normales Gespräch |
+| 67 | „Und zurück?“ (1.5.1) | ✅ | ⏳ | `test_return_trip_after_the_arrival_without_ai`, `test_return_trip_with_time_then_danach_and_back_again` | Nach einer Verbindung: „Und zurück?“, „Zurück“, „Am Nachmittag zurück“ |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine

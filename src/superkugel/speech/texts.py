@@ -135,7 +135,9 @@ TEXTS: dict[str, tuple[str, str]] = {
     "transit_same_place": ("Da bist du ja schon, in {name}.", "Da sind Sie ja schon, in {name}."),
     "transit_no_home": ("Sag mir bitte, von wo du fährst, zum Beispiel: von Salzburg nach Linz.",
                         "Sagen Sie mir bitte, von wo Sie fahren, zum Beispiel: von Salzburg nach Linz."),
-    "transit_no_data_day": ("Für {day} hab ich noch keinen Fahrplan.", "Für {day} habe ich noch keinen Fahrplan."),
+    "transit_no_data_day": ("{day} hab ich noch keinen Fahrplan.", "{day} habe ich noch keinen Fahrplan."),
+    "transit_ask_day": ("Welchen Tag meinst du? Sag zum Beispiel: am Dienstag, oder: am 20. November.",
+                        "Welchen Tag meinen Sie? Sagen Sie zum Beispiel: am Dienstag, oder: am 20. November."),
     "transit_unavailable": ("Den Fahrplan hab ich gerade nicht zur Hand. Probier's bitte später nochmal.",
                             "Den Fahrplan habe ich gerade nicht zur Hand. Bitte später nochmal probieren."),
     # Morgengruß
