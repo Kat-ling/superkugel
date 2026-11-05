@@ -164,3 +164,4 @@ def test_no_short_single_word_timetable_intent() -> None:
 
 def test_new_carrier_words() -> None:
     assert {"gegen", "später", "früher", "lieber", "eher", "danach", "wieder", "zurück"} <= set(CARRIERS)
+    assert {"neuigkeiten", "nachrichten", "sonst", "noch"} <= set(CARRIERS)

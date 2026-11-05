@@ -1998,6 +1998,54 @@
           "samples": [
             "zurück {query}"
           ]
+        },
+        {
+          "name": "ChatNeuigkeitenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "neuigkeiten {query}"
+          ]
+        },
+        {
+          "name": "ChatNachrichtenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "nachrichten {query}"
+          ]
+        },
+        {
+          "name": "ChatSonstIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "sonst {query}"
+          ]
+        },
+        {
+          "name": "ChatNochIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "noch {query}"
+          ]
         }
       ],
       "types": [

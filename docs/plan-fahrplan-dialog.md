@@ -1,6 +1,6 @@
 # Plan: Fahrplan-Dialog (Version 1.6)
 
-**Status:** Entwurf vom 5.11.2026, noch nicht umgesetzt.
+**Status:** Schritte 1 bis 3 umgesetzt (5.11.2026), Schritt 4 bis 9 offen.
 
 **Ziel:** Fahrplanfragen lassen sich wie ein Gespräch fortführen, ohne dass jede Formulierung einzeln programmiert wird.
 

@@ -60,6 +60,11 @@ _AMOUNT = {"": 1.0, "einer": 1.0, "einem": 1.0, "einen": 1.0, "ein": 1.0, "einer
 _VAGUE = re.compile(r"\b(nächste woche|nächster woche|übernächste woche|nächstes wochenende|am wochenende|"
                     r"übers wochenende|nächsten monat|nächstes jahr|irgendwann|demnächst|bald einmal|"
                     r"zu weihnachten|zu ostern|zu pfingsten|zu silvester|zu neujahr)\b")
+_WHEN_VOCABULARY = """und dann lieber doch eher etwa ungefähr so bitte vielleicht später früher um gegen ab uhr halb
+    viertel dreiviertel vor nach heute morgen übermorgen am in der den dem früh abend abends nachmittag nachmittags
+    vormittag vormittags mittag mittags nacht nachts nächsten nächster nächste kommenden kommender einer einem einen ein
+    halben eineinhalb anderthalb stunde stunden minute minuten viertelstunde tag tagen woche wochen"""
+_WHEN_WORDS = frozenset(_WHEN_VOCABULARY.split()) | frozenset(_WEEKDAYS)
 
 
 @dataclass
@@ -79,6 +84,17 @@ class TransitQuery:
 def looks_like_transit(text: str) -> bool:
     t = fold(text)
     return bool(_TRANSIT.search(t)) or bool(_TRAVEL.search(t) and re.search(r"\b(wie|wann)\b", t))
+
+
+def only_says_when(text: str) -> bool:
+    """Nennt der Satz nur eine Zeit („gegen zehn“, „und am Freitag“)? Dann ändert er nur Zeit oder Tag der Reise."""
+    t = fold(text).rstrip(".,? ")
+    words = t.replace(",", " ").split()
+    if not all(w in _WHEN_WORDS or w.rstrip(".") in _MONTHS or word_to_int(w) is not None or _ordinal(w) is not None
+               for w in words):
+        return False
+    q = parse(text, dt.datetime(2000, 1, 3, 12))
+    return q.time_s is not None or q.day_said
 
 
 def travel_dest(text: str) -> str:

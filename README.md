@@ -23,7 +23,7 @@ Ohne neue Hardware, ohne Prime, ohne Abo, für unter 2 $ im Monat.
 - **Ausfallsicher**: Jeder Fehler endet mit „Das klappt gerade leider nicht. Sie können Alexa aber
   ganz normal weiterverwenden.“ und geschlossener Sitzung. Circuit-Breaker, Fernschalter
   (`normal` / `audiobooks_only` / `maintenance`).
-- **Tagesaktuell**: ORF-Schlagzeilen (Österreich + Bundesland) und Wetter, stündlich in AWS abgerufen; bei Bedarf
+- **Tagesaktuell**: ORF-Meldungen (Österreich + Bundesland) ohne Wiederholungen und Wetter, stündlich in AWS abgerufen; bei Bedarf
   Websuche mit österreichischem Standort – höchstens 1 Suche pro Antwort und 25 pro Tag.
 - **Mediatheken**: Lieblingssendungen über offizielle RSS-Feeds (z. B. ARD-Krimihörspiele) und freie Suche über
   Podcast Index („Such ein Krimihörspiel“ → „die zweite“), mit Lesezeichen pro Folge.

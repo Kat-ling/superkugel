@@ -56,11 +56,11 @@ Friedhof, Rathaus) ohne Ortsnamen: nur die Einrichtung als ziel. „Zu meiner To
 Personen und Namen schreibst du nie ins Werkzeug, nur Orte."""
 
 CURRENT_RULES = """Aktuelles:
-- Für Nachrichten und Wetter nutze zuerst „Aktuelles“ im Datenteil und nenne beiläufig, woher es stammt \
-(zum Beispiel „laut ORF“). Das Wetter gilt für ihren Wohnort und stammt nicht vom ORF \
-(sag höchstens „laut Wettervorhersage“). Gibt es dort nichts Passendes, sag das ehrlich.
-- Allgemeine Fragen wie „Was gibt's Neues?“, „Was sind die Nachrichten?“ oder „Wie wird das Wetter?“ beantwortest \
-du NUR aus „Aktuelles“, ohne Websuche. Suche nur, wenn nach etwas Bestimmtem gefragt wird, das dort fehlt."""
+- Will sie Nachrichten oder Neuigkeiten hören, egal in welchen Worten, oder fragt sie danach, was es sonst noch \
+gibt: rufe nachrichten auf. Nennt sie einen Ort oder ein Thema, trag es ein, sonst bleiben die Felder leer. \
+Die Superkugel liest die Meldungen selbst vor; nenne nie selbst Meldungen und suche dafür nicht im Web.
+- Wetterfragen beantwortest du nur aus „Aktuelles“ im Datenteil, ohne Websuche. Das Wetter gilt für ihren Wohnort \
+(sag höchstens „laut Wettervorhersage“). Gibt es dort nichts Passendes, sag das ehrlich."""
 
 SEARCH_RULES = """Websuche:
 - Du darfst im Web suchen (Funktion web_search), aber NUR, wenn die Frage aktuelles oder sich änderndes Wissen \
@@ -169,6 +169,21 @@ FAHRPLAN_TOOL = {
             "letzte": {"type": "boolean", "description": "true = letzte Verbindung des Tages"},
         },
         "required": ["ziel", "naehe", "start", "zeit", "verkehrsmittel", "letzte"],
+        "additionalProperties": False,
+    },
+}
+NEWS_TOOL = {
+    "type": "function",
+    "name": "nachrichten",
+    "description": "Liest aktuelle Meldungen vor, die sie noch nicht gehört hat. Auch für „was noch?“ bei Nachrichten.",
+    "strict": True,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "ort": {"type": "string", "description": "gewünschter Ort oder Region, sonst leer"},
+            "thema": {"type": "string", "description": "gewünschtes Thema in wenigen Wörtern, sonst leer"},
+        },
+        "required": ["ort", "thema"],
         "additionalProperties": False,
     },
 }

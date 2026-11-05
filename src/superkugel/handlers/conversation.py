@@ -15,6 +15,7 @@ from superkugel.conversation.history import History
 from superkugel.conversation.llm import LlmError, LlmReply
 from superkugel.conversation.prompt import (
     FAHRPLAN_TOOL,
+    NEWS_TOOL,
     PLAY_TOOL,
     SEARCH_MEDIA_TOOL,
     SHOW_TOOL,
@@ -31,6 +32,7 @@ from superkugel.handlers.common import (
     uid,
 )
 from superkugel.services import current_context
+from superkugel.services import news as news_pool
 from superkugel.services.logs import log, metric
 from superkugel.services.ops import Mode
 from superkugel.services.usage import TokenUsage
@@ -38,6 +40,7 @@ from superkugel.speech.styles import personalize
 
 _EXECUTOR = cf.ThreadPoolExecutor(max_workers=4)
 
+NEWS_SEARCH_MIN_S = 3.5  # darunter reicht die Zeit bis zum Alexa-Limit nicht mehr für eine Websuche
 THINKING = ("Moment, ich überleg kurz.", "Einen Augenblick.", "Lass mich kurz nachdenken.")
 
 
@@ -57,6 +60,9 @@ def handle_launch(services: Services, hi: HandlerInput) -> Response:
     except Exception:  # noqa: BLE001
         snap = None
     resumed = bool(snap and snap.get("turns"))
+    from superkugel.handlers import transit
+
+    transit.restore_trip(services, hi, snap or {})
     if resumed:
         attrs["history"] = snap["turns"]
         greeting = services.t("welcome_back")
@@ -99,7 +105,7 @@ def _morning_briefing(services: Services, user: str) -> str | None:
 
 
 def _call_llm(services: Services, hi: HandlerInput, user: str, history: History, text: str,
-              deadline: float) -> LlmReply:
+              deadline: float, search_only: bool = False) -> LlmReply:
     key = services.params.openai_api_key()
     if not key:
         raise LlmError("no_key")
@@ -124,7 +130,9 @@ def _call_llm(services: Services, hi: HandlerInput, user: str, history: History,
         tools.append(SHOW_TOOL)
     if services.params.podcast_index_credentials():
         tools.append(SEARCH_MEDIA_TOOL)
-    tools.append(FAHRPLAN_TOOL)
+    tools.extend((FAHRPLAN_TOOL, NEWS_TOOL))
+    if search_only:
+        tools = []
     if searches_left > 0:
         tools.append(web_search_tool(s.user_region, s.timezone))
     instructions = build_instructions(
@@ -167,6 +175,34 @@ def _book_unfinished(services: Services, instructions: str, messages: list[dict[
     log("llm_unfinished_booked", searches=est.search_calls)
 
 
+def _read_news(services: Services, hi: HandlerInput, user: str, history: History, args: dict,
+                deadline: float) -> str:
+    """Werkzeug ``nachrichten``: Der Code wählt und liest vor. Nur ein Wunsch ohne Treffer braucht die Websuche."""
+    s = services.settings
+    wish = " ".join(str(args.get(k) or "").strip() for k in ("ort", "thema")).strip()
+    now = services.now().timestamp()
+    told = news_pool.told_ids(services.store, user)
+    items = news_pool.select(news_pool.load_pool(services.store), told, wish,
+                             (*s.news_interests, *([s.user_city] if s.user_city else [])), now, s.user_region)
+    log("news_answer", picked=len(items), wish=bool(wish))
+    if items:
+        news_pool.remember_told(services.store, user, told, items)
+        return f"{services.t('news_intro')} {news_pool.spoken(items)}"
+    if not wish:
+        return services.t("news_no_more")
+    if services.usage.searches_left() <= 0 or deadline - services.clock() < NEWS_SEARCH_MIN_S:
+        return services.t("news_nothing")
+    try:
+        reply = _call_llm(services, hi, user, history,
+                          f"Such aktuelle Nachrichten zu: {wish}. Sag das Wichtigste in zwei bis drei kurzen Sätzen.",
+                          deadline, search_only=True)
+    except LlmError as exc:
+        log("llm_error", kind=exc.kind, status=exc.status)
+        return services.t("news_nothing")
+    services.usage.record(reply.usage, reply.latency_ms)
+    return reply.text or services.t("news_nothing")
+
+
 def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: float) -> Response:
     mode = services.params.mode()
     if mode is Mode.MAINTENANCE:
@@ -176,6 +212,8 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
     from superkugel.transit import service as transit_service
     from superkugel.transit.ask import looks_like_transit, travel_dest
 
+    if hi.request_envelope.session and hi.request_envelope.session.new:
+        transit.restore_trip(services, hi)  # Frage öffnet die Sitzung direkt: Reise von vorhin gilt weiter
     if text.strip() and (transit.is_follow_up(hi, text) or looks_like_transit(text)
                          or transit.is_new_target(services, hi, text)):
         return transit.answer_text(services, hi, text)  # Fahrplan: ohne KI, auch im Hörbuch-Modus
@@ -214,12 +252,13 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
 
     attrs["ai_failed"] = False
     attrs["misunderstood"] = 0
-    attrs.pop("transit_last", None)  # Thema gewechselt: „danach“ gehört jetzt zum Gespräch
+    attrs.pop("trip", None)  # Thema gewechselt: „danach“ gehört jetzt zum Gespräch
     circuit.record_success()
     services.usage.record(reply.usage, reply.latency_ms)
     _measure_total(services, started)
 
     _privacy_check(services, reply)
+    spoken = ""
     for call in reply.tool_calls:
         if call.name == "play_audiobook":
             book = services.audio().book(str(call.arguments.get("book_id", "")))
@@ -242,6 +281,9 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
             if show:
                 return media_handlers.play_show(services, hi, show)
             log("tool_unknown_show")
+        elif call.name == "nachrichten":
+            spoken = _read_news(services, hi, user, history, call.arguments, deadline)
+            break
         elif call.name == "fahrplan":
             from superkugel.handlers import transit
 
@@ -253,7 +295,7 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
             return media_handlers.search_media(services, hi, str(call.arguments.get("query", "")),
                                                deadline=deadline)
 
-    answer = reply.text or services.t("not_understood")
+    answer = spoken or reply.text or services.t("not_understood")
     history.add("user", text)
     history.add("assistant", answer)
     history = history.trimmed(s.history_max_turns, s.history_max_chars)
@@ -381,9 +423,11 @@ def handle_help(services: Services, hi: HandlerInput) -> Response:
 
 
 def handle_goodbye(services: Services, hi: HandlerInput) -> Response:
-    # Bewusstes Beenden: nächstes Öffnen startet frisch (kein „Wo waren wir?“).
+    # Bewusstes Beenden: nächstes Öffnen startet frisch (kein „Wo waren wir?“), nur die Reise bleibt kurz gemerkt.
+    from superkugel.handlers import transit
+
     try:
-        services.store.delete_conversation(uid(hi))
+        transit.end_session_keep_trip(services, hi)
     except Exception as exc:  # noqa: BLE001
         log("conversation_delete_failed", error=type(exc).__name__)
     return end_with(services, hi, personalize(services.style.goodbye[services.settings.address_form],
@@ -392,6 +436,7 @@ def handle_goodbye(services: Services, hi: HandlerInput) -> Response:
 
 def handle_forget(services: Services, hi: HandlerInput) -> Response:
     session_attrs(hi)["history"] = []
+    session_attrs(hi).pop("trip", None)
     try:
         services.store.delete_conversation(uid(hi))
     except Exception as exc:  # noqa: BLE001

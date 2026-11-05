@@ -15,9 +15,12 @@ from typing import Any
 from ask_sdk_core.handler_input import HandlerInput
 from ask_sdk_model import Response
 
-from superkugel.handlers.common import Services, has_session, keep_open, session_attrs
+from superkugel.handlers.common import Services, has_session, keep_open, session_attrs, uid
 from superkugel.language import fold, word_to_int
-from superkugel.transit.ask import parse, parse_dest
+from superkugel.services.logs import log
+from superkugel.services.usage import local_now
+from superkugel.transit.ask import only_says_when, parse, parse_dest
+from superkugel.transit.trip import Change, Trip
 
 _VEHICLE = r"(bus|autobus|postbus|zug|bahn)"
 _FOLLOW_UP = re.compile(rf"(und )?(wann )?(fährt |geht |kommt )?(danach|dann|später|der nächste|die nächste|"
@@ -37,6 +40,8 @@ _BACK_VOCABULARY = """und wie wann wo komm komme kommen ich wir man fahr fahre f
     samstag sonntag zurück retour rückfahrt rückweg rückreise heimfahrt heimweg heim hause"""
 _BACK_WORDS = frozenset(_BACK_VOCABULARY.split())
 
+RETURN_GAP_MIN = 10  # Rückfahrt frühestens 10 Minuten nach der Ankunft
+
 # Kurze Befehle ohne Ortsangabe (eigene Intents, weil sie kein Trägerwort haben)
 BARE = {
     "TransitNextBusIntent": "nächster bus",
@@ -51,25 +56,79 @@ def _is_back(t: str) -> bool:
     return bool(_BACK_CORE.search(t)) and all(w in _BACK_WORDS or word_to_int(w) is not None for w in words)
 
 
+def _trip(hi: HandlerInput) -> Trip | None:
+    return Trip.from_dict(session_attrs(hi).get("trip")) if has_session(hi) else None
+
+
+def _save_trip(services: Services, hi: HandlerInput, trip: dict[str, Any] | None) -> None:
+    """Stand neben dem Gespräch ablegen, damit „Stopp“ oder ein Neustart ihn nicht löscht (nur der Stand zählt)."""
+    window = services.settings.resume_window_s
+    if window <= 0:
+        return
+    try:
+        user = uid(hi)
+        turns = (services.store.get_conversation(user) or {}).get("turns") or []
+        if trip or turns:
+            services.store.put_conversation(user, {"turns": turns, **({"trip": trip} if trip else {})}, window)
+        else:
+            services.store.delete_conversation(user)
+    except Exception as exc:  # noqa: BLE001 - ohne Gedächtnis geht die Auskunft trotzdem
+        log("trip_save_failed", error=type(exc).__name__)
+
+
+def restore_trip(services: Services, hi: HandlerInput, snap: dict[str, Any] | None = None) -> None:
+    """Stand aus dem Gesprächseintrag zurück in die Sitzung."""
+    try:
+        snap = snap if snap is not None else services.store.get_conversation(uid(hi))
+    except Exception as exc:  # noqa: BLE001
+        log("trip_read_failed", error=type(exc).__name__)
+        return
+    if trip := Trip.from_dict((snap or {}).get("trip")):
+        session_attrs(hi)["trip"] = trip.to_dict()
+
+
+def end_session_keep_trip(services: Services, hi: HandlerInput) -> None:
+    """Bewusstes Beenden: Das Gespräch endet, nur eine laufende Reise bleibt kurz gemerkt."""
+    trip = session_attrs(hi).get("trip") if has_session(hi) else None
+    if trip and services.settings.resume_window_s > 0:
+        services.store.put_conversation(uid(hi), {"turns": [], "trip": trip}, services.settings.resume_window_s)
+    else:
+        services.store.delete_conversation(uid(hi))
+
+
 def _follow_kind(hi: HandlerInput, text: str) -> str:
     """"day" (Antwort auf „Welchen Tag?“), "back" (Rückfahrt), "detail" (Umstiege der Kurzfassung),
-    "next" (nächste Möglichkeit) oder ""."""
-    last = session_attrs(hi).get("transit_last") if has_session(hi) else None
-    if not last:
+    "when" (nur Zeit oder Tag ändert sich), "next" (nächste Möglichkeit) oder ""."""
+    trip = _trip(hi)
+    if not trip:
         return ""
     t = fold(text).rstrip(".,? ")
-    if last.get("ask_day"):
-        return "day" if parse(text, dt.datetime(2000, 1, 3, 12)).day_said else ""
-    if (last.get("places") or {}).get("dest") and _is_back(t):
+    probe = parse(text, dt.datetime(2000, 1, 3, 12))
+    if trip.open == "day":
+        return "day" if probe.day_said else ""
+    if trip.dest and _is_back(t):
         return "back"
-    if last.get("short_t") is not None and _DETAIL.fullmatch(t):
+    if trip.short and _DETAIL.fullmatch(t):
         return "detail"
-    if not last.get("next_t") or not _FOLLOW_UP.fullmatch(t):
+    if only_says_when(text):
+        return "when"
+    if trip.dep is None or trip.last or not _FOLLOW_UP.fullmatch(t):
         return ""
     # „der nächste Bus“ nach einer Zugauskunft ist eine neue Frage
-    said = parse(text, dt.datetime(2000, 1, 3, 12)).mode
-    asked = str(last.get("text", "")).split(" ")[0]
-    return "" if said != "any" and {"train": "zug", "bus": "bus"}[said] != asked else "next"
+    return "" if probe.mode != "any" and probe.mode != trip.mode else "next"
+
+
+def _change(services: Services, kind: str, text: str) -> Change:
+    """Erkannte Nachfrage → Änderung am Reise-Stand. Tag nur, wenn er genannt wurde."""
+    q = parse(text, local_now(services.settings, services.now()))
+    tag = q.day.isoformat() if q.day_said and q.day else ""
+    mode = "" if q.mode == "any" else q.mode
+    if kind == "back":
+        return Change("rueckfahrt", tag=tag, zeit_s=q.time_s, bezug="nach_ankunft", versatz_min=RETURN_GAP_MIN,
+                      mode=mode, last=True if q.last else None)
+    if kind == "when":
+        return Change("aendern", tag=tag, zeit_s=q.time_s)
+    return Change("genauer" if kind == "detail" else "spaeter", mode=mode)
 
 
 def is_follow_up(hi: HandlerInput, text: str) -> bool:
@@ -80,7 +139,7 @@ def is_new_target(services: Services, hi: HandlerInput, text: str) -> bool:
     """„Und dann nach Seeort“ direkt nach einer Auskunft – nur, wenn das Ziel eine bekannte Haltestelle ist."""
     from superkugel.transit import service
 
-    if not (has_session(hi) and session_attrs(hi).get("transit_last") and _NEW_TARGET.match(fold(text))):
+    if not (has_session(hi) and session_attrs(hi).get("trip") and _NEW_TARGET.match(fold(text))):
         return False
     dest = parse_dest(text)
     return bool(dest) and service.knows_place(services, dest)
@@ -89,13 +148,12 @@ def is_new_target(services: Services, hi: HandlerInput, text: str) -> bool:
 def answer_text(services: Services, hi: HandlerInput, text: str, chosen: dict[str, str] | None = None) -> Response:
     from superkugel.transit import service
 
-    attrs = session_attrs(hi) if has_session(hi) else {}
     kind = "" if chosen else _follow_kind(hi, text)
-    if kind == "day":  # „Welchen Tag?“ – „am Donnerstag“: die offene Frage mit dem Tag
-        text, kind = f"{attrs['transit_last'].get('text', '')} {text}", ""
-    after = attrs.get("transit_last") if kind else None
-    ans = service.handle_text(services, text, after, detail=kind == "detail", chosen=chosen, back=kind == "back")
-    return _respond(services, hi, ans)
+    trip = _trip(hi) if kind else None
+    if kind == "day" and trip:  # „Welchen Tag?“ – „am Donnerstag“: die offene Frage mit dem Tag
+        text, kind, trip = f"{trip.text} {text}", "", None
+    change = _change(services, kind, text) if kind else None
+    return _respond(services, hi, service.handle_text(services, text, trip, change, chosen=chosen))
 
 
 def _respond(services: Services, hi: HandlerInput, ans: Any) -> Response:
@@ -108,10 +166,11 @@ def _respond(services: Services, hi: HandlerInput, ans: Any) -> Response:
             attrs["pending"] = "transit_confirm"
             attrs["transit_confirm"] = {**ans.confirm, "i": 0}
             return keep_open(services, hi, ans.text, ans.text)
-        if ans.follow_up:
-            attrs["transit_last"] = ans.follow_up
+        if ans.trip:
+            attrs["trip"] = ans.trip.to_dict()
         else:
-            attrs.pop("transit_last", None)
+            attrs.pop("trip", None)
+        _save_trip(services, hi, attrs.get("trip"))
     return keep_open(services, hi, ans.text, None)
 
 
@@ -176,8 +235,9 @@ def detail_intent(services: Services, hi: HandlerInput, started: float) -> Respo
 def thanks_intent(services: Services, hi: HandlerInput, started: float) -> Response:
     """„Danke“ beendet das Fahrplan-Thema; ohne Fahrplan-Thema ist es ein normaler Gesprächssatz."""
     attrs = session_attrs(hi)
-    if attrs.get("transit_last") or attrs.get("pending") == "transit_confirm":
-        attrs.pop("transit_last", None)
+    if attrs.get("trip") or attrs.get("pending") == "transit_confirm":
+        attrs.pop("trip", None)
+        _save_trip(services, hi, None)
         attrs.pop("transit_confirm", None)
         attrs.pop("pending", None)
         return keep_open(services, hi, services.t("transit_thanks"), None)

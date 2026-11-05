@@ -65,7 +65,7 @@ def test_refresh_stores_all_sources_and_prompt_block() -> None:
     cc.refresh(store, settings(), fetch=fetch, clock=lambda: at)
     assert any("kaernten.xml" in u for u in urls) and any("latitude=47.00" in u for u in urls)
     block = cc.prompt_block(store, settings(), clock=lambda: at + 600)
-    assert "Stand" in block and "Schlagzeilen Kärnten" in block and "Teststadt" not in block
+    assert "Stand" in block and "Schlagzeilen" not in block and "Teststadt" not in block  # Nachrichten: Werkzeug
     assert "Wetter Heute an ihrem Wohnort (Wettervorhersage): überwiegend sonnig, 3 bis 14 Grad" in block
 
 
@@ -237,7 +237,7 @@ def test_stale_source_not_carried_forward_forever() -> None:
         t[0] += 3600
         cc.refresh(store, settings(), fetch=weather_down, clock=lambda: t[0])
     block = cc.prompt_block(store, settings(), clock=lambda: t[0])
-    assert "Wetter" not in block and "Schlagzeilen" in block
+    assert block == ""  # kein frisches Wetter, Nachrichten stehen nicht im Prompt
 
 
 def test_weather_label_by_date_not_position() -> None:

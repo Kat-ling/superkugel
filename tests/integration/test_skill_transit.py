@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from conftest import attrs, ends_session, intent, make_harness, speech
+from conftest import attrs, ends_session, intent, launch, make_harness, speech
 from superkugel.config import Settings
 from superkugel.services.usage import local_now
 from superkugel.transit import service
@@ -49,7 +49,7 @@ def test_free_sentence_via_carrier_without_ai(paket, capsys) -> None:
     r = h.send(chat("ChatWannIntent", "fährt der nächste Zug nach Bergdorf"))
     s = speech(r)
     assert "Laut Fahrplan: um 9 Uhr 10 ab Teststadt Hauptbahnhof" in s and "9 Uhr 50" in s
-    assert h.openai.requests == [] and ends_session(r) is False and "transit_last" in attrs(r)
+    assert h.openai.requests == [] and ends_session(r) is False and "trip" in attrs(r)
     out = capsys.readouterr().out
     assert "transit_answer" in out and "Bergdorf" not in out and "Teststadt" not in out  # keine Orte im Log
     day = local_now(h.services.settings, NOW).strftime("%Y-%m-%d")
@@ -212,7 +212,7 @@ def test_ai_answer_ends_the_timetable_topic(paket) -> None:
     session = _after_train(h)
     h.openai.text("Gern.")
     r = h.send(chat("ChatIchIntent", "mag Strudel", session))
-    assert "transit_last" not in attrs(r)
+    assert "trip" not in attrs(r)
     h.openai.text("Dann kommt die Füllung dran.")
     r = h.send(chat("ChatUndIntent", "danach", attrs(r)))
     assert "Füllung" in speech(r) and len(h.openai.requests) == 2
@@ -345,7 +345,7 @@ def test_thanks_ends_the_timetable_topic_without_an_answer_from_the_timetable(pa
     h = harness(paket)
     r = h.send(intent("ThanksIntent", session=_after_train(h)))
     assert "Gerne" in speech(r) and "Laut Fahrplan" not in speech(r)
-    assert "transit_last" not in attrs(r) and ends_session(r) is False and h.openai.requests == []
+    assert "trip" not in attrs(r) and ends_session(r) is False and h.openai.requests == []
 
 
 def test_thanks_after_a_question_about_a_place_ends_it_too(paket) -> None:
@@ -367,3 +367,95 @@ def test_short_return_sentences_arrive_over_carrier_words(paket, carrier, query)
     h = harness(paket)
     r = h.send(chat(carrier, query, _after_train(h)))
     assert "ab Bergdorf Bahnhof" in speech(r) and h.openai.requests == []
+
+
+# ------------------------------------------------------------------ v1.6: Reise-Stand
+def test_time_only_keeps_the_day_of_the_question(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatWannIntent", "fährt am Freitag ein Zug nach Bergdorf"))
+    r = h.send(chat("ChatGegenIntent", "zehn", attrs(r)))  # 10 Uhr liegt nicht in der Vergangenheit des Freitags
+    assert "am Freitag, 6. November" in speech(r) and "11 Uhr 10" in speech(r) and h.openai.requests == []
+
+
+def test_time_already_past_today_stays_on_the_chosen_day(paket) -> None:
+    h = harness(paket)
+    h.services.now = lambda: NOW.replace(hour=18)
+    r = h.send(chat("ChatWannIntent", "fährt übermorgen ein Zug nach Bergdorf"))
+    r = h.send(chat("ChatUndIntent", "gegen zehn", attrs(r)))
+    assert "übermorgen um 11 Uhr 10" in speech(r)
+
+
+def test_other_day_keeps_the_question_and_later_keeps_the_day(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatWannIntent", "fährt heute ein Zug nach Bergdorf"))
+    r = h.send(chat("ChatUndIntent", "am Freitag", attrs(r)))
+    assert "am Freitag, 6. November" in speech(r) and "Bergdorf" in speech(r)
+    r = h.send(chat("ChatUndIntent", "danach", attrs(r)))
+    assert "am Freitag, 6. November" in speech(r) and "11 Uhr 10" in speech(r)
+
+
+def test_time_after_no_connection_keeps_the_trip(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatWannIntent", "fährt am Samstag ein Zug nach Bergdorf"))
+    assert "keine Verbindung" in speech(r) and "trip" in attrs(r)
+    r = h.send(chat("ChatUndIntent", "am Freitag", attrs(r)))
+    assert "am Freitag, 6. November" in speech(r) and "Laut Fahrplan" in speech(r)
+
+
+def test_home_stop_is_only_a_marker_in_the_state(paket) -> None:
+    h = harness(paket)
+    t = attrs(h.send(chat("ChatWannIntent", "fährt der nächste Bus nach Bergdorf")))["trip"]
+    assert t["origin"]["home"] is True and t["dest"]["home"] is False
+
+
+def test_sentence_with_a_time_and_other_words_is_still_talk(paket) -> None:
+    h = harness(paket)
+    session = _after_train(h)
+    h.openai.text("Schön.")
+    r = h.send(chat("ChatIchIntent", "geh um acht schlafen", session))
+    assert "Schön" in speech(r) and len(h.openai.requests) == 1
+
+
+# ------------------------------------------------------------------ v1.6: Gedächtnis über „Stopp“
+def test_trip_survives_stop_and_reopening(paket) -> None:
+    h = harness(paket)
+    session = _after_train(h)
+    h.send(intent("AMAZON.StopIntent", session=session))
+    r = h.send(launch())
+    assert "Willkommen zurück" not in speech(r) and attrs(r)["trip"]["dest"]["name"] == "Bergdorf Bahnhof"
+    r = h.send(chat("ChatUndIntent", "zurück", attrs(r)))
+    assert "12 Uhr 30 ab Bergdorf Bahnhof" in speech(r) and h.openai.requests == []
+
+
+def test_trip_is_found_when_a_question_opens_the_session(paket) -> None:
+    h = harness(paket)
+    _after_train(h)
+    event = chat("ChatUndIntent", "gegen zehn")
+    event["session"]["new"] = True
+    assert "11 Uhr 10" in speech(h.send(event))
+
+
+def test_trip_expires_and_thanks_or_ai_answer_end_it(paket) -> None:
+    h = harness(paket)
+    session = _after_train(h)
+    h.send(intent("ThanksIntent", session=session))
+    assert "trip" not in attrs(h.send(launch()))
+    h = harness(paket)
+    session = _after_train(h)
+    h.openai.text("Gut.")
+    h.send(chat("ChatIchIntent", "mag Strudel", session))
+    assert "trip" not in attrs(h.send(launch()))
+    h = harness(paket)
+    _after_train(h)
+    h.store.items[next(k for k in h.store.items if k[1] == "CONVERSATION")]["expires_at"] = 1
+    assert "trip" not in attrs(h.send(launch()))
+
+
+def test_stop_keeps_only_the_trip_not_the_conversation(paket) -> None:
+    h = harness(paket)
+    h.openai.text("Gern.")
+    r = h.send(chat("ChatIchIntent", "mag Strudel"))
+    session = attrs(h.send(chat("ChatWannIntent", "fährt der nächste Zug nach Bergdorf", attrs(r))))
+    h.send(intent("AMAZON.StopIntent", session=session))
+    r = h.send(launch())
+    assert attrs(r).get("history") in (None, []) and "trip" in attrs(r) and "Wo waren wir" not in speech(r)

@@ -24,6 +24,7 @@ from zoneinfo import ZoneInfo
 
 from superkugel.config import Settings
 from superkugel.services import net
+from superkugel.services import news as news_pool
 from superkugel.services.logs import log, metric
 from superkugel.services.storage import Store
 
@@ -111,10 +112,17 @@ def weather_url(lat: float, lon: float, tz: str) -> str:
 def refresh(store: Store, settings: Settings, fetch: Fetcher = http_get,
             clock: Callable[[], float] = time.time) -> dict[str, Any]:
     """Alle Quellen parallel abrufen; jede Quelle mit eigenem Zeitstempel speichern; Teil-Ausfälle tolerieren."""
-    jobs: dict[str, tuple[str, Callable[[bytes], Any]]] = {"news": (ORF_NEWS, lambda b: parse_rss_titles(b, 8))}
+    collected: list[dict[str, Any]] = []
+
+    def titles(data: bytes, limit: int, regional: bool) -> list[str]:
+        result_titles = parse_rss_titles(data, limit)  # kaputter Feed: Fehler zählt wie bisher für diese Quelle
+        collected.extend(news_pool.parse_items(data, regional))
+        return result_titles
+
+    jobs: dict[str, tuple[str, Callable[[bytes], Any]]] = {"news": (ORF_NEWS, lambda b: titles(b, 8, False))}
     region = ORF_REGIONS.get(settings.user_region.strip().lower())
     if region:
-        jobs["regional"] = (f"https://rss.orf.at/{region}.xml", lambda b: parse_rss_titles(b, 5))
+        jobs["regional"] = (f"https://rss.orf.at/{region}.xml", lambda b: titles(b, 5, True))
     if settings.user_lat is not None and settings.user_lon is not None:
         jobs["weather"] = (weather_url(settings.user_lat, settings.user_lon, settings.timezone), parse_weather)
 
@@ -133,6 +141,8 @@ def refresh(store: Store, settings: Settings, fetch: Fetcher = http_get,
                 errors += 1
                 log("context_source_failed", source=name, error=type(exc).__name__)
     store.put_item("CONTEXT", "CURRENT", result)
+    if collected:
+        news_pool.store_pool(store, collected, now)
     if errors:
         metric("ContextRefreshErrors", errors)
     log("context_refreshed", sources=len(jobs), errors=errors)
@@ -155,7 +165,8 @@ def _fresh(entry: Any, now: float, max_age_s: float) -> Any:
 
 
 def prompt_block(store: Store, settings: Settings, clock: Callable[[], float] = time.time) -> str:
-    """Text für den Datenteil des Prompts; nur frische Quellen; Heute/Morgen nach Datum."""
+    """Wetter für den Datenteil des Prompts; nur frische Quellen; Heute/Morgen nach Datum.
+    Nachrichten stehen nicht im Prompt: Sie kommen über das Werkzeug ``nachrichten`` (``services/news.py``)."""
     data = _safe_get(store)
     if not data:
         return ""
@@ -165,14 +176,6 @@ def prompt_block(store: Store, settings: Settings, clock: Callable[[], float] = 
     today = dt.datetime.fromtimestamp(now, tz).date()
     lines: list[str] = []
     stamps: list[float] = []
-    news = _fresh(data.get("news"), now, max_age)
-    if news:
-        lines.append("Schlagzeilen Österreich (ORF): " + " | ".join(news))
-        stamps.append(float(data["news"]["at"]))
-    regional = _fresh(data.get("regional"), now, max_age)
-    if regional:
-        lines.append(f"Schlagzeilen {data.get('region') or 'Bundesland'} (ORF): " + " | ".join(regional))
-        stamps.append(float(data["regional"]["at"]))
     weather = _fresh(data.get("weather"), now, max_age)
     for w in weather or []:
         try:

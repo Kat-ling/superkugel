@@ -66,6 +66,12 @@ Parameters:
     Default: ""
     AllowedPattern: '^[\p{L} .-]{0,60}$'
     Description: Wohnort der Nutzerin (Stadt) für Wetter und Websuche. Nur in samconfig.toml setzen.
+  NewsInterests:
+    Type: String
+    NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
+    Default: ""
+    AllowedPattern: '^[\p{L} ,.-]{0,200}$'
+    Description: Interessen für die Nachrichten-Auswahl, mit Komma getrennt. Nur in samconfig.toml setzen.
   UserRegion:
     Type: String
     NoEcho: true  # persönlich: nicht im CloudFormation-Protokoll anzeigen
@@ -218,6 +224,7 @@ Resources:
           MONTHLY_COST_LIMIT_USD: !Ref MonthlyCostLimitUsd
           WEB_SEARCH_DAILY_LIMIT: !Ref WebSearchDailyLimit
           USER_CITY: !Ref UserCity
+          NEWS_INTERESTS: !Ref NewsInterests
           USER_REGION: !Ref UserRegion
           USER_LAT: !Ref UserLat
           USER_LON: !Ref UserLon

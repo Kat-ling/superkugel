@@ -111,6 +111,7 @@ class Settings:
 
     # Nachrichten/Wetter (A) und Ort der Nutzerin (nur Stadtebene)
     user_city: str = ""
+    news_interests: tuple[str, ...] = ()
     user_region: str = ""  # Bundesland, z. B. "Kärnten"
     user_lat: float | None = None
     user_lon: float | None = None
@@ -184,6 +185,7 @@ class Settings:
             web_search_daily_limit=max(0, _int("WEB_SEARCH_DAILY_LIMIT", 25)),
             web_search_price_usd=max(0.01, _float("WEB_SEARCH_PRICE_USD", 0.012)),
             user_city=re.sub(r"[^\w\- ]", "", _env("USER_CITY", ""))[:60].strip(),
+            news_interests=tuple(w.strip() for w in _env("NEWS_INTERESTS", "").split(",") if w.strip())[:20],
             user_region=_region(_env("USER_REGION", "")),
             user_lat=_opt_float("USER_LAT"),
             user_lon=_opt_float("USER_LON"),

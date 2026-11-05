@@ -4,6 +4,15 @@
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
+## Version 1.6 (in Arbeit) – Fahrplan-Dialog
+
+Schritte 2 und 3 von `docs/plan-fahrplan-dialog.md` sind lokal fertig: Reise-Stand (`transit/trip.py`) ersetzt
+`transit_last`, „gegen zehn“ und „am Freitag“ ändern nur Zeit oder Tag, die Reise übersteht „Stopp“ 30 Minuten.
+
+Nachrichten lokal fertig: Vorrat aus ORF-Feeds (`services/news.py`), Werkzeug `nachrichten`, keine Wiederholung für
+36 Stunden, Regionales und Interessen zuerst, Aufregendes als Beimischung, Websuche nur bei Ort oder Thema ohne Treffer.
+Neue Trägerwörter → **Interaction Model neu laden**. Noch nicht bereitgestellt.
+
 ## Version 1.5.2 (5.11.2026) – „Danke“ korrigiert: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 Beim Gerätetest löste „Danke“ eine Rückfahrt aus: Das Log zeigt `TransitBackIntent`, vermutlich als ähnlichster kurzer

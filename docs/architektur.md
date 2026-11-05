@@ -80,7 +80,15 @@ mehrere weit auseinander, fragt die Superkugel nach (Sitzungsattribut `transit_c
 Zusatz). „Stadtzentrum“ ist die Bushaltestelle mit den meisten Abfahrten im Heimatort (aus den Daten). Verbindungen
 mit Umstiegen kommen zuerst als Kurzfassung, `TransitDetailIntent` („genauer“) liefert alle Abschnitte.
 
-Ab v1.5.1: Folgefragen gelten nur als ganzer kurzer Satz (`handlers/transit.py`), `transit_last` endet mit der ersten
+Ab v1.6 (in Arbeit): Reise-Stand `transit/trip.py`. Nachfragen sind eine `Change`, `merge` ändert nur die genannten
+Felder. Der Stand liegt 30 Minuten beim Gesprächseintrag und übersteht „Stopp“. Plan: `docs/plan-fahrplan-dialog.md`.
+
+Nachrichten ab v1.6: Der stündliche Abruf füllt einen Vorrat (`services/news.py`, `CONTEXT/NEWS`, 36 Stunden). Die KI
+ruft nur das Werkzeug `nachrichten(ort, thema)` auf; Auswahl und Vorlesen macht der Code. Schon Erzähltes steht je Gerät
+in `NEWS_TOLD`. Ein Wunsch ohne Treffer nutzt eine Websuche im Tagesbudget. Schlagzeilen stehen nicht mehr im Prompt.
+Interessen nur über `NewsInterests` (samconfig).
+
+Ab v1.5.1: Folgefragen gelten nur als ganzer kurzer Satz (`handlers/transit.py`), der Stand endet mit der ersten
 KI-Antwort. „Und zurück?“ tauscht die Orte der letzten Auskunft und startet 10 Minuten nach der Ankunft. Ein Paket, das
 noch nicht gilt, liegt unter `TRANSIT/NEXT`; `active_pointer` nimmt es ab seinem Startdatum, ohne etwas zu schreiben.
 

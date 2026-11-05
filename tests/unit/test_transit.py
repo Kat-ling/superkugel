@@ -14,6 +14,7 @@ from superkugel.transit.build import build
 from superkugel.transit.places import PlaceIndex, spoken_name
 from superkugel.transit.service import answer, clock_words, phone_words, plan_import
 from superkugel.transit.timetable import Timetable
+from superkugel.transit.trip import Change
 from transit_fixture import package, write_feeds
 
 VIE = ZoneInfo("Europe/Vienna")
@@ -201,7 +202,7 @@ def test_brief_then_detail_and_confirm(tt: Timetable) -> None:
         return answer(lambda k, **x: T("du", k, **x), tt, pl, s, text, now, **kw)
 
     brief = ask("wie komm ich nach Seeort")
-    full = ask("", after=brief.follow_up, detail=True)
+    full = ask("", trip=brief.trip, change=Change("genauer"))
     assert "mit dem Bus 8" in full.text and "2 Mal umsteigen" in full.text and "8 Uhr 50" in full.text
     q = ask("wann fährt ein Zug nach Lindenau")
     assert q.kind == "confirm" and q.text == "Meinst du Lindenau Bahnhof?"

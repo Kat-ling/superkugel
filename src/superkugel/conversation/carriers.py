@@ -37,6 +37,8 @@ CARRIERS: tuple[str, ...] = (
     "am", "um", "in",
     # v1.5.2: Nachfragen zum Fahrplan („gegen zehn“, „später am Abend“, „wieder zurück“, „lieber mit dem Bus“)
     "gegen", "später", "früher", "lieber", "eher", "danach", "wieder", "zurück",
+    # v1.6: Nachrichten in jeder Formulierung („Neuigkeiten aus …“, „sonst noch was“, „noch was“)
+    "neuigkeiten", "nachrichten", "sonst", "noch",
 )
 
 

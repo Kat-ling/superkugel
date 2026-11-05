@@ -68,7 +68,11 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 65 | Rückfrage nach dem Tag (1.5.1) | ✅ | ⏳ | `test_vague_day_is_asked_for_and_the_answer_completes_the_question` | „Fährt nächste Woche ein Zug nach …?“ → „Welchen Tag …?“ → „Am Donnerstag“ |
 | 66 | Kein Reisewunsch (1.5.1) | ✅ | ⏳ | `test_travel_sentences_that_are_no_trip_go_to_ai`, `test_travel_dest` | „Ich will heute nicht in die Stadt fahren“ → normales Gespräch |
 | 67 | „Und zurück?“ (1.5.1) | ✅ | ⏳ | `test_return_trip_after_the_arrival_without_ai`, `test_return_trip_with_time_then_danach_and_back_again` | Nach einer Verbindung: „Und zurück?“, „Wieder zurück“, „Am Nachmittag zurück“ |
-| 68 | „Danke“ beendet das Fahrplan-Thema (1.5.2) | ✅ | ⏳ | `test_thanks_ends_the_timetable_topic_without_an_answer_from_the_timetable`, `test_no_short_single_word_timetable_intent` | Nach einer Verbindung mit Umstiegen: „Danke“ → „Gerne.“, keine Fahrplanauskunft; „Passt“ ebenso; außerdem prüfen, ob ein einzelnes „Zurück“ noch ankommt |
+| 68 | „Danke“ beendet das Fahrplan-Thema (1.5.2) | ✅ | ✅ „Danke“ (5.11.2026), einzelnes „Zurück“ offen | `test_thanks_ends_the_timetable_topic_without_an_answer_from_the_timetable`, `test_no_short_single_word_timetable_intent` | Nach einer Verbindung mit Umstiegen: „Danke“ → „Gerne.“, keine Fahrplanauskunft; „Passt“ ebenso; außerdem prüfen, ob ein einzelnes „Zurück“ noch ankommt |
+| 69 | Reise übersteht „Stopp“ (1.6) | ✅ | ⏳ | `test_trip_survives_stop_and_reopening` | Verbindung fragen, „Stopp“, Superkugel öffnen, „Und zurück?“ |
+| 70 | Nur Zeit oder Tag ändern (1.6) | ✅ | ⏳ | `test_time_only_keeps_the_day_of_the_question`, `tests/unit/test_trip.py` | „Zug übermorgen nach …“, dann „Gegen zehn“ → bleibt übermorgen |
+| 71 | Nachrichten ohne Wiederholung (1.6) | ✅ | ⏳ | `test_news_are_read_by_the_code_and_what_else_brings_new_ones`, `test_told_news_stay_told_in_a_new_session` | „Was gibt's Neues?“, „Was noch?“, später nochmal → keine Meldung doppelt |
+| 72 | Nachrichten zu Ort oder Thema (1.6) | ✅ | ⏳ | `test_wish_without_a_hit_uses_one_web_search`, `test_wish_filters_by_place_topic_or_region` | „Neuigkeiten aus …“, „Was gibt's im Theater?“ |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine

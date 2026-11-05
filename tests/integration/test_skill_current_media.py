@@ -59,18 +59,20 @@ def test_texts_say_ratschen_not_plaudern() -> None:
 # ------------------------------------------------------------------ A + B im Prompt / Tools
 def test_context_block_and_web_search_tool_with_austrian_location() -> None:
     h = make_harness(Settings(user_city="Teststadt", user_region="Kärnten", progressive_after_s=5))
-    h.store.put_item("CONTEXT", "CURRENT", {"news": {"value": ["ORF-Schlagzeile"], "at": __import__("time").time()},
-                                            "region": "Kärnten"})
+    today = __import__("datetime").date.today().isoformat()
+    h.store.put_item("CONTEXT", "CURRENT", {"region": "Kärnten", "weather": {
+        "value": [{"date": today, "desc": "Testwetter", "min": 1, "max": 2, "rain": 3}],
+        "at": __import__("time").time()}})
     h.openai.text("Laut ORF …")
     h.send(chat("ChatWasIntent", "gibt's neues"))
     body = h.openai.requests[0]["body"]
-    assert "ORF-Schlagzeile" in body["instructions"] and "Websuche" in body["instructions"]
+    assert "Testwetter" in body["instructions"] and "Websuche" in body["instructions"]
     ws = next(t for t in body["tools"] if t["type"] == "web_search")
     # Datenschutz: keine Stadt an die Websuche, nur Land + Bundesland + Zeitzone
     assert ws["user_location"] == {"type": "approximate", "country": "AT", "timezone": "Europe/Vienna",
                                    "region": "Kärnten"}
     assert "Teststadt" not in body["instructions"]
-    assert "<<<DATEN" in body["instructions"] and body["instructions"].index("ORF-Schlagzeile") > \
+    assert "<<<DATEN" in body["instructions"] and body["instructions"].index("Testwetter") > \
         body["instructions"].index("<<<DATEN")
     assert ws["search_context_size"] == "low" and body["max_tool_calls"] == 1
 

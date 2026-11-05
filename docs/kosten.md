@@ -37,6 +37,7 @@ Podcast-Folgen streamt der Echo direkt beim Anbieter – keine AWS-Kosten.
 | Morgengruß, Hinweise auf Alexa | **ohne KI-Aufruf** (deterministisch) | 0 $ |
 | DynamoDB: Tageszähler, Tagesmerker | ≈ 1–2 zusätzliche Schreibzugriffe pro Sitzung | Always-Free (25 WCU) |
 | Wochenbericht: 1 EventBridge-Regel (2 Auslösungen/Woche), 1 SNS-Mail | – | frei (SNS: 1.000 Mails/Monat frei) |
+| Nachrichten (ab 1.6): Der Code liest vor, Websuche nur bei Ort oder Thema ohne Treffer | im Tagesbudget der Suche | ≈ 0 |
 | CloudWatch: **8 eigene Metriken**, 9 Alarme | Metriken nur bei Ereignissen | frei (10 Metriken, 10 Alarme) |
 
 Durch 1.3 entfallen die zwei KI-Werkzeuge (`play_radio`, `set_reminder`) samt Senderliste im Prompt

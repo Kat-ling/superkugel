@@ -10,6 +10,8 @@ Layout:
   pk=OPS            sk=CIRCUIT           Fehlerzähler für die KI-Anbindung
   pk=OPS            sk=COUNTER#<name>    einfache Zähler (z. B. Mediensuchen pro Tag, mit TTL)
   pk=CONTEXT        sk=CURRENT           Schlagzeilen + Wetter (stündlich aktualisiert)
+  pk=CONTEXT        sk=NEWS              Vorrat öffentlicher Meldungen, 36 Stunden
+  pk=USER#<hash>    sk=NEWS_TOLD         schon erzählte Meldungen (nur IDs, TTL 36 Stunden)
   pk=STATS          sk=DAY#<yyyy-mm-dd>  reine Tageszähler für den Wochenbericht (TTL 45 Tage, keine Inhalte)
   pk=USER#<hash>    sk=DAYFLAGS          Tagesmerker pro Gerät: Morgengruß gesagt (TTL 2 Tage)
   pk=USER#<hash>    sk=PREFS             Einstellungen pro Gerät (z. B. Morgengruß aus)
