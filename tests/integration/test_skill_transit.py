@@ -341,9 +341,29 @@ def test_timetable_waiting_for_its_start_is_used_from_that_day(paket) -> None:
     assert h.reads[-1] == "transit/neu.zip"
 
 
-def test_bare_back_intent_needs_a_journey(paket) -> None:
+def test_thanks_ends_the_timetable_topic_without_an_answer_from_the_timetable(paket) -> None:
     h = harness(paket)
-    r = h.send(intent("TransitBackIntent", session=_after_train(h)))
-    assert "12 Uhr 30 ab Bergdorf Bahnhof" in speech(r) and h.openai.requests == []
-    h.openai.text("Wohin zurück?")
-    assert "Wohin" in speech(h.send(intent("TransitBackIntent")))
+    r = h.send(intent("ThanksIntent", session=_after_train(h)))
+    assert "Gerne" in speech(r) and "Laut Fahrplan" not in speech(r)
+    assert "transit_last" not in attrs(r) and ends_session(r) is False and h.openai.requests == []
+
+
+def test_thanks_after_a_question_about_a_place_ends_it_too(paket) -> None:
+    h = harness(paket)
+    r = h.send(chat("ChatWannIntent", "fährt ein Zug nach Lindenau"))
+    r = h.send(intent("ThanksIntent", session=attrs(r)))
+    assert "Gerne" in speech(r) and "pending" not in attrs(r) and "transit_confirm" not in attrs(r)
+
+
+def test_thanks_without_a_timetable_is_normal_talk(paket) -> None:
+    h = harness(paket)
+    h.openai.text("Bitte, gern geschehen.")
+    r = h.send(intent("ThanksIntent", session={}))
+    assert "gern geschehen" in speech(r) and len(h.openai.requests) == 1
+
+
+@pytest.mark.parametrize(("carrier", "query"), [("ChatWiederIntent", "zurück"), ("ChatZurueckIntent", "um drei")])
+def test_short_return_sentences_arrive_over_carrier_words(paket, carrier, query) -> None:
+    h = harness(paket)
+    r = h.send(chat(carrier, query, _after_train(h)))
+    assert "ab Bergdorf Bahnhof" in speech(r) and h.openai.requests == []

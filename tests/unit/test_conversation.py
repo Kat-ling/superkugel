@@ -149,3 +149,18 @@ def test_parse_tool_call_and_truncation() -> None:
 def test_parse_empty_response_is_error() -> None:
     with pytest.raises(LlmError):
         parse_response({"output": []})
+
+
+def test_no_short_single_word_timetable_intent() -> None:
+    """Kurze Einzelwörter ziehen falsche Treffer an: „Danke“ landete im früheren Befehl für „Zurück“."""
+    import json
+    from pathlib import Path
+
+    model = json.loads(Path("skill-package/interactionModels/custom/de-DE.json").read_text(encoding="utf-8"))
+    intents = {i["name"]: i for i in model["interactionModel"]["languageModel"]["intents"]}
+    assert "TransitBackIntent" not in intents
+    assert {"danke", "danke schön", "vielen dank", "passt"} <= set(intents["ThanksIntent"]["samples"])
+
+
+def test_new_carrier_words() -> None:
+    assert {"gegen", "später", "früher", "lieber", "eher", "danach", "wieder", "zurück"} <= set(CARRIERS)

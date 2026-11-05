@@ -4,6 +4,14 @@
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
+## Version 1.5.2 (5.11.2026) – „Danke“ korrigiert: lokal fertig, noch nicht bereitgestellt
+
+Beim Gerätetest löste „Danke“ eine Rückfahrt aus: Das Log zeigt `TransitBackIntent`, vermutlich als ähnlichster kurzer
+Befehl. Dieser Befehl entfällt. Neu ist `ThanksIntent` („danke“, „passt“); er beendet das Fahrplan-Thema mit „Gerne.“,
+ohne Fahrplan-Thema geht der Satz ans Gespräch. Neue Trägerwörter: „gegen“, „später“, „früher“, „lieber“, „eher“,
+„danach“, „wieder“, „zurück“ → **Interaction Model neu laden**. „Und zurück?“ bleibt; ob ein einzelnes „zurück“ noch
+ankommt, zeigt der Gerätetest. Weiterer Plan: `docs/plan-fahrplan-dialog.md`.
+
 ## Version 1.5.1 (5.11.2026) – Fahrplan-Dialog korrigiert: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 Anlass: Prüfbericht nach den Arbeitsmethoden von `obra/superpowers`. Die Fehler wurden zuerst als fehlschlagende
@@ -16,7 +24,7 @@ Tests nachgestellt, dann behoben.
   „am Abend“. Unklare Tage („nächste Woche“, „zu Weihnachten“) → Rückfrage „Welchen Tag?“, die Antwort ergänzt die Frage.
 - Reisesätze ohne KI nur für die Sprecherin selbst: keine Verneinung, kein „zu Fuß“, kein Umzug, nichts Vergangenes.
 - „Und zurück?“: Rückfahrt ohne KI, Orte aus der letzten Auskunft, Start 10 Minuten nach der Ankunft, gleicher Tag.
-  Neu: `TransitBackIntent` und die Trägerwörter „am“, „um“, „in“ → **Interaction Model neu laden**.
+  Neu: die Trägerwörter „am“, „um“, „in“ → **Interaction Model neu laden**.
 - Fahrplan-Import: Ein Paket, das noch nicht gilt, wartet unter `TRANSIT/NEXT`; die Lambda wechselt ab dem Startdatum
   von selbst. Abgelaufene Pakete werden abgelehnt, Lücken gemeldet.
 

@@ -544,17 +544,20 @@
           ]
         },
         {
-          "name": "TransitBackIntent",
+          "name": "ThanksIntent",
           "slots": [],
           "samples": [
-            "zurück",
-            "retour",
-            "rückfahrt",
-            "die rückfahrt",
-            "rückweg",
-            "der rückweg",
-            "wieder zurück",
-            "wieder heim"
+            "danke",
+            "danke schön",
+            "dankeschön",
+            "vielen dank",
+            "danke dir",
+            "danke vielmals",
+            "passt",
+            "passt schon",
+            "passt danke",
+            "das passt",
+            "alles klar danke"
           ]
         },
         {
@@ -1898,6 +1901,102 @@
           ],
           "samples": [
             "in {query}"
+          ]
+        },
+        {
+          "name": "ChatGegenIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "gegen {query}"
+          ]
+        },
+        {
+          "name": "ChatSpaeterIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "später {query}"
+          ]
+        },
+        {
+          "name": "ChatFrueherIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "früher {query}"
+          ]
+        },
+        {
+          "name": "ChatLieberIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "lieber {query}"
+          ]
+        },
+        {
+          "name": "ChatEherIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "eher {query}"
+          ]
+        },
+        {
+          "name": "ChatDanachIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "danach {query}"
+          ]
+        },
+        {
+          "name": "ChatWiederIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "wieder {query}"
+          ]
+        },
+        {
+          "name": "ChatZurueckIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "zurück {query}"
           ]
         }
       ],

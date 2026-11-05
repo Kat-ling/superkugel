@@ -151,8 +151,9 @@ EXTRA_INTENTS = [
         "genauer", "bitte genauer", "genauer bitte", "sag es genauer", "sag's genauer", "ganz genau", "einzelheiten",
         "die umstiege", "wo muss ich umsteigen", "wo steige ich um", "wo muss ich da umsteigen",
     ]},
-    {"name": "TransitBackIntent", "slots": [], "samples": [
-        "zurück", "retour", "rückfahrt", "die rückfahrt", "rückweg", "der rückweg", "wieder zurück", "wieder heim",
+    {"name": "ThanksIntent", "slots": [], "samples": [
+        "danke", "danke schön", "dankeschön", "vielen dank", "danke dir", "danke vielmals", "passt", "passt schon",
+        "passt danke", "das passt", "alles klar danke",
     ]},
     {"name": "MorningOffIntent", "slots": [], "samples": [
         "lass den morgengruß weg", "kein morgengruß mehr", "morgengruß aus", "ich will keinen morgengruß",

@@ -35,6 +35,8 @@ CARRIERS: tuple[str, ...] = (
     "fährt", "geht", "kommt", "nächster", "nächste", "letzter", "letzte", "zug", "bus", "fahrplan", "verbindung",
     # v1.5.1: Fahrplanangaben am Satzanfang („am Donnerstag“, „um acht nach …“, „in zwei Stunden …“)
     "am", "um", "in",
+    # v1.5.2: Nachfragen zum Fahrplan („gegen zehn“, „später am Abend“, „wieder zurück“, „lieber mit dem Bus“)
+    "gegen", "später", "früher", "lieber", "eher", "danach", "wieder", "zurück",
 )
 
 

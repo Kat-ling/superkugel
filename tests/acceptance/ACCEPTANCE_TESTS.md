@@ -67,7 +67,8 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 64 | Datum und relative Zeit (1.5.1) | ✅ | ⏳ | `test_date_and_relative_time_are_answered`, `test_dates_and_relative_times` | „Fährt am 20. November ein Zug nach …?“, „… in zwei Stunden?“ |
 | 65 | Rückfrage nach dem Tag (1.5.1) | ✅ | ⏳ | `test_vague_day_is_asked_for_and_the_answer_completes_the_question` | „Fährt nächste Woche ein Zug nach …?“ → „Welchen Tag …?“ → „Am Donnerstag“ |
 | 66 | Kein Reisewunsch (1.5.1) | ✅ | ⏳ | `test_travel_sentences_that_are_no_trip_go_to_ai`, `test_travel_dest` | „Ich will heute nicht in die Stadt fahren“ → normales Gespräch |
-| 67 | „Und zurück?“ (1.5.1) | ✅ | ⏳ | `test_return_trip_after_the_arrival_without_ai`, `test_return_trip_with_time_then_danach_and_back_again` | Nach einer Verbindung: „Und zurück?“, „Zurück“, „Am Nachmittag zurück“ |
+| 67 | „Und zurück?“ (1.5.1) | ✅ | ⏳ | `test_return_trip_after_the_arrival_without_ai`, `test_return_trip_with_time_then_danach_and_back_again` | Nach einer Verbindung: „Und zurück?“, „Wieder zurück“, „Am Nachmittag zurück“ |
+| 68 | „Danke“ beendet das Fahrplan-Thema (1.5.2) | ✅ | ⏳ | `test_thanks_ends_the_timetable_topic_without_an_answer_from_the_timetable`, `test_no_short_single_word_timetable_intent` | Nach einer Verbindung mit Umstiegen: „Danke“ → „Gerne.“, keine Fahrplanauskunft; „Passt“ ebenso; außerdem prüfen, ob ein einzelnes „Zurück“ noch ankommt |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine

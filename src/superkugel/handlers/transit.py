@@ -173,13 +173,17 @@ def detail_intent(services: Services, hi: HandlerInput, started: float) -> Respo
     return handle_chat_text(services, hi, "genauer, bitte", started)
 
 
-def back_intent(services: Services, hi: HandlerInput, started: float) -> Response:
-    """„Zurück“, „die Rückfahrt“: nach einer Verbindung die Rückfahrt; sonst ist das Gespräch gemeint."""
-    if _follow_kind(hi, "zurück") == "back":
-        return answer_text(services, hi, "zurück")
+def thanks_intent(services: Services, hi: HandlerInput, started: float) -> Response:
+    """„Danke“ beendet das Fahrplan-Thema; ohne Fahrplan-Thema ist es ein normaler Gesprächssatz."""
+    attrs = session_attrs(hi)
+    if attrs.get("transit_last") or attrs.get("pending") == "transit_confirm":
+        attrs.pop("transit_last", None)
+        attrs.pop("transit_confirm", None)
+        attrs.pop("pending", None)
+        return keep_open(services, hi, services.t("transit_thanks"), None)
     from superkugel.handlers.conversation import handle_chat_text
 
-    return handle_chat_text(services, hi, "zurück", started)
+    return handle_chat_text(services, hi, "danke", started)
 
 
 def bare_intent(services: Services, hi: HandlerInput) -> Response:
