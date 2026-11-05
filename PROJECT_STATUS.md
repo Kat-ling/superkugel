@@ -1,10 +1,10 @@
 # Projektstatus – Superkugel
 
-**Stand:** 5.11.2026 · **Version 1.5.1 bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.** **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
+**Stand:** 5.11.2026 · **Version 1.5.2 bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.** **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
-## Version 1.5.2 (5.11.2026) – „Danke“ korrigiert: lokal fertig, noch nicht bereitgestellt
+## Version 1.5.2 (5.11.2026) – „Danke“ korrigiert: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 Beim Gerätetest löste „Danke“ eine Rückfahrt aus: Das Log zeigt `TransitBackIntent`, vermutlich als ähnlichster kurzer
 Befehl. Dieser Befehl entfällt. Neu ist `ThanksIntent` („danke“, „passt“); er beendet das Fahrplan-Thema mit „Gerne.“,
