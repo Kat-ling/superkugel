@@ -41,6 +41,9 @@ Während das Hörbuch läuft:
 | „Alexa, weiter.“ | spielt weiter |
 | „Alexa, zurück.“ | ein Stück zurück (eine halbe Minute) |
 | „Alexa, nächstes.“ | nächstes Kapitel |
+| „Alexa, sag Superkugel, zehn Minuten zurück.“ | geht zehn Minuten zurück |
+| „Alexa, sag Superkugel, fünf Minuten vor.“ | geht fünf Minuten vor |
+| „Alexa, sag Superkugel, fang das Buch von vorne an.“ | fragt kurz nach, dann beginnt das ganze Buch neu |
 
 Du musst dir nie merken, wo du warst. Das macht die Superkugel.
 

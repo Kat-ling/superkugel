@@ -61,6 +61,7 @@ wartender Fahrplan `TRANSIT/NEXT`) bereitgestellt (Lambda), Interaction Model ne
 Version 1.5.2 („Danke“ beendet das Fahrplan-Thema, keine kurzen Einzelwort-Befehle für den Fahrplan) bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.
 Version 1.6.0: Reise-Stand `transit/trip.py` und Nachrichten-Vorrat `services/news.py` bereitgestellt, Gerätetest offen,
 KI-Dolmetscher offen (`docs/plan-fahrplan-dialog.md`). Nachrichten-Interessen nur in samconfig (`NewsInterests`).
+Version 1.7.0: Minutensprung (`player.jump`) und „Buch von vorne“ mit Rückfrage gebaut, noch nicht bereitgestellt.
 Offene Punkte: `PROJECT_STATUS.md`, `docs/plan-tagesaktuell.md`.
 Persönliche Werte (Konto-IDs, Skill-ID, E-Mail, Name/Wohnort der Nutzerin) stehen nur in den lokal ignorierten
 Dateien `infra/samconfig.toml` und `.env` – nie ins Repository.

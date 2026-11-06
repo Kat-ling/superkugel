@@ -20,6 +20,8 @@ Gleich weiterreden: „Alexa … und wie wird das Wetter morgen?“
 
 ## 4. Ein Stück zurück
 ### „Alexa, zurück.“
+### „Alexa, sag Superkugel, zehn Minuten zurück.“
+### „Alexa, sag Superkugel, fang das Buch von vorne an.“
 
 ## 5. Morgengruß aus- oder einschalten
 ### „Lass den Morgengruß weg.“ – „Mach den Morgengruß wieder.“

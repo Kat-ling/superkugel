@@ -353,7 +353,17 @@ def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> 
         answered = transit.confirm_text(services, hi, text)
         if answered is not None:
             return answered
+    from superkugel.audiobooks import matching
+    from superkugel.handlers import audio
+
+    if session_attrs(hi).get("pending") == "restart_book":
+        answered = audio.restart_answer(services, hi, text)
+        if answered is not None:
+            return answered
     session_attrs(hi).pop("pending", None)
+    wish = matching.restart_wish(text)
+    if wish is not None and matching.mentions_book(text):
+        return audio.restart(services, hi, wish)
     return handle_chat_text(services, hi, text, started)
 
 
@@ -375,6 +385,10 @@ def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response
         from superkugel.handlers import transit
 
         return transit.confirm_yes(services, hi)
+    if pending == "restart_book":
+        from superkugel.handlers.audio import restart_yes
+
+        return restart_yes(services, hi)
     return handle_chat_text(services, hi, "ja", started)
 
 
@@ -391,6 +405,10 @@ def handle_no(services: Services, hi: HandlerInput, started: float) -> Response:
         from superkugel.handlers import transit
 
         return transit.confirm_no(services, hi)
+    if pending == "restart_book":
+        from superkugel.handlers.audio import restart_no
+
+        return restart_no(services, hi)
     return handle_chat_text(services, hi, "nein", started)
 
 

@@ -86,6 +86,24 @@ AUDIO_INTENTS = [
         "ein stück vor", "ein stückchen vor", "ein bisschen vor", "spul vor", "vorspulen",
         "geh ein stück vor",
     ]},
+    # Keine Sätze mit „um“ am Anfang: Das ist ein Trägerwort der freien Rede.
+    {"name": "JumpBackIntent", "slots": [{"name": "duration", "type": "AMAZON.DURATION"}], "samples": [
+        "{duration} zurück", "geh {duration} zurück", "spring {duration} zurück", "spul {duration} zurück",
+        "{duration} zurückspulen", "bitte {duration} zurück", "geh bitte {duration} zurück",
+    ]},
+    {"name": "JumpForwardIntent", "slots": [{"name": "duration", "type": "AMAZON.DURATION"}], "samples": [
+        "{duration} vor", "{duration} vorwärts", "{duration} weiter", "geh {duration} vor", "spring {duration} vor",
+        "spul {duration} vor", "{duration} vorspulen", "bitte {duration} vor", "geh bitte {duration} vor",
+    ]},
+    {"name": "RestartBookIntent", "slots": [], "samples": [
+        "fang das buch von vorne an", "fang das hörbuch von vorne an", "fang den krimi von vorne an",
+        "fang nochmal von vorne an", "fang von vorne an", "beginn das buch neu", "beginn das hörbuch neu",
+        "spiel das buch von vorne", "spiel das hörbuch von vorne", "spiel das ganze buch von vorne",
+        "spiel den krimi von vorne", "starte das buch von vorne", "starte das hörbuch von vorne",
+        "das buch von vorne", "das hörbuch von vorne", "das ganze buch von vorne", "den krimi von vorne",
+        "das buch nochmal von vorne", "ganz von vorne", "von ganz vorne", "von ganz vorn",
+        "von anfang an", "nochmal von anfang an", "das buch von anfang an",
+    ]},
     {"name": "NextChapterIntent", "slots": [], "samples": [
         "nächstes kapitel", "das nächste kapitel", "nächste kapitel", "kapitel weiter",
         "spring zum nächsten kapitel",

@@ -4,6 +4,12 @@
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
+## Version 1.7.0 (6.11.2026) – Minutengenau springen, Buch von vorne: gebaut, noch nicht bereitgestellt
+
+„Zehn Minuten zurück“ und „fünf Minuten vor“ springen über beliebig viele Kapitel (`player.jump`, Dauer aus
+`AMAZON.DURATION`). „Fang das Buch von vorne an“ fragt nach, wenn eine Hörstelle verloren ginge. Neue Intents
+`JumpBackIntent`, `JumpForwardIntent`, `RestartBookIntent` → **Interaction Model neu laden**. Prüfpunkte 73 und 74.
+
 ## Version 1.6.0 (5.11.2026) – Reise-Stand und Nachrichten: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 Schritte 2 und 3 von `docs/plan-fahrplan-dialog.md` sind fertig: Reise-Stand (`transit/trip.py`) ersetzt

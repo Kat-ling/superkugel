@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from superkugel.audiobooks.models import Book
@@ -26,6 +27,9 @@ def parse_token(token: str | None) -> tuple[str, int] | None:
     return book_id, idx
 
 
+_DURATION = re.compile(r"PT(?:([\d.]+)H)?(?:([\d.]+)M)?(?:([\d.]+)S)?")
+
+
 @dataclass(frozen=True)
 class Position:
     chapter: int
@@ -43,27 +47,36 @@ def clamp(book: Book, pos: Position) -> Position:
     return Position(chapter, offset)
 
 
+def jump(book: Book, pos: Position, seconds: int) -> Position | None:
+    """Beliebig weit vor (+) oder zurück (-), auch über mehrere Kapitel. Zurück endet am Buchanfang,
+    None heißt: Das Buchende würde erreicht."""
+    lengths = [c.duration_ms for c in book.chapters]
+    target = pos.offset_ms + seconds * 1000
+    if min(lengths, default=0) <= 0:  # Länge unbekannt (manche Sendungen): im Kapitel bleiben
+        return Position(pos.chapter, max(target, 0))
+    target = max(sum(lengths[:pos.chapter]) + target, 0)
+    for chapter, length in enumerate(lengths):
+        if target < length - 1000:
+            return Position(chapter, target)
+        target = max(target - length, 0)
+    return None
+
+
 def rewind(book: Book, pos: Position, seconds: int) -> Position:
-    """Ein Stück zurück; springt bei Bedarf ins Ende des vorherigen Kapitels."""
-    target = pos.offset_ms - seconds * 1000
-    if target >= 0 or pos.chapter == 0:
-        return clamp(book, Position(pos.chapter, max(target, 0)))
-    prev = book.chapters[pos.chapter - 1]
-    if prev.duration_ms <= 0:
-        return Position(pos.chapter - 1, 0)
-    return clamp(book, Position(pos.chapter - 1, max(prev.duration_ms + target, 0)))
+    return jump(book, pos, -seconds) or pos
 
 
 def forward(book: Book, pos: Position, seconds: int) -> Position | None:
-    """Ein Stück vor; None, wenn dabei das Buchende erreicht würde."""
-    target = pos.offset_ms + seconds * 1000
-    dur = book.chapters[pos.chapter].duration_ms
-    if dur <= 0 or target < dur - 1000:
-        return Position(pos.chapter, target)
-    nxt = pos.chapter + 1
-    if nxt >= len(book.chapters):
-        return None
-    return Position(nxt, max(target - dur, 0))
+    return jump(book, pos, seconds)
+
+
+def duration_seconds(value: str) -> int:
+    """Dauer aus dem Alexa-Slot (ISO 8601, zum Beispiel ``PT10M``); 0, wenn sie unklar ist."""
+    match = _DURATION.fullmatch(value)
+    if not match or not any(match.groups()):
+        return 0
+    hours, minutes, seconds = (float(g or 0) for g in match.groups())
+    return round(hours * 3600 + minutes * 60 + seconds)
 
 
 def next_chapter(book: Book, chapter: int) -> int | None:

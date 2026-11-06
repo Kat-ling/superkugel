@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from conftest import FakeSigner, book
 from superkugel.audiobooks import matching, player
-from superkugel.audiobooks.models import Book, Progress
+from superkugel.audiobooks.models import Book, Chapter, Progress
 from superkugel.audiobooks.player import Position
 from superkugel.audiobooks.service import AudiobookService
 from superkugel.services.storage import MemoryStore
@@ -172,3 +172,39 @@ def test_book_without_chapters_hidden() -> None:
     store = MemoryStore()
     store.put_book(Book("leer", "Leer", "", (), ()))
     assert AudiobookService(store, FakeSigner()).books() == []
+
+
+# --- Minutensprung und Neustart ------------------------------------------
+def test_jump_crosses_several_chapters_both_ways() -> None:
+    long = book()  # drei Kapitel zu je zehn Minuten
+    assert player.jump(long, Position(2, 60_000), -660) == Position(1, 0)
+    assert player.jump(long, Position(0, 60_000), 1260) == Position(2, 120_000)
+
+
+def test_jump_stops_at_the_start_and_reports_the_end() -> None:
+    long = book()
+    assert player.jump(long, Position(1, 0), -3600) == Position(0, 0)
+    assert player.jump(long, Position(1, 0), 3600) is None
+
+
+def test_jump_with_unknown_length_stays_in_the_chapter() -> None:
+    chapter = Chapter(index=0, title="Folge", s3_key="k", duration_ms=0, sha256="s")
+    show = Book(book_id="b", title="Folge", author="", genres=(), chapters=(chapter,))
+    assert player.jump(show, Position(0, 10_000), 60) == Position(0, 70_000)
+    assert player.jump(show, Position(0, 10_000), -60) == Position(0, 0)
+
+
+def test_duration_from_alexa() -> None:
+    assert player.duration_seconds("PT10M") == 600
+    assert player.duration_seconds("PT1H30M") == 5400
+    assert player.duration_seconds("PT45S") == 45
+    assert player.duration_seconds("PT0.5H") == 1800
+    for unclear in ("", "?", "P1W", "PT", "zehn"):
+        assert player.duration_seconds(unclear) == 0
+
+
+def test_restart_wish_finds_the_phrase_and_keeps_the_title() -> None:
+    assert matching.restart_wish("Tod am Wörthersee von vorne") == "Tod am Wörthersee"
+    assert matching.restart_wish("das Buch nochmal von Anfang an") == "das Buch"
+    assert matching.restart_wish("von ganz vorn") == ""
+    assert matching.restart_wish("mord im kräuterbeet") is None

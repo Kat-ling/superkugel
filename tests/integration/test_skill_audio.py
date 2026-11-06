@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from conftest import DEVICE, USER, audio_event, book, directives, ends_session, envelope, intent, speech
+import json
+from pathlib import Path
+
+from conftest import DEVICE, USER, attrs, audio_event, book, directives, ends_session, envelope, intent, speech
 from superkugel.audiobooks.models import Progress
 from superkugel.services.logs import hash_user
 
@@ -201,3 +204,116 @@ def test_progress_is_separate_per_echo_device(harness) -> None:
     r = harness.send(other)
     assert "kein angefangenes" in speech(r) and not directives(r)
     assert play_of(harness.send(intent("ResumeAudiobookIntent")))["audioItem"]["stream"]["token"] == "tod-am-woerthersee|2"
+
+
+def jump(name: str, value: str, token: str, offset: int) -> dict:
+    return intent(name, {"duration": value}, audio=playing(token, offset, "STOPPED"))
+
+
+def test_jump_back_over_several_chapters(harness) -> None:
+    setup(harness)
+    r = harness.send(jump("JumpBackIntent", "PT11M", "mord-im-kraeuterbeet|2", 60_000))
+    s = play_of(r)["audioItem"]["stream"]
+    assert s["token"] == "mord-im-kraeuterbeet|1" and s["offsetInMilliseconds"] == 0
+    p = harness.store.get_progress(UID, "mord-im-kraeuterbeet")
+    assert (p.chapter, p.offset_ms) == (1, 0)
+
+
+def test_jump_forward_over_several_chapters(harness) -> None:
+    setup(harness)
+    r = harness.send(jump("JumpForwardIntent", "PT21M", "mord-im-kraeuterbeet|0", 60_000))
+    s = play_of(r)["audioItem"]["stream"]
+    assert s["token"] == "mord-im-kraeuterbeet|2" and s["offsetInMilliseconds"] == 120_000
+
+
+def test_jump_past_the_end_keeps_playing_at_the_same_place(harness) -> None:
+    setup(harness)
+    r = harness.send(jump("JumpForwardIntent", "PT1H", "mord-im-kraeuterbeet|1", 90_000))
+    s = play_of(r)["audioItem"]["stream"]
+    assert s["token"] == "mord-im-kraeuterbeet|1" and s["offsetInMilliseconds"] == 90_000
+    assert "So weit" in speech(r)
+
+
+def test_unclear_duration_asks_again_without_moving(harness) -> None:
+    setup(harness)
+    r = harness.send(jump("JumpBackIntent", "?", "mord-im-kraeuterbeet|1", 90_000))
+    assert not directives(r) and ends_session(r) is False and "zehn Minuten zurück" in speech(r)
+
+
+def started(h, chapter: int = 1, offset: int = 90_000, finished: bool = False) -> None:
+    setup(h)
+    h.store.put_progress(UID, Progress("mord-im-kraeuterbeet", chapter=chapter, offset_ms=offset, started=True,
+                                       finished=finished, updated_at=9))
+    h.store.put_state(UID, {"book_id": "mord-im-kraeuterbeet"})
+
+
+def test_restart_asks_first_and_yes_starts_the_whole_book(harness) -> None:
+    started(harness)
+    r = harness.send(intent("RestartBookIntent"))
+    assert not directives(r) and ends_session(r) is False and "Mord im Kräuterbeet" in speech(r)
+    p = harness.store.get_progress(UID, "mord-im-kraeuterbeet")
+    assert (p.chapter, p.offset_ms) == (1, 90_000)
+    r = harness.send(intent("AMAZON.YesIntent", session=attrs(r)))
+    s = play_of(r)["audioItem"]["stream"]
+    assert s["token"] == "mord-im-kraeuterbeet|0" and s["offsetInMilliseconds"] == 0
+    p = harness.store.get_progress(UID, "mord-im-kraeuterbeet")
+    assert (p.chapter, p.offset_ms, p.finished) == (0, 0, False)
+
+
+def test_restart_no_keeps_the_place(harness) -> None:
+    started(harness)
+    r = harness.send(intent("RestartBookIntent"))
+    r = harness.send(intent("AMAZON.NoIntent", session=attrs(r)))
+    assert not directives(r) and ends_session(r) is True and "bleibt" in speech(r)
+    p = harness.store.get_progress(UID, "mord-im-kraeuterbeet")
+    assert (p.chapter, p.offset_ms) == (1, 90_000)
+
+
+def test_restart_answer_in_a_longer_sentence(harness) -> None:
+    started(harness)
+    r = harness.send(intent("RestartBookIntent"))
+    r2 = harness.send(intent("ChatJaIntent", {"query": "bitte"}, session=attrs(r)))
+    assert play_of(r2)["audioItem"]["stream"]["token"] == "mord-im-kraeuterbeet|0"
+    assert not harness.openai.requests
+    r3 = harness.send(intent("ChatNeinIntent", {"query": "lieber nicht"}, session=attrs(r)))
+    assert not directives(r3) and "bleibt" in speech(r3) and not harness.openai.requests
+
+
+def test_restart_without_a_place_to_lose_needs_no_question(harness) -> None:
+    started(harness, chapter=2, offset=0, finished=True)
+    r = harness.send(intent("RestartBookIntent"))
+    assert play_of(r)["audioItem"]["stream"]["token"] == "mord-im-kraeuterbeet|0"
+
+
+def test_restart_by_title_and_in_free_speech(harness) -> None:
+    started(harness)
+    harness.store.put_progress(UID, Progress("tod-am-woerthersee", chapter=1, offset_ms=5_000, started=True, updated_at=9))
+    r = harness.send(intent("PlayAudiobookIntent", {"title": "tod am wörthersee von vorne"}))
+    assert not directives(r) and "Tod am Wörthersee" in speech(r)
+    assert attrs(r)["pending"] == "restart_book"
+    r = harness.send(intent("ChatDasIntent", {"query": "hörbuch von vorne"}))
+    assert not directives(r) and attrs(r)["pending"] == "restart_book" and not harness.openai.requests
+
+
+def test_restart_stale_book_is_harmless(harness) -> None:
+    started(harness)
+    r = harness.send(intent("AMAZON.YesIntent", session={"pending": "restart_book", "restart_book_id": "gibt-es-nicht"}))
+    assert not directives(r)
+
+
+def test_ordinary_talk_after_the_question_drops_it(harness) -> None:
+    started(harness)
+    r = harness.send(intent("RestartBookIntent"))
+    harness.openai.text("Gut.")
+    r = harness.send(intent("ChatWieIntent", {"query": "geht es dir"}, session=attrs(r)))
+    assert "pending" not in attrs(r)
+
+
+def test_navigation_commands_are_in_the_model() -> None:
+    model = Path(__file__).parents[2] / "skill-package" / "interactionModels" / "custom" / "de-DE.json"
+    data = json.loads(model.read_text(encoding="utf-8"))
+    intents = {i["name"]: i for i in data["interactionModel"]["languageModel"]["intents"]}
+    assert "{duration} zurück" in intents["JumpBackIntent"]["samples"]
+    assert "{duration} vor" in intents["JumpForwardIntent"]["samples"]
+    assert intents["JumpBackIntent"]["slots"] == [{"name": "duration", "type": "AMAZON.DURATION"}]
+    assert "fang das buch von vorne an" in intents["RestartBookIntent"]["samples"]

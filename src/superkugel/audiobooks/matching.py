@@ -15,6 +15,12 @@ _STOPWORDS = {
     "spiel", "spiele", "abspielen", "vorlesen", "lies", "hören", "mal", "doch", "mit", "noch",
 }
 
+# „von vorne“ mit Abwandlungen; was davor steht, kann ein Titel sein
+_RESTART = re.compile(r"\b(?:(?:noch ?mal|nochmals|ganz)\s+)*von\s+(?:ganz\s+)?(?:vorn|vorne|anfang)(?:\s+an)?\b",
+                      re.IGNORECASE)
+_BOOK_WORD = re.compile(r"\b(?:hör)?buch\b|\bkrimi\b", re.IGNORECASE)
+_NO_TITLE = _STOPWORDS | {"krimi", "fang", "beginn", "beginne", "starte", "ganze", "ganzes", "dieses", "diesen", "es", "an"}
+
 # Genre-Synonyme -> kanonisches Genre (wie im Manifest verwendet, kleingeschrieben)
 GENRE_SYNONYMS: dict[str, str] = {
     "gartenkrimi": "gartenkrimi", "gartenkrimis": "gartenkrimi", "garten krimi": "gartenkrimi",
@@ -25,6 +31,21 @@ GENRE_SYNONYMS: dict[str, str] = {
     "roman": "roman", "romane": "roman", "geschichte": "geschichte", "geschichten": "geschichte",
     "märchen": "märchen", "humor": "humor", "lustiges": "humor",
 }
+
+
+def restart_wish(text: str) -> str | None:
+    """Ohne „von vorne“: None. Sonst der Rest des Satzes, der einen Titel enthalten kann."""
+    if not _RESTART.search(text):
+        return None
+    return " ".join(_RESTART.sub(" ", text).split())
+
+
+def mentions_book(text: str) -> bool:
+    return bool(_BOOK_WORD.search(text))
+
+
+def names_title(wish: str) -> bool:
+    return any(word not in _NO_TITLE for word in wish.lower().split())
 
 
 def normalize(text: str) -> str:

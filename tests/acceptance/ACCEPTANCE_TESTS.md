@@ -73,6 +73,8 @@ gemockter OpenAI-API, gemocktem AWS) · **GERÄT ✅** = manuell auf echtem Echo
 | 70 | Nur Zeit oder Tag ändern (1.6) | ✅ | ⏳ | `test_time_only_keeps_the_day_of_the_question`, `tests/unit/test_trip.py` | „Zug übermorgen nach …“, dann „Gegen zehn“ → bleibt übermorgen |
 | 71 | Nachrichten ohne Wiederholung (1.6) | ✅ | ⏳ | `test_news_are_read_by_the_code_and_what_else_brings_new_ones`, `test_told_news_stay_told_in_a_new_session` | „Was gibt's Neues?“, „Was noch?“, später nochmal → keine Meldung doppelt |
 | 72 | Nachrichten zu Ort oder Thema (1.6) | ✅ | ⏳ | `test_wish_without_a_hit_uses_one_web_search`, `test_wish_filters_by_place_topic_or_region` | „Neuigkeiten aus …“, „Was gibt's im Theater?“ |
+| 73 | Minutengenau springen (1.7) | ✅ | ⏳ | `test_jump_back_over_several_chapters`, `test_jump_forward_over_several_chapters`, `test_jump_past_the_end_keeps_playing_at_the_same_place` | Beim Hören: „Alexa, sag Superkugel, zehn Minuten zurück“, „… fünf Minuten vor“, „… eine halbe Stunde zurück“; außerdem „zwei Stunden vor“ kurz vor Buchende → Hinweis, läuft an derselben Stelle weiter |
+| 74 | Buch von vorne (1.7) | ✅ | ⏳ | `test_restart_asks_first_and_yes_starts_the_whole_book`, `test_restart_no_keeps_the_place`, `test_restart_by_title_and_in_free_speech` | „Alexa, sag Superkugel, fang das Buch von vorne an“ → Rückfrage; „Nein“ → Stelle bleibt, „Alexa, weiter“; erneut und „Ja“ → Kapitel 1; „Spiel … von vorne“ mit Titel |
 
 Zusätzlich automatisiert: Modus `maintenance`/`audiobooks_only`, Ja/Nein nach der Begrüßung,
 KI-Werkzeugaufruf nur für vorhandene Bücher, Zwischenmeldung bei langsamer KI, keine

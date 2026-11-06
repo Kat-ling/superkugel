@@ -74,6 +74,9 @@ def play_raw(services: Services, hi: HandlerInput, raw: str, started: float | No
     chosen = media_handlers.choose_hit(services, hi, raw)  # „spiel die erste“ nach einer Suche
     if chosen is not None:
         return chosen
+    wish = matching.restart_wish(raw)
+    if wish is not None:
+        return restart(services, hi, wish)
     norm = matching.normalize(raw)
     if "weiter" in norm.split():
         return resume_current(services, hi)
@@ -195,6 +198,93 @@ def rewind(services: Services, hi: HandlerInput) -> Response:
 
 def forward(services: Services, hi: HandlerInput) -> Response:
     return _seek(services, hi, "forward")
+
+
+def _jump(services: Services, hi: HandlerInput, direction: int) -> Response:
+    """„Zehn Minuten zurück“: Geht es nicht so weit, läuft das Buch an derselben Stelle weiter."""
+    seconds = player.duration_seconds(slot(hi, "duration"))
+    if seconds <= 0:
+        return keep_open(services, hi, services.t("jump_unclear"), services.t("jump_unclear"))
+    token, offset = audio_context(hi)
+    found = services.audio().position_from_context(uid(hi), token, offset)
+    if not found:
+        return keep_open(services, hi, services.t("nothing_to_resume"), services.t("which_book"))
+    book, pos = found
+    target = player.jump(book, pos, direction * seconds)
+    if target is None:
+        return _play(services, hi, book, pos, intro=services.t("jump_past_end"))
+    return _play(services, hi, book, target)
+
+
+def jump_back(services: Services, hi: HandlerInput) -> Response:
+    return _jump(services, hi, -1)
+
+
+def jump_forward(services: Services, hi: HandlerInput) -> Response:
+    return _jump(services, hi, 1)
+
+
+def _restart_target(services: Services, hi: HandlerInput, wish: str) -> Book | None:
+    audio = services.audio()
+    books = audio.books()
+    if wish and books and matching.names_title(wish):
+        book = matching.best_match(wish, books)[0]
+        if book:
+            return book
+    token, offset = audio_context(hi)
+    found = audio.position_from_context(uid(hi), token, offset)
+    if found:
+        return found[0]
+    last = audio.book(str(services.store.get_state(uid(hi)).get("book_id") or ""))  # auch ein fertig gehörtes Buch
+    return last or (books[0] if len(books) == 1 else None)
+
+
+def _play_from_start(services: Services, hi: HandlerInput, book: Book) -> Response:
+    return _play(services, hi, book, Position(0, 0), intro=services.t("restart_go", title=book.title))
+
+
+def restart(services: Services, hi: HandlerInput, wish: str = "") -> Response:
+    """Das ganze Buch von vorne. Geht dabei eine Hörstelle verloren, fragt die Superkugel zuerst."""
+    book = _restart_target(services, hi, wish)
+    if book is None:
+        if not services.audio().books():
+            return end_with(services, hi, services.t("no_books"))
+        return keep_open(services, hi, services.t("nothing_to_resume"), services.t("which_book"))
+    p = services.store.get_progress(uid(hi), book.book_id)
+    if not p or not p.started or p.finished:
+        return _play_from_start(services, hi, book)
+    attrs = session_attrs(hi)
+    attrs["pending"], attrs["restart_book_id"] = "restart_book", book.book_id
+    question = services.t("restart_ask", title=book.title)
+    return keep_open(services, hi, question, question)
+
+
+def restart_intent(services: Services, hi: HandlerInput) -> Response:
+    return restart(services, hi)
+
+
+def restart_yes(services: Services, hi: HandlerInput) -> Response:
+    book = services.audio().book(str(session_attrs(hi).pop("restart_book_id", "")))
+    if book is None:
+        return keep_open(services, hi, services.t("nothing_to_resume"), services.t("which_book"))
+    return _play_from_start(services, hi, book)
+
+
+def restart_no(services: Services, hi: HandlerInput) -> Response:
+    session_attrs(hi).pop("restart_book_id", None)
+    return end_with(services, hi, services.t("restart_declined"))
+
+
+def restart_answer(services: Services, hi: HandlerInput, text: str) -> Response | None:
+    """Antwort auf die Rückfrage in einem längeren Satz („ja bitte“, „lieber nicht“). None: Es war keine Antwort."""
+    first = (text.lower().split() or [""])[0]
+    if first in ("ja", "gern", "gerne", "genau", "bitte"):
+        session_attrs(hi).pop("pending", None)
+        return restart_yes(services, hi)
+    if first in ("nein", "lieber", "nicht"):
+        session_attrs(hi).pop("pending", None)
+        return restart_no(services, hi)
+    return None
 
 
 def next_chapter(services: Services, hi: HandlerInput) -> Response:
