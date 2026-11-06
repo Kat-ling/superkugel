@@ -1,10 +1,10 @@
 # Projektstatus – Superkugel
 
-**Stand:** 5.11.2026 · **Version 1.6.0 bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.** **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
+**Stand:** 6.11.2026 · **Version 1.7.0 bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.** **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
-## Version 1.7.0 (6.11.2026) – Minutengenau springen, Buch von vorne: gebaut, noch nicht bereitgestellt
+## Version 1.7.0 (6.11.2026) – Minutengenau springen, Buch von vorne: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 „Zehn Minuten zurück“ und „fünf Minuten vor“ springen über beliebig viele Kapitel (`player.jump`, Dauer aus
 `AMAZON.DURATION`). „Fang das Buch von vorne an“ fragt nach, wenn eine Hörstelle verloren ginge. Neue Intents
