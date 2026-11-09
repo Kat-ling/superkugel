@@ -110,7 +110,8 @@ def play_raw(services: Services, hi: HandlerInput, raw: str, started: float | No
         # vorhandenen Bibliothek wählen (nur bekannte book_ids werden abgespielt) oder ehrlich verneinen.
         from superkugel.handlers.conversation import handle_chat_text
 
-        return handle_chat_text(services, hi, f"Spiel {raw}", started if started is not None else services.clock())
+        return handle_chat_text(services, hi, f"Spiel {raw}", started if started is not None else services.clock(),
+                                explicit_play=True)
     if book is None:
         return keep_open(services, hi, services.t("unknown_title"), services.t("which_book"))
     p = services.store.get_progress(uid(hi), book.book_id)
@@ -275,16 +276,62 @@ def restart_no(services: Services, hi: HandlerInput) -> Response:
     return end_with(services, hi, services.t("restart_declined"))
 
 
-def restart_answer(services: Services, hi: HandlerInput, text: str) -> Response | None:
-    """Antwort auf die Rückfrage in einem längeren Satz („ja bitte“, „lieber nicht“). None: Es war keine Antwort."""
+def _yes_or_no(text: str) -> bool | None:
+    """Antwort auf eine Rückfrage in einem längeren Satz („ja bitte“, „lieber nicht“). None: keine Antwort."""
     first = (text.lower().split() or [""])[0]
     if first in ("ja", "gern", "gerne", "genau", "bitte"):
-        session_attrs(hi).pop("pending", None)
-        return restart_yes(services, hi)
+        return True
     if first in ("nein", "lieber", "nicht"):
-        session_attrs(hi).pop("pending", None)
-        return restart_no(services, hi)
+        return False
     return None
+
+
+def restart_answer(services: Services, hi: HandlerInput, text: str) -> Response | None:
+    answer = _yes_or_no(text)
+    if answer is None:
+        return None
+    session_attrs(hi).pop("pending", None)
+    return restart_yes(services, hi) if answer else restart_no(services, hi)
+
+
+def from_ai(services: Services, hi: HandlerInput, book: Book, text: str, lead: str, explicit: bool) -> Response:
+    """Die KI will ein Hörbuch starten. Direkt nur, wenn sie es so gewünscht hat: Buch genannt, „weiter“ beim
+    angefangenen Buch oder „Spiel …“. Sonst fragt die Superkugel nach – ein Missverständnis startet nichts."""
+    user = uid(hi)
+    current = services.audio().current_book(user) if matching.wants_to_go_on(text) else None
+    if explicit or matching.names_book(text, book) or (current and current[0].book_id == book.book_id):
+        cmd = services.audio().start_or_resume(user, book)
+        services.count("audiobook")
+        return (hi.response_builder.speak(services.say(lead)).add_directive(play_directive(cmd))
+                .set_should_end_session(True).response)
+    log("ai_book_asked")
+    attrs = session_attrs(hi)
+    attrs["pending"], attrs["play_book_id"] = "play_book", book.book_id
+    question = services.t("play_ask", title=book.title)
+    return keep_open(services, hi, question, question)
+
+
+def play_yes(services: Services, hi: HandlerInput) -> Response:
+    book = services.audio().book(str(session_attrs(hi).pop("play_book_id", "")))
+    if book is None or book.book_id.startswith("pod-"):
+        return keep_open(services, hi, services.t("nothing_to_resume"), services.t("which_book"))
+    p = services.store.get_progress(uid(hi), book.book_id)
+    resumed = bool(p and p.started and not p.finished)
+    return _play(services, hi, book, intro=_intro(book, p.chapter if p else 0, resumed))
+
+
+def play_no(services: Services, hi: HandlerInput) -> Response:
+    session_attrs(hi).pop("play_book_id", None)
+    question = services.t("no_book_then")
+    return keep_open(services, hi, question, question)
+
+
+def play_answer(services: Services, hi: HandlerInput, text: str) -> Response | None:
+    answer = _yes_or_no(text)
+    if answer is None:
+        return None
+    session_attrs(hi).pop("pending", None)
+    return play_yes(services, hi) if answer else play_no(services, hi)
 
 
 def next_chapter(services: Services, hi: HandlerInput) -> Response:

@@ -4,6 +4,14 @@
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
+## Version 1.7.1 (9.11.2026) – Hörbuch nur, wenn gewünscht: gebaut, noch nicht bereitgestellt
+
+Gerätetest am Wochenende: Die KI startete bei Fragen nach Podcasts oder bei Missverständnissen ein Hörbuch, weil
+sie für Hörwünsche nur `play_audiobook` hat (Podcast-Suche ohne Schlüssel, keine Lieblingssendungen). Jetzt startet
+der Code ein Hörbuch der KI nur direkt, wenn der Satz das Buch nennt (Titel, Autor, Reihe), „weiter“ beim
+angefangenen Buch sagt oder mit „Spiel …“ begann (`audio.from_ai`). Sonst fragt die Superkugel: „Möchtest du … hören?“
+Der Prompt verbietet ein Hörbuch als Ersatz. Kein neuer Intent, Sprachmodell bleibt. Prüfpunkt 75.
+
 ## Version 1.7.0 (6.11.2026) – Minutengenau springen, Buch von vorne: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 „Zehn Minuten zurück“ und „fünf Minuten vor“ springen über beliebig viele Kapitel (`player.jump`, Dauer aus

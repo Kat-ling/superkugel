@@ -146,7 +146,7 @@ def test_stop_says_goodbye_and_ends(harness) -> None:
 def test_llm_tool_call_starts_known_book_only(harness) -> None:
     harness.store.put_book(book())
     harness.openai.tool("mord-im-kraeuterbeet", "Gern, ich spiel deinen Gartenkrimi.")
-    r = harness.send(chat("ChatHastDuIntent", "was mit garten"))
+    r = harness.send(chat("ChatIchIntent", "möchte mord im kräuterbeet hören"))
     assert r["response"]["directives"][0]["type"] == "AudioPlayer.Play" and ends_session(r) is True
     harness.openai.tool("erfundenes-buch").text("dummy")
     r = harness.send(chat("ChatHastDuIntent", "was anderes"))
@@ -191,3 +191,75 @@ def test_audiobooks_only_mode_blocks_ai(harness) -> None:
 def test_choice_after_launch_plaudern(harness) -> None:
     r = harness.send(intent("StartChatIntent", session={"pending": "resume_book"}))
     assert "Worüber" in speech(r) and ends_session(r) is False and "pending" not in attrs(r)
+
+
+# --- Hörbuch nur, wenn gewünscht (1.7.1) -------------------------------
+def _two_books(h) -> None:
+    h.store.put_book(book())
+    h.store.put_book(book("tod-am-woerthersee", "Tod am Wörthersee", "Hans Huber", ("regionalkrimi",),
+                          series="Kärnten-Krimi", imported_at="2026-10-20T00:00:00+00:00"))
+
+
+def test_ai_book_start_without_a_named_book_asks_first(harness) -> None:
+    _two_books(harness)
+    harness.openai.tool("tod-am-woerthersee", "Gern.")
+    r = harness.send(chat("ChatWelcheIntent", "podcasts gibt es"))
+    assert not r["response"].get("directives") and ends_session(r) is False
+    assert "Tod am Wörthersee" in speech(r) and attrs(r)["pending"] == "play_book"
+    r = harness.send(intent("AMAZON.YesIntent", session=attrs(r)))
+    assert r["response"]["directives"][0]["audioItem"]["stream"]["token"].startswith("tod-am-woerthersee")
+
+
+def test_ai_book_question_no_or_other_talk_plays_nothing(harness) -> None:
+    _two_books(harness)
+    harness.openai.tool("tod-am-woerthersee")
+    r = harness.send(chat("ChatIchIntent", "hab heute Kuchen gebacken"))
+    first = attrs(r)
+    r = harness.send(intent("AMAZON.NoIntent", session=first))
+    assert not r["response"].get("directives") and ends_session(r) is False and "pending" not in attrs(r)
+    r = harness.send(chat("ChatNeinIntent", "danke", first))
+    assert not r["response"].get("directives") and len(harness.openai.requests) == 1
+    harness.openai.text("Schön!")
+    r = harness.send(chat("ChatDerIntent", "Kuchen ist mit Äpfeln", first))
+    assert not r["response"].get("directives") and "Schön" in speech(r)
+
+
+def test_ai_book_start_is_direct_when_the_book_is_named(harness) -> None:
+    _two_books(harness)
+    for query in ("möchte den Wörthersee hören", "will was von Huber hören", "hätte Lust auf den Kärnten-Krimi"):
+        harness.openai.tool("tod-am-woerthersee")
+        r = harness.send(chat("ChatIchIntent", query))
+        assert r["response"]["directives"][0]["type"] == "AudioPlayer.Play", query
+
+
+def test_ai_book_start_is_direct_when_she_wants_to_go_on(harness) -> None:
+    from conftest import DEVICE, USER
+    from superkugel.audiobooks.models import Progress
+    from superkugel.services.logs import hash_user
+
+    _two_books(harness)
+    uid = hash_user(USER, DEVICE)
+    harness.store.put_progress(uid, Progress("tod-am-woerthersee", chapter=1, offset_ms=5_000, started=True, updated_at=9))
+    harness.store.put_state(uid, {"book_id": "tod-am-woerthersee"})
+    harness.openai.tool("tod-am-woerthersee")
+    r = harness.send(chat("ChatIchIntent", "möchte weiterhören"))
+    assert r["response"]["directives"][0]["type"] == "AudioPlayer.Play"
+    harness.openai.tool("mord-im-kraeuterbeet")
+    r = harness.send(chat("ChatIchIntent", "möchte weiterhören"))
+    assert not r["response"].get("directives")  # „weiter“ gilt nur für das angefangene Buch
+
+
+def test_ai_book_question_answered_with_ja_bitte(harness) -> None:
+    _two_books(harness)
+    harness.openai.tool("tod-am-woerthersee")
+    r = harness.send(chat("ChatIchIntent", "langweile mich"))
+    r = harness.send(chat("ChatJaIntent", "bitte", attrs(r)))
+    assert r["response"]["directives"][0]["type"] == "AudioPlayer.Play" and len(harness.openai.requests) == 1
+
+
+def test_prompt_forbids_a_book_as_substitute(harness) -> None:
+    _two_books(harness)
+    harness.openai.text("Gut.")
+    harness.send(chat("ChatWieIntent", "geht es dir"))
+    instr = harness.openai.requests[0]["body"]["instructions"]
+    assert "ausdrücklich" in instr and "nie ersatzweise ein Hörbuch" in instr

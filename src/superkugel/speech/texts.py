@@ -63,6 +63,7 @@ TEXTS: dict[str, tuple[str, str]] = {
                      "Das habe ich nicht verstanden. Sagen Sie zum Beispiel: zehn Minuten zurück."),
     "restart_ask": ("Soll ich {title} wirklich ganz von vorne beginnen? Deine gemerkte Stelle geht dabei verloren.",
                     "Soll ich {title} wirklich ganz von vorne beginnen? Ihre gemerkte Stelle geht dabei verloren."),
+    "play_ask": ("Möchtest du {title} hören?", "Möchten Sie {title} hören?"),
     "restart_go": ("Gern, {title} von Anfang an.",) * 2,
     "restart_declined": ("Gut, deine Stelle bleibt. Sag einfach: Alexa, weiter.",
                          "Gut, Ihre Stelle bleibt. Sagen Sie einfach: Alexa, weiter."),

@@ -59,6 +59,17 @@ def _tokens(text: str) -> list[str]:
     return [t for t in normalize(text).split() if t not in _STOPWORDS]
 
 
+def names_book(text: str, book: Book) -> bool:
+    """Nennt der Satz das Buch selbst (ein markantes Wort aus Titel, Autor oder Reihe)? Genres zählen nicht."""
+    said = "".join(_tokens(text))
+    words = {t for part in (book.title, book.author, book.series) for t in _tokens(part)}
+    return any(w in said for w in words if len(w) >= 5 and w not in GENRE_SYNONYMS)
+
+
+def wants_to_go_on(text: str) -> bool:
+    return any(w.startswith("weiter") or w == "fortsetzen" for w in normalize(text).split())
+
+
 def detect_genre(text: str) -> str | None:
     norm = normalize(text)
     # längste Synonyme zuerst, damit "gartenkrimi" vor "krimi" greift

@@ -26,7 +26,6 @@ from superkugel.handlers.common import (
     Services,
     end_with,
     keep_open,
-    play_directive,
     session_attrs,
     slot,
     uid,
@@ -203,7 +202,8 @@ def _read_news(services: Services, hi: HandlerInput, user: str, history: History
     return reply.text or services.t("news_nothing")
 
 
-def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: float) -> Response:
+def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: float,
+                     explicit_play: bool = False) -> Response:
     mode = services.params.mode()
     if mode is Mode.MAINTENANCE:
         return end_with(services, hi, services.t("maintenance"))
@@ -263,11 +263,10 @@ def handle_chat_text(services: Services, hi: HandlerInput, text: str, started: f
         if call.name == "play_audiobook":
             book = services.audio().book(str(call.arguments.get("book_id", "")))
             if book and not book.book_id.startswith("pod-"):  # Modell darf nur vorhandene Bücher starten
-                cmd = services.audio().start_or_resume(user, book)
-                services.count("audiobook")
-                lead = reply.text or f"Gern, hier ist {book.title}."
-                return (hi.response_builder.speak(services.say(lead)).add_directive(play_directive(cmd))
-                        .set_should_end_session(True).response)
+                from superkugel.handlers import audio
+
+                return audio.from_ai(services, hi, book, text, reply.text or f"Gern, hier ist {book.title}.",
+                                     explicit_play)
             log("tool_unknown_book")
         elif call.name == "play_show":
             from superkugel.handlers import media as media_handlers
@@ -356,8 +355,10 @@ def handle_chat_intent(services: Services, hi: HandlerInput, started: float) -> 
     from superkugel.audiobooks import matching
     from superkugel.handlers import audio
 
-    if session_attrs(hi).get("pending") == "restart_book":
-        answered = audio.restart_answer(services, hi, text)
+    pending = session_attrs(hi).get("pending")
+    if pending in ("restart_book", "play_book"):
+        answer = audio.restart_answer if pending == "restart_book" else audio.play_answer
+        answered = answer(services, hi, text)
         if answered is not None:
             return answered
     session_attrs(hi).pop("pending", None)
@@ -389,6 +390,10 @@ def handle_yes(services: Services, hi: HandlerInput, started: float) -> Response
         from superkugel.handlers.audio import restart_yes
 
         return restart_yes(services, hi)
+    if pending == "play_book":
+        from superkugel.handlers.audio import play_yes
+
+        return play_yes(services, hi)
     return handle_chat_text(services, hi, "ja", started)
 
 
@@ -409,6 +414,10 @@ def handle_no(services: Services, hi: HandlerInput, started: float) -> Response:
         from superkugel.handlers.audio import restart_no
 
         return restart_no(services, hi)
+    if pending == "play_book":
+        from superkugel.handlers.audio import play_no
+
+        return play_no(services, hi)
     return handle_chat_text(services, hi, "nein", started)
 
 
