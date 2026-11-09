@@ -1,10 +1,10 @@
 # Projektstatus – Superkugel
 
-**Stand:** 6.11.2026 · **Version 1.7.0 bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.** **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
+**Stand:** 9.11.2026 · **Version 1.7.1 bereitgestellt (Lambda), Interaction Model neu laden, Gerätetest offen.** **Version 1.5 (Orte besser verstehen, kürzere Antworten): bereitgestellt (Change Set am
 31.10.2026 ausgeführt), live per Lambda-Aufruf getestet; Interaction Model in der Developer Console neu laden.** Version 1.4 (Fahrplanauskunft) bereitgestellt, Fahrplan gültig bis 12.12.2026, auf GitHub (Tag
 `v1.4.0`). Version 1.0 ist im Alltag auf einem Echo Dot 5 in Betrieb.
 
-## Version 1.7.1 (9.11.2026) – Hörbuch nur, wenn gewünscht: gebaut, noch nicht bereitgestellt
+## Version 1.7.1 (9.11.2026) – Hörbuch nur, wenn gewünscht: bereitgestellt, live per Lambda geprüft, Gerätetest offen
 
 Gerätetest am Wochenende: Die KI startete bei Fragen nach Podcasts oder bei Missverständnissen ein Hörbuch, weil
 sie für Hörwünsche nur `play_audiobook` hat (Podcast-Suche ohne Schlüssel, keine Lieblingssendungen). Jetzt startet
